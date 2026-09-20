@@ -23,8 +23,8 @@ export default function HomePage() {
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
               Create an account, add prepaid credits, generate an API key and
-              call the Jev Decision API. Balance, usage and permissions are
-              managed in one backend.
+              call the Jev Decision API. Balance and usage stay visible in one
+              dashboard.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg">
@@ -60,7 +60,7 @@ export default function HomePage() {
             {
               icon: Zap,
               title: 'Usage metering',
-              text: 'Requests and credit consumption are metered by New API on every call.',
+              text: 'Requests and credit consumption update automatically with each call.',
             },
           ].map((item) => (
             <div key={item.title} className="border-t pt-6">
@@ -83,7 +83,7 @@ export default function HomePage() {
             </div>
             <div className="space-y-4">
               {[
-                'Sign in with a New API-backed account.',
+                'Sign in to your Jev account.',
                 'Redeem a one-time recharge code.',
                 'Generate an API key in the dashboard.',
                 'Send Bearer-authenticated requests to /api/v1/decide.',

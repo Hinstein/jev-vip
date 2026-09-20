@@ -99,7 +99,9 @@ export default async function DashboardPage() {
           <Card className="shadow-none">
             <CardContent className="p-6">
               <p className="text-sm font-medium text-gray-500">Quick start</p>
-              <h2 className="mt-1 text-xl font-semibold">Call the Jev Decision API</h2>
+              <h2 className="mt-1 text-xl font-semibold">
+                Call the Jev Decision API
+              </h2>
               <p className="mt-2 text-sm leading-6 text-gray-500">
                 Create an API key, keep it server-side, then send Jev-shaped
                 requests to the hosted endpoint.
@@ -138,9 +140,6 @@ export default async function DashboardPage() {
                   <dd className="font-mono text-xs">{user.id}</dd>
                 </div>
               </dl>
-              <p className="mt-5 border-t pt-4 text-xs leading-5 text-gray-400">
-                Account status, roles and permissions come from New API.
-              </p>
             </CardContent>
           </Card>
         </div>

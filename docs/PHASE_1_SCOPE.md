@@ -8,7 +8,7 @@ Customer flow:
 
 ```text
 landing
-  -> New API-backed sign up / sign in
+  -> sign up / sign in
   -> dashboard
       -> available credits
       -> top up / redeem code
@@ -30,7 +30,7 @@ key store to the JEV frontend.
 
 ## Acceptance
 
-- JEV naming is consistent; no ZEV branding remains.
+- Product naming is consistently JEV/Jev.
 - Dashboard product mechanics follow the hosted Jev reference: balance, top up,
   API key management, usage and a simple API quick start.
 - JEV login is New API login.

@@ -38,8 +38,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
             {mode === 'signin' ? 'Sign in to Jev' : 'Start using Jev'}
           </h1>
           <p className="mt-2 text-sm leading-6 text-gray-500">
-            Account authentication, roles and permissions are managed by the
-            New API backend.
+            Use one account for credits, API keys and usage.
           </p>
 
           <form className="mt-8 space-y-5" action={formAction}>

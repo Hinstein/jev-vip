@@ -29,10 +29,10 @@ export default async function UsagePage() {
           <CardContent className="flex gap-3 p-6">
             <Activity className="mt-0.5 h-5 w-5 text-gray-400" />
             <div>
-              <p className="font-medium">Usage is metered by New API</p>
+              <p className="font-medium">Usage updates automatically</p>
               <p className="mt-1 text-sm leading-6 text-gray-500">
-                Request logs, model cost, quota deductions and administrative
-                audit data are kept in the New API backend.
+                Every successful Jev API request is counted against the same
+                prepaid balance shown in your dashboard.
               </p>
             </div>
           </CardContent>

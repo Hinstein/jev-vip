@@ -30,8 +30,8 @@ export default async function ApiKeysPage() {
         <p className="text-sm font-medium text-gray-500">Access</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">API Keys</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
-          Create and revoke Jev API keys. Key status, model access, quota and
-          usage enforcement are managed by New API.
+          Create a key for your Jev API calls and revoke it whenever you need
+          to rotate access.
         </p>
 
         <div className="mt-8">

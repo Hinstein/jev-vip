@@ -48,8 +48,8 @@ export default async function CreditsPage() {
         </div>
 
         <p className="mt-6 text-sm text-gray-500">
-          Balance and consumption are read directly from the New API account
-          ledger. JEV does not maintain a second credit balance.
+          Your balance updates automatically after recharge-code redemption and
+          API usage.
         </p>
       </div>
     </section>

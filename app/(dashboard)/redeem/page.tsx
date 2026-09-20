@@ -22,8 +22,8 @@ export default async function RedeemPage() {
           Redeem a code
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
-          Enter the one-time code you received after purchase. New API validates
-          the code and credits this account directly.
+          Enter the one-time code you received after purchase. Credits are
+          added to this account immediately after a successful redemption.
         </p>
       </div>
 
@@ -49,8 +49,8 @@ export default async function RedeemPage() {
             <div className="flex gap-2">
               <BadgeCheck className="mt-1 h-4 w-4 shrink-0 text-gray-900" />
               <p>
-                Redemption state and quota are owned by New API, so the JEV
-                frontend cannot double-credit a used code.
+                Each recharge code can only be credited according to its
+                backend redemption state.
               </p>
             </div>
           </div>

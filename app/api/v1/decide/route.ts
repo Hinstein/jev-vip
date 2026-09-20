@@ -4,7 +4,7 @@ const MAX_BODY_BYTES = 2 * 1024 * 1024;
 
 function newApiBaseUrl() {
   const value = process.env.NEW_API_BASE_URL?.replace(/\/+$/, '');
-  if (!value) throw new Error('New API backend is not configured');
+  if (!value) throw new Error('Jev backend is not configured');
   return value;
 }
 
@@ -16,14 +16,20 @@ export async function POST(request: NextRequest) {
 
   const contentLength = Number(request.headers.get('content-length') || '0');
   if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: 'Request body is too large.' }, { status: 413 });
+    return NextResponse.json(
+      { error: 'Request body is too large.' },
+      { status: 413 }
+    );
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON request body.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid JSON request body.' },
+      { status: 400 }
+    );
   }
 
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
@@ -56,14 +62,14 @@ export async function POST(request: NextRequest) {
     });
   } catch {
     return NextResponse.json(
-      { error: 'ZEV gateway is temporarily unavailable.' },
+      { error: 'Jev gateway is temporarily unavailable.' },
       { status: 503 }
     );
   }
 
   const relayText = await relayResponse.text();
   if (!relayResponse.ok) {
-    let errorBody: unknown = { error: 'ZEV gateway request failed.' };
+    let errorBody: unknown = { error: 'Jev gateway request failed.' };
     if (relayText) {
       try {
         errorBody = JSON.parse(relayText);
@@ -84,7 +90,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(JSON.parse(content));
   } catch {
     return NextResponse.json(
-      { error: 'ZEV gateway returned an invalid response.' },
+      { error: 'Jev gateway returned an invalid response.' },
       { status: 502 }
     );
   }
