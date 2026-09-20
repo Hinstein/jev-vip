@@ -1,10 +1,12 @@
 import { ProductGrid } from '@/components/jev/product-grid';
 import { getActiveProducts } from '@/lib/jev/products';
+import { getJevRetailPricing } from '@/lib/new-api/pricing';
 
 export const dynamic = 'force-dynamic';
 
-export default function TopUpPage() {
+export default async function TopUpPage() {
   const products = getActiveProducts();
+  const pricing = await getJevRetailPricing();
 
   return (
     <section className="flex-1 px-4 py-8 lg:px-10 lg:py-10">
@@ -19,7 +21,11 @@ export default function TopUpPage() {
         </p>
 
         <div className="mt-8">
-          <ProductGrid products={products} />
+          <ProductGrid
+          products={products}
+          inputUsdPerMillion={pricing.inputUsdPerMillion}
+          outputUsdPerMillion={pricing.outputUsdPerMillion}
+        />
         </div>
       </div>
     </section>
