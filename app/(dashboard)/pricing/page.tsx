@@ -1,11 +1,13 @@
 import { ProductGrid } from '@/components/jev/product-grid';
 import { getActiveProducts } from '@/lib/jev/products';
 import { productConfig } from '@/lib/jev/config';
+import { getJevRetailPricing } from '@/lib/new-api/pricing';
 
 export const dynamic = 'force-dynamic';
 
-export default function PricingPage() {
+export default async function PricingPage() {
   const products = getActiveProducts();
+  const pricing = await getJevRetailPricing();
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -22,7 +24,11 @@ export default function PricingPage() {
       </div>
 
       <div className="mx-auto mt-10 max-w-5xl">
-        <ProductGrid products={products} />
+        <ProductGrid
+          products={products}
+          inputUsdPerMillion={pricing.inputUsdPerMillion}
+          outputUsdPerMillion={pricing.outputUsdPerMillion}
+        />
       </div>
 
       <p className="mx-auto mt-8 max-w-3xl text-center text-xs leading-5 text-gray-500">
