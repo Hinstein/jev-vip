@@ -1,0 +1,15 @@
+services:
+  new-api:
+    image: calciumion/new-api:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      TZ: Asia/Shanghai
+      SESSION_SECRET: ${NEW_API_SESSION_SECRET}
+      CRYPTO_SECRET: ${NEW_API_CRYPTO_SECRET}
+      SESSION_COOKIE_TRUSTED_URL: ${NEW_API_TRUSTED_FRONTEND}
+      SQL_DSN: ${NEW_API_SQL_DSN:-}
+      REDIS_CONN_STRING: ${NEW_API_REDIS_CONN_STRING:-}
+    volumes:
+      - ./new-api-data:/data

@@ -1,12 +1,7 @@
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Product } from '@/lib/db/schema';
-
-type DisplayProduct = Pick<
-  Product,
-  'id' | 'name' | 'priceMinor' | 'currency' | 'credits' | 'purchaseUrl'
->;
+import type { DisplayProduct } from '@/lib/jev/config';
 
 function formatPrice(product: DisplayProduct) {
   if (product.currency === 'CNY') {
@@ -19,10 +14,6 @@ function formatPrice(product: DisplayProduct) {
   }).format(product.priceMinor / 100);
 }
 
-function formatCredits(value: number) {
-  return new Intl.NumberFormat('en-US').format(value);
-}
-
 export function ProductGrid({ products }: { products: DisplayProduct[] }) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
@@ -31,21 +22,21 @@ export function ProductGrid({ products }: { products: DisplayProduct[] }) {
           <h2 className="text-lg font-semibold">{product.name}</h2>
           <p className="mt-4 text-4xl font-semibold">{formatPrice(product)}</p>
           <p className="mt-2 text-sm text-gray-500">
-            {formatCredits(product.credits)} JEV Credits
+            {new Intl.NumberFormat('en-US').format(product.credits)} JEV Credits
           </p>
 
           <ul className="mt-6 space-y-3 text-sm text-gray-600">
             <li className="flex gap-2">
               <Check className="h-4 w-4 text-gray-950" />
-              One-time voucher redemption
+              One-time redemption code
             </li>
             <li className="flex gap-2">
               <Check className="h-4 w-4 text-gray-950" />
-              Credits stored in JEV VIP
+              Wallet owned by New API
             </li>
             <li className="flex gap-2">
               <Check className="h-4 w-4 text-gray-950" />
-              Full credit ledger
+              Usage deducted by the gateway
             </li>
           </ul>
 

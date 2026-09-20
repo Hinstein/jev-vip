@@ -1,94 +1,54 @@
-import { redirect } from 'next/navigation';
+'use client';
+
 import { WalletCards } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { getUser } from '@/lib/db/queries';
-import {
-  getCreditBalance,
-  getCreditTransactions,
-} from '@/lib/credits/queries';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/components/auth/auth-provider';
 
-export const dynamic = 'force-dynamic';
-
-function formatCredits(value: number) {
-  return new Intl.NumberFormat('en-US').format(value);
-}
-
-export default async function CreditsPage() {
-  const user = await getUser();
-  if (!user) redirect('/sign-in');
-
-  const [balance, transactions] = await Promise.all([
-    getCreditBalance(user.id),
-    getCreditTransactions(user.id),
-  ]);
+export default function CreditsPage() {
+  const { user } = useAuth();
+  if (!user) return null;
 
   return (
     <section className="flex-1 p-4 lg:p-8">
-      <p className="text-sm text-gray-500">Ledger</p>
+      <p className="text-sm text-gray-500">Wallet</p>
       <h1 className="text-2xl font-semibold tracking-tight">Credits</h1>
 
-      <Card className="mt-6 max-w-md">
-        <CardContent className="pt-6">
-          <WalletCards className="h-5 w-5 text-gray-500" />
-          <p className="mt-3 text-sm text-gray-500">Available balance</p>
-          <p className="mt-1 text-3xl font-semibold">{formatCredits(balance)}</p>
-          <p className="text-sm text-gray-500">JEV Credits</p>
-        </CardContent>
-      </Card>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium text-gray-500">
+              <WalletCards className="h-4 w-4" />
+              Available
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">
+              {new Intl.NumberFormat('en-US').format(user.quota || 0)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">
+              Lifetime used
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-semibold">
+              {new Intl.NumberFormat('en-US').format(user.used_quota || 0)}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Credit transactions</CardTitle>
+          <CardTitle>Source of truth</CardTitle>
         </CardHeader>
-        <CardContent>
-          {transactions.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-500">
-              No credit transactions yet.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b text-gray-500">
-                  <tr>
-                    <th className="py-3 pr-4 font-medium">Time</th>
-                    <th className="py-3 pr-4 font-medium">Type</th>
-                    <th className="py-3 pr-4 font-medium">Product</th>
-                    <th className="py-3 pr-4 font-medium">Source</th>
-                    <th className="py-3 text-right font-medium">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((transaction) => (
-                    <tr key={transaction.id} className="border-b last:border-0">
-                      <td className="py-3 pr-4 text-gray-500">
-                        {transaction.createdAt.toLocaleString()}
-                      </td>
-                      <td className="py-3 pr-4">{transaction.type}</td>
-                      <td className="py-3 pr-4">
-                        {transaction.productName ?? '—'}
-                      </td>
-                      <td className="py-3 pr-4">{transaction.source}</td>
-                      <td
-                        className={`py-3 text-right font-medium ${
-                          transaction.amount > 0
-                            ? 'text-green-700'
-                            : 'text-gray-900'
-                        }`}
-                      >
-                        {transaction.amount > 0 ? '+' : ''}
-                        {formatCredits(transaction.amount)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        <CardContent className="text-sm leading-6 text-gray-600">
+          This balance comes directly from the New API user wallet. JEV VIP no
+          longer maintains a second local credit balance, so redemption, API
+          consumption and admin adjustments cannot drift between two ledgers.
         </CardContent>
       </Card>
     </section>

@@ -1,20 +1,15 @@
 import { ProductGrid } from '@/components/jev/product-grid';
-import { getActiveProducts } from '@/lib/credits/queries';
+import { products } from '@/lib/jev/config';
 
-export const dynamic = 'force-dynamic';
-
-export default async function TopUpPage() {
-  const products = await getActiveProducts();
-
+export default function TopUpPage() {
   return (
     <section className="flex-1 p-4 lg:p-8">
       <p className="text-sm text-gray-500">Sales channel</p>
       <h1 className="text-2xl font-semibold tracking-tight">Buy Credits</h1>
       <p className="mt-2 max-w-2xl text-sm text-gray-500">
-        JEV VIP does not process payment in this phase. Buy a package on Xianyu
-        and redeem the delivered code on this site.
+        Buy a package through the configured sales channel and redeem the
+        delivered New API redemption code on this site.
       </p>
-
       <div className="mt-6">
         <ProductGrid products={products} />
       </div>

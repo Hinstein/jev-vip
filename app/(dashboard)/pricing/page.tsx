@@ -1,12 +1,7 @@
 import { ProductGrid } from '@/components/jev/product-grid';
-import { getActiveProducts } from '@/lib/credits/queries';
-import { productConfig } from '@/lib/jev/config';
+import { productConfig, products } from '@/lib/jev/config';
 
-export const dynamic = 'force-dynamic';
-
-export default async function PricingPage() {
-  const products = await getActiveProducts();
-
+export default function PricingPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
       <div className="mx-auto max-w-2xl text-center">
@@ -15,8 +10,8 @@ export default async function PricingPage() {
           Choose a credit package
         </h1>
         <p className="mt-4 text-gray-600">
-          Purchase through Xianyu, receive a unique voucher code, then redeem it
-          to your JEV VIP account.
+          Purchase through the configured sales channel, receive a unique code,
+          then redeem it into your New API-backed account.
         </p>
       </div>
 
@@ -25,9 +20,7 @@ export default async function PricingPage() {
       </div>
 
       <p className="mx-auto mt-8 max-w-3xl text-center text-xs text-gray-500">
-        {productConfig.officialDisclaimer} Xianyu is only a sales channel.
-        Voucher lifecycle is handled by OfferKit; JEV VIP remains the source of
-        truth for credits.
+        {productConfig.officialDisclaimer}
       </p>
     </main>
   );

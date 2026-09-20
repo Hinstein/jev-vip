@@ -1,33 +1,31 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, Suspense } from 'react';
-import { Button } from '@/components/ui/button';
+import { Suspense, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Gauge, Home, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { signOut } from '@/app/(login)/actions';
-import { useRouter } from 'next/navigation';
-import { User } from '@/lib/db/schema';
-import useSWR, { mutate } from 'swr';
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { useAuth } from '@/components/auth/auth-provider';
 
 function UserMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { data: user } = useSWR<User>('/api/user', fetcher);
+  const { user, ready, logout } = useAuth();
   const router = useRouter();
 
   async function handleSignOut() {
-    await signOut();
-    mutate('/api/user');
+    await logout();
     router.push('/');
+    router.refresh();
   }
+
+  if (!ready) return <div className="h-9 w-9" />;
 
   if (!user) {
     return (
@@ -45,12 +43,14 @@ function UserMenu() {
     );
   }
 
+  const displayName = user.display_name || user.username;
+
   return (
     <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
       <DropdownMenuTrigger>
         <Avatar className="cursor-pointer size-9">
           <AvatarFallback>
-            {(user.name || user.email || 'U').slice(0, 1).toUpperCase()}
+            {displayName.slice(0, 1).toUpperCase()}
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
@@ -61,14 +61,16 @@ function UserMenu() {
             <span>Dashboard</span>
           </Link>
         </DropdownMenuItem>
-        <form action={handleSignOut} className="w-full">
-          <button type="submit" className="flex w-full">
-            <DropdownMenuItem className="w-full flex-1 cursor-pointer">
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Sign out</span>
-            </DropdownMenuItem>
-          </button>
-        </form>
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onSelect={(event) => {
+            event.preventDefault();
+            void handleSignOut();
+          }}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Sign out</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

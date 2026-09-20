@@ -1,74 +1,68 @@
 # JEV VIP
 
-JEV VIP is an independent prepaid-access SaaS for Jev users, built on the MIT-licensed `nextjs/saas-starter`.
+JEV VIP keeps its own customer-facing Next.js UI while using **New API as the sole business backend**.
 
 ## Architecture
 
 ```text
-Xianyu (sales only)
-   -> unique voucher code
-OfferKit (voucher lifecycle only)
-   -> successful atomic redemption
-JEV VIP
-   -> products
-   -> user credit balance
-   -> credit transaction ledger
+Customer browser
+   -> JEV VIP / ZEV custom frontend
+      -> /api/* reverse proxy
+         -> New API
+            -> users / sessions
+            -> wallet / quota
+            -> redemption codes
+            -> API tokens
+            -> usage / logs
+            -> models / channels / routing
+            -> admin console
+
+Public API clients
+   -> api.<domain>/v1
+      -> New API directly
 ```
 
-OfferKit never owns or deducts JEV Credits.
+There is intentionally no second JEV user database, voucher engine, credit
+ledger, or LiteLLM sidecar in the active runtime path.
 
-## Implemented
+## What stays custom
 
-- Email/password sign up, sign in and session-protected dashboard
-- Account and password settings
-- Product catalog
-- Xianyu purchase-link slots
-- `/redeem` customer flow
-- Server-only OfferKit adapter
-- OfferKit atomic redemption + stable idempotency key
-- Product mapping by actual OfferKit campaign UUID
-- JEV credit balances
-- Immutable credit transaction history
-- Local ledger idempotency
-- Credits dashboard
-- Safe retry after partial OfferKit/JEV failure
-- Production migration + CI migration check
-- LiteLLM v1.101.0 relay sidecar
-- LiteLLM Virtual Key create/list/revoke from the existing Dashboard
-- Public `POST /api/v1/decide` backed by a LiteLLM custom JEV provider
+- Landing and pricing pages
+- Sign-in / sign-up UX
+- Customer dashboard
+- Wallet / redemption UX
+- API key UX
+- Usage UX
+- Product copy and integration documentation
 
-Default products:
+## What New API owns
 
-| Product | Price | Credits | Campaign key |
-| --- | ---: | ---: | --- |
-| Starter | ¥10 | 1,000,000 | JEV_10 |
-| Standard | ¥30 | 3,500,000 | JEV_30 |
-| Pro | ¥50 | 6,000,000 | JEV_50 |
+- Users and login sessions
+- User quota / wallet
+- Redemption code generation and lifecycle
+- API tokens
+- Usage accounting and logs
+- Model/channel configuration and routing
+- Admin console
 
-## Intentionally not implemented yet
+## Local setup
 
-- WeChat/Alipay/Stripe payment collection
-- Voucher generation or voucher inventory inside JEV VIP
-- JEV request metering and credit debits
-- Xianyu automatic fulfillment
-- A global admin console
+1. Copy `.env.example` to `.env`.
+2. Start New API:
 
-These are separate concerns and should not be mixed into the voucher adapter.
+```bash
+docker compose -f docker-compose.new-api.yml up -d
+```
 
-## Setup
+3. Complete New API's initial Root setup on port 3001.
+4. For the first ZEV version, keep password-login encryption, Turnstile and
+   login 2FA challenges disabled unless the custom UI is extended to support
+   those flows.
+5. Start the frontend:
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm db:migrate
-pnpm db:seed
-pnpm jev:configure-products
 pnpm dev
 ```
 
-See:
-
-- `docs/OFFERKIT_INTEGRATION.md`
-- `docs/DEPLOYMENT.md`
-- `docs/LITELLM_RELAY.md`
-
-JEV VIP is independent and is not affiliated with or operated by TypeSafe AI.
+See `docs/NEW_API_INTEGRATION.md` and `docs/DEPLOYMENT.md`.

@@ -1,62 +1,45 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Loader2, TicketCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-
-type RedeemResponse =
-  | {
-      ok: true;
-      productName: string;
-      credited: number;
-      balance: number;
-      alreadyApplied: boolean;
-    }
-  | {
-      ok: false;
-      code: string;
-      message: string;
-    };
-
-function formatCredits(value: number) {
-  return new Intl.NumberFormat('en-US').format(value);
-}
+import { useAuth } from '@/components/auth/auth-provider';
+import type { ApiEnvelope } from '@/lib/new-api/types';
 
 export function RedeemForm() {
-  const router = useRouter();
+  const { authFetch, refreshUser } = useAuth();
   const [code, setCode] = useState('');
   const [pending, setPending] = useState(false);
-  const [result, setResult] = useState<RedeemResponse | null>(null);
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const normalized = code.trim();
-    if (!normalized || pending) return;
+    if (pending || !code.trim()) return;
 
     setPending(true);
     setResult(null);
-
     try {
-      const response = await fetch('/api/redeem', {
+      const response = await authFetch('/api/user/topup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: normalized }),
+        body: JSON.stringify({ key: code.trim() }),
       });
-      const payload = (await response.json()) as RedeemResponse;
-      setResult(payload);
-
-      if (payload.ok) {
-        setCode('');
-        router.refresh();
+      const payload = (await response.json()) as ApiEnvelope<number>;
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message || 'Unable to redeem this code.');
       }
-    } catch {
+
+      await refreshUser();
+      setCode('');
+      setResult({
+        ok: true,
+        message: `Redeemed successfully. +${new Intl.NumberFormat('en-US').format(payload.data || 0)} credits.`,
+      });
+    } catch (cause) {
       setResult({
         ok: false,
-        code: 'network_error',
-        message: 'Network error. Please try again.',
+        message: cause instanceof Error ? cause.message : 'Unable to redeem this code.',
       });
     } finally {
       setPending(false);
@@ -64,24 +47,17 @@ export function RedeemForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="voucher-code">Redemption code</Label>
-        <Input
-          id="voucher-code"
-          value={code}
-          onChange={(event) => setCode(event.target.value)}
-          placeholder="JEV10-X82K-PQ91"
-          autoComplete="off"
-          autoCapitalize="characters"
-          spellCheck={false}
-          className="mt-2 font-mono"
-          maxLength={128}
-          required
-        />
-      </div>
-
-      <Button type="submit" disabled={pending || code.trim().length < 4}>
+    <form onSubmit={submit} className="space-y-4">
+      <Input
+        value={code}
+        onChange={(event) => setCode(event.target.value)}
+        autoComplete="off"
+        placeholder="Enter redemption code"
+        minLength={4}
+        maxLength={128}
+        required
+      />
+      <Button type="submit" disabled={pending || !code.trim()} className="w-full">
         {pending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -103,22 +79,7 @@ export function RedeemForm() {
               : 'border-red-200 bg-red-50 text-red-900'
           }`}
         >
-          {result.ok ? (
-            result.alreadyApplied ? (
-              <p>
-                This code was already processed for your account. Current
-                balance: {formatCredits(result.balance)} JEV Credits.
-              </p>
-            ) : (
-              <p>
-                Redeemed {result.productName}: +
-                {formatCredits(result.credited)} JEV Credits. Current balance:{' '}
-                {formatCredits(result.balance)}.
-              </p>
-            )
-          ) : (
-            <p>{result.message}</p>
-          )}
+          {result.message}
         </div>
       ) : null}
     </form>
