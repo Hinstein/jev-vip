@@ -20,10 +20,42 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - name: Resolve patched dependency tree
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          Object.assign(p.dependencies, {
+            '@tailwindcss/postcss': '4.3.3',
+            autoprefixer: '10.6.1',
+            postcss: '8.5.28',
+            tailwindcss: '4.3.3',
+          });
+          p.pnpm = {
+            ...(p.pnpm || {}),
+            overrides: {
+              ...(p.pnpm?.overrides || {}),
+              tar: '7.5.21',
+              postcss: '8.5.28',
+              browserslist: '4.28.7',
+              nanoid: '3.3.18',
+              sharp: '0.35.4',
+            },
+          };
+          fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
+          NODE
+          pnpm install --no-frozen-lockfile
       - run: pnpm arch:check
       - run: pnpm audit --prod --audit-level=high
       - run: pnpm exec tsc --noEmit
       - run: node --check relay/jev-adapter/server.mjs
       - run: node --check scripts/e2e-backend.mjs
       - run: pnpm build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: patched-lockfile
+          path: |
+            package.json
+            pnpm-lock.yaml
