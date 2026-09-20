@@ -1,59 +1,39 @@
-# JEV VIP
+# ZEV / JEV VIP
 
-JEV VIP is an independent prepaid-access SaaS for Jev users, built on the MIT-licensed `nextjs/saas-starter`.
+ZEV is a branded prepaid-access frontend for the JEV/TypeSafe API.
 
 ## Architecture
 
 ```text
-Xianyu (sales only)
-   -> unique voucher code
-OfferKit (voucher lifecycle only)
-   -> successful atomic redemption
-JEV VIP
-   -> products
-   -> user credit balance
-   -> credit transaction ledger
+Customer
+   -> ZEV Next.js frontend
+      -> New API
+         -> users / quota / redemption
+         -> API keys / usage / logs
+         -> routing / admin console
+         -> internal JEV protocol adapter
+            -> TypeSafe /v1/systemone
 ```
 
-OfferKit never owns or deducts JEV Credits.
+The customer-facing frontend remains ours. New API is the business backend and
+administrator console.
 
-## Implemented
+## Current backend migration
 
-- Email/password sign up, sign in and session-protected dashboard
-- Account and password settings
-- Product catalog
-- Xianyu purchase-link slots
-- `/redeem` customer flow
-- Server-only OfferKit adapter
-- OfferKit atomic redemption + stable idempotency key
-- Product mapping by actual OfferKit campaign UUID
-- JEV credit balances
-- Immutable credit transaction history
-- Local ledger idempotency
-- Credits dashboard
-- Safe retry after partial OfferKit/JEV failure
-- Production migration + CI migration check
-- LiteLLM v1.101.0 relay sidecar
-- LiteLLM Virtual Key create/list/revoke from the existing Dashboard
-- Public `POST /api/v1/decide` backed by a LiteLLM custom JEV provider
+The active customer flows now use New API for:
 
-Default products:
+- quota and redemption codes
+- API-key create/list/revoke
+- gateway authentication and routing
+- usage counters and request accounting
 
-| Product | Price | Credits | Campaign key |
-| --- | ---: | ---: | --- |
-| Starter | ¥10 | 1,000,000 | JEV_10 |
-| Standard | ¥30 | 3,500,000 | JEV_30 |
-| Pro | ¥50 | 6,000,000 | JEV_50 |
+The existing TypeSafe endpoint is not OpenAI-compatible, so
+`relay/jev-adapter` is intentionally kept as a tiny protocol adapter. It owns
+no commercial state.
 
-## Intentionally not implemented yet
-
-- WeChat/Alipay/Stripe payment collection
-- Voucher generation or voucher inventory inside JEV VIP
-- JEV request metering and credit debits
-- Xianyu automatic fulfillment
-- A global admin console
-
-These are separate concerns and should not be mixed into the voucher adapter.
+Legacy OfferKit/LiteLLM files are temporarily retained only as rollback
+reference and are no longer on the active API-key, redemption or
+`/api/v1/decide` request paths.
 
 ## Setup
 
@@ -61,14 +41,17 @@ These are separate concerns and should not be mixed into the voucher adapter.
 pnpm install --frozen-lockfile
 pnpm db:migrate
 pnpm db:seed
-pnpm jev:configure-products
+docker compose -f docker-compose.backend.yml up -d
 pnpm dev
 ```
 
-See:
+See `docs/NEW_API_BACKEND.md` for New API first-boot and channel setup.
 
-- `docs/OFFERKIT_INTEGRATION.md`
-- `docs/DEPLOYMENT.md`
-- `docs/LITELLM_RELAY.md`
+## Security boundary
 
-JEV VIP is independent and is not affiliated with or operated by TypeSafe AI.
+- TypeSafe upstream credentials exist only in the internal adapter.
+- New API is bound to localhost by default; publish its admin UI only through a
+  protected HTTPS reverse proxy.
+- Customer API keys are returned by ZEV only at explicit creation time.
+- `NEW_API_IDENTITY_SECRET`, database credentials and adapter shared key are
+  server-side secrets.

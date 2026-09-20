@@ -15,12 +15,15 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { getUser } from '@/lib/db/queries';
-import { getCreditBalance } from '@/lib/credits/queries';
-import { dashboardPlaceholderMetrics } from '@/lib/jev/config';
+import {
+  getNewApiSelf,
+  isNewApiConfigured,
+  listNewApiTokens
+} from '@/lib/new-api/client';
 
 export const dynamic = 'force-dynamic';
 
-function formatCredits(value: number) {
+function formatNumber(value: number) {
   return new Intl.NumberFormat('en-US').format(value);
 }
 
@@ -28,32 +31,31 @@ export default async function DashboardPage() {
   const user = await getUser();
   if (!user) redirect('/sign-in');
 
-  const balance = await getCreditBalance(user.id);
-  const offerkitConfigured = Boolean(
-    process.env.OFFERKIT_API_URL && process.env.OFFERKIT_API_KEY
-  );
+  let quota = 0;
+  let usedQuota = 0;
+  let requests = 0;
+  let activeKeys = 0;
+
+  if (isNewApiConfigured()) {
+    try {
+      const [backend, tokens] = await Promise.all([
+        getNewApiSelf(user),
+        listNewApiTokens(user),
+      ]);
+      quota = backend.quota;
+      usedQuota = backend.used_quota;
+      requests = backend.request_count;
+      activeKeys = tokens.filter((token) => token.status === 1).length;
+    } catch (error) {
+      console.error('Unable to load New API dashboard', error);
+    }
+  }
 
   const metrics = [
-    {
-      label: 'JEV Credits',
-      value: formatCredits(balance),
-      icon: WalletCards
-    },
-    {
-      label: 'Requests',
-      value: dashboardPlaceholderMetrics.requests.toLocaleString(),
-      icon: MousePointerClick
-    },
-    {
-      label: 'Input tokens',
-      value: dashboardPlaceholderMetrics.inputTokens.toLocaleString(),
-      icon: TextCursorInput
-    },
-    {
-      label: 'Active API keys',
-      value: dashboardPlaceholderMetrics.activeKeys.toString(),
-      icon: KeyRound
-    }
+    { label: 'Available quota', value: formatNumber(quota), icon: WalletCards },
+    { label: 'Requests', value: formatNumber(requests), icon: MousePointerClick },
+    { label: 'Used quota', value: formatNumber(usedQuota), icon: TextCursorInput },
+    { label: 'Active API keys', value: activeKeys.toString(), icon: KeyRound },
   ];
 
   return (
@@ -87,64 +89,29 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>How credits work</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[
-              ['1', 'Buy on Xianyu', 'Xianyu is only the sales channel.'],
-              ['2', 'Receive a unique code', 'OfferKit owns voucher validity and one-time redemption.'],
-              ['3', 'Redeem on JEV VIP', 'The matching product credits are added to your account.'],
-              ['4', 'Use JEV', 'Future API usage will debit the same JEV credit ledger.']
-            ].map(([step, title, description]) => (
-              <div key={step} className="flex gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-950 text-xs font-medium text-white">
-                  {step}
-                </span>
-                <div>
-                  <p className="text-sm font-medium">{title}</p>
-                  <p className="text-sm text-gray-500">{description}</p>
-                </div>
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>How ZEV works</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {[
+            ['1', 'Buy a redemption code', 'Use the sales channel listed by ZEV.'],
+            ['2', 'Redeem in ZEV', 'New API validates the code and adds quota to your backend account.'],
+            ['3', 'Create an API key', 'New API issues and controls the key.'],
+            ['4', 'Call ZEV', 'New API authenticates, meters and routes each request.'],
+          ].map(([step, title, description]) => (
+            <div key={step} className="flex gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-950 text-xs font-medium text-white">
+                {step}
+              </span>
+              <div>
+                <p className="text-sm font-medium">{title}</p>
+                <p className="text-sm text-gray-500">{description}</p>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Integration status</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <StatusRow label="SaaS authentication" status="Ready" />
-            <StatusRow label="JEV credit ledger" status="Ready" />
-            <StatusRow
-              label="OfferKit voucher adapter"
-              status={offerkitConfigured ? 'Configured' : 'Needs env'}
-            />
-            <StatusRow label="JEV API delivery" status="Phase 2" />
-            <StatusRow label="Usage metering / debit" status="Phase 2" />
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </section>
-  );
-}
-
-function StatusRow({ label, status }: { label: string; status: string }) {
-  const ready = status === 'Ready' || status === 'Configured';
-
-  return (
-    <div className="flex items-center justify-between rounded-lg border px-3 py-2">
-      <span>{label}</span>
-      <span
-        className={`rounded-full px-2 py-1 text-xs ${
-          ready ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'
-        }`}
-      >
-        {status}
-      </span>
-    </div>
   );
 }

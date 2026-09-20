@@ -1,0 +1,81 @@
+services:
+  new-api:
+    image: calciumion/new-api:latest
+    restart: unless-stopped
+    command: --log-dir /app/logs
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      SQL_DSN: postgresql://newapi:${NEW_API_DB_PASSWORD}@new-api-postgres:5432/new_api
+      REDIS_CONN_STRING: redis://:${NEW_API_REDIS_PASSWORD}@new-api-redis:6379
+      SESSION_SECRET: ${NEW_API_SESSION_SECRET}
+      SESSION_COOKIE_SECURE: ${NEW_API_SESSION_COOKIE_SECURE:-false}
+      SESSION_COOKIE_TRUSTED_URL: ${NEW_API_SESSION_COOKIE_TRUSTED_URL:-}
+      TZ: Asia/Shanghai
+      ERROR_LOG_ENABLED: "true"
+      BATCH_UPDATE_ENABLED: "true"
+      NODE_NAME: zev-new-api-1
+    depends_on:
+      new-api-postgres:
+        condition: service_healthy
+      new-api-redis:
+        condition: service_started
+      jev-adapter:
+        condition: service_healthy
+    volumes:
+      - new_api_data:/data
+      - new_api_logs:/app/logs
+    networks:
+      - zev-backend
+
+  jev-adapter:
+    build:
+      context: ./relay/jev-adapter
+    restart: unless-stopped
+    environment:
+      PORT: "4100"
+      TYPESAFE_API_BASE: ${TYPESAFE_API_BASE:-https://api.typesafe.ai}
+      TYPESAFE_API_KEY: ${TYPESAFE_API_KEY}
+      JEV_ADAPTER_SHARED_KEY: ${JEV_ADAPTER_SHARED_KEY}
+    expose:
+      - "4100"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:4100/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - zev-backend
+
+  new-api-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: newapi
+      POSTGRES_PASSWORD: ${NEW_API_DB_PASSWORD}
+      POSTGRES_DB: new_api
+    volumes:
+      - new_api_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U newapi -d new_api"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zev-backend
+
+  new-api-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${NEW_API_REDIS_PASSWORD}"]
+    networks:
+      - zev-backend
+
+volumes:
+  new_api_data:
+  new_api_logs:
+  new_api_pg:
+
+networks:
+  zev-backend:
+    driver: bridge

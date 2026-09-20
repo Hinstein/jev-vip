@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getUser } from '@/lib/db/queries';
-import { redeemVoucherForUser } from '@/lib/jev/redeem';
+import { redeemNewApiCode } from '@/lib/new-api/client';
 
 const redeemSchema = z.object({
   code: z.string().trim().min(4).max(128),
@@ -10,7 +10,6 @@ const redeemSchema = z.object({
 function isAllowedOrigin(request: NextRequest) {
   const origin = request.headers.get('origin');
   const baseUrl = process.env.BASE_URL;
-
   if (!origin || !baseUrl) return true;
 
   try {
@@ -49,21 +48,29 @@ export async function POST(request: NextRequest) {
   const parsed = redeemSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      {
-        ok: false,
-        code: 'invalid_code',
-        message: 'Enter a valid redemption code.',
-      },
+      { ok: false, code: 'invalid_code', message: 'Enter a valid redemption code.' },
       { status: 400 }
     );
   }
 
-  const result = await redeemVoucherForUser(user.id, parsed.data.code);
-
-  if (!result.ok) {
-    const status = result.retryable ? 503 : 400;
-    return NextResponse.json(result, { status });
+  try {
+    const result = await redeemNewApiCode(user, parsed.data.code);
+    return NextResponse.json({
+      ok: true,
+      productName: 'ZEV Credits',
+      credited: result.credited,
+      balance: result.self.quota,
+      alreadyApplied: false,
+    });
+  } catch (error) {
+    console.error('New API redemption failed', error);
+    return NextResponse.json(
+      {
+        ok: false,
+        code: 'redeem_failed',
+        message: error instanceof Error ? error.message : 'Redemption failed.',
+      },
+      { status: 400 }
+    );
   }
-
-  return NextResponse.json(result);
 }

@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation';
 import {
-  isLiteLLMConfigured,
-  listLiteLLMVirtualKeys,
-  type LiteLLMVirtualKey,
-} from '@/lib/litellm/client';
+  isNewApiConfigured,
+  listNewApiTokens,
+  type NewApiToken,
+} from '@/lib/new-api/client';
 import { getUser } from '@/lib/db/queries';
 import { KeyManager } from './key-manager';
 
@@ -13,14 +13,14 @@ export default async function ApiKeysPage() {
   const user = await getUser();
   if (!user) redirect('/sign-in');
 
-  const configured = isLiteLLMConfigured();
-  let keys: LiteLLMVirtualKey[] = [];
+  const configured = isNewApiConfigured();
+  let keys: NewApiToken[] = [];
 
   if (configured) {
     try {
-      keys = await listLiteLLMVirtualKeys(user.id);
+      keys = await listNewApiTokens(user);
     } catch (error) {
-      console.error('Unable to load LiteLLM keys', error);
+      console.error('Unable to load New API keys', error);
     }
   }
 
@@ -30,8 +30,8 @@ export default async function ApiKeysPage() {
         <p className="text-sm text-gray-500">Access</p>
         <h1 className="text-2xl font-semibold tracking-tight">API Keys</h1>
         <p className="mt-2 max-w-2xl text-sm text-gray-500">
-          These are JEV VIP keys backed by LiteLLM Virtual Keys. Your upstream
-          TypeSafe credential is never exposed.
+          Create and revoke ZEV API keys. Keys, quota, usage and access control
+          are managed by the New API backend.
         </p>
       </div>
 

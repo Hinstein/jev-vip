@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 type KeyItem = {
-  tokenId: string;
-  keyName: string;
-  keyAlias: string | null;
-  createdAt: string | null;
-  blocked: boolean;
-  models: string[];
+  id: number;
+  name: string;
+  key: string;
+  status: number;
+  created_time: number;
+  used_quota: number;
+  remain_quota: number;
+  unlimited_quota: boolean;
 };
 
 export function KeyManager({
@@ -25,7 +27,7 @@ export function KeyManager({
   const router = useRouter();
   const [name, setName] = useState('Default');
   const [pending, setPending] = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<number | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,11 +45,7 @@ export function KeyManager({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
       });
-
-      const payload = (await response.json()) as {
-        key?: string;
-        error?: string;
-      };
+      const payload = (await response.json()) as { key?: string; error?: string };
 
       if (!response.ok || !payload.key) {
         throw new Error(payload.error || 'Unable to create API key.');
@@ -56,16 +54,14 @@ export function KeyManager({
       setNewKey(payload.key);
       router.refresh();
     } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : 'Unable to create API key.'
-      );
+      setError(cause instanceof Error ? cause.message : 'Unable to create API key.');
     } finally {
       setPending(false);
     }
   }
 
-  async function deleteKey(tokenId: string) {
-    if (deleting) return;
+  async function deleteKey(tokenId: number) {
+    if (deleting !== null) return;
 
     setDeleting(tokenId);
     setError(null);
@@ -76,34 +72,29 @@ export function KeyManager({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tokenId }),
       });
-
       const payload = (await response.json()) as { error?: string };
+
       if (!response.ok) {
         throw new Error(payload.error || 'Unable to revoke API key.');
       }
 
       router.refresh();
     } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : 'Unable to revoke API key.'
-      );
+      setError(cause instanceof Error ? cause.message : 'Unable to revoke API key.');
     } finally {
       setDeleting(null);
     }
   }
 
   async function copyKey() {
-    if (newKey) {
-      await navigator.clipboard.writeText(newKey);
-    }
+    if (newKey) await navigator.clipboard.writeText(newKey);
   }
 
   return (
     <div className="space-y-6">
       {!configured ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          LiteLLM relay is not configured on this server yet. Add the relay
-          environment variables before enabling API key creation.
+          New API is not configured on this server yet.
         </div>
       ) : null}
 
@@ -134,7 +125,7 @@ export function KeyManager({
       {newKey ? (
         <div className="rounded-xl border border-green-200 bg-green-50 p-4">
           <p className="font-medium text-green-950">
-            Copy this key now. It will not be shown again.
+            Copy this key now. ZEV will not show it again in this interface.
           </p>
           <div className="mt-3 flex gap-2">
             <code className="min-w-0 flex-1 overflow-x-auto rounded-lg bg-white px-3 py-2 text-sm">
@@ -160,35 +151,32 @@ export function KeyManager({
             <KeyRound className="h-8 w-8 text-gray-400" />
             <p className="mt-4 font-medium">No API keys yet</p>
             <p className="mt-1 max-w-md text-sm text-gray-500">
-              Create a key after redeeming JEV Credits. The key is issued and
-              validated by the LiteLLM relay.
+              Create a key to access the ZEV API.
             </p>
           </div>
         ) : (
           <div className="divide-y">
             {initialKeys.map((key) => (
               <div
-                key={key.tokenId}
+                key={key.id}
                 className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-medium">{key.keyAlias || 'Unnamed key'}</p>
-                  <p className="mt-1 font-mono text-sm text-gray-500">
-                    {key.keyName}
-                  </p>
+                  <p className="font-medium">{key.name || 'Unnamed key'}</p>
+                  <p className="mt-1 font-mono text-sm text-gray-500">{key.key}</p>
                   <p className="mt-1 text-xs text-gray-400">
-                    {key.createdAt
-                      ? new Date(key.createdAt).toLocaleString()
+                    {key.created_time
+                      ? new Date(key.created_time * 1000).toLocaleString()
                       : 'Creation time unavailable'}
                   </p>
                 </div>
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={deleting === key.tokenId}
-                  onClick={() => deleteKey(key.tokenId)}
+                  disabled={deleting === key.id}
+                  onClick={() => deleteKey(key.id)}
                 >
-                  {deleting === key.tokenId ? (
+                  {deleting === key.id ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <Trash2 className="mr-2 h-4 w-4" />
