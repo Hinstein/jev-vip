@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -52,10 +55,21 @@ jobs:
       - run: node --check relay/jev-adapter/server.mjs
       - run: node --check scripts/e2e-backend.mjs
       - run: pnpm build
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: patched-lockfile
-          path: |
-            package.json
-            pnpm-lock.yaml
+      - name: Commit patched dependency lock
+        if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        shell: bash
+        run: |
+          cp package.json /tmp/package.json
+          cp pnpm-lock.yaml /tmp/pnpm-lock.yaml
+          git fetch origin codex/new-api-backend
+          git checkout -B codex/new-api-backend origin/codex/new-api-backend
+          cp /tmp/package.json package.json
+          cp /tmp/pnpm-lock.yaml pnpm-lock.yaml
+          if git diff --quiet -- package.json pnpm-lock.yaml; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json pnpm-lock.yaml
+          git commit -m "fix: patch production dependency advisories"
+          git push origin HEAD:codex/new-api-backend
