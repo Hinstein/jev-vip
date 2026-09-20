@@ -8,8 +8,7 @@ This is the minimum end-to-end path that must pass before public sales.
    `latest` tag.
 2. Start New API + PostgreSQL + Redis + JEV adapter.
 3. Put the JEV site and New API administrator console behind HTTPS.
-4. In production set New API session cookies to Secure and configure the trusted
-   public admin URL.
+4. In production set New API session cookies to Secure. Set `SESSION_COOKIE_TRUSTED_URL` to exact HTTPS origins and ensure the JEV public origin is included, because the JEV BFF sends that Origin when refreshing/logout of New API sessions. Add the admin-console origin too if it differs.
 5. Configure database backups before public sales.
 
 ## B. New API initial setup
