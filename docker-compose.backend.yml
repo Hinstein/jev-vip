@@ -1,6 +1,6 @@
 services:
   new-api:
-    image: ${NEW_API_IMAGE:-calciumion/new-api:v1.0.0-rc.38}
+    image: ${NEW_API_IMAGE:-calciumion/new-api:v1.0.0-rc.39}
     restart: unless-stopped
     command: --log-dir /app/logs
     ports:
