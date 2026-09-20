@@ -23,24 +23,12 @@ importers:
       autoprefixer:
         specifier: ^10.4.21
         version: 10.4.21(postcss@8.5.3)
-      bcryptjs:
-        specifier: ^3.0.2
-        version: 3.0.2
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      dotenv:
-        specifier: ^16.5.0
-        version: 16.5.0
-      drizzle-kit:
-        specifier: ^0.31.1
-        version: 0.31.1
-      drizzle-orm:
-        specifier: ^0.43.1
-        version: 0.43.1(gel@2.1.0)(postgres@3.4.5)
       jose:
         specifier: ^6.0.11
         version: 6.0.11
@@ -53,9 +41,6 @@ importers:
       postcss:
         specifier: ^8.5.3
         version: 8.5.3
-      postgres:
-        specifier: ^3.4.5
-        version: 3.4.5
       radix-ui:
         specifier: ^1.4.2
         version: 1.4.2(@types/react-dom@19.1.5(@types/react@19.1.4))(@types/react@19.1.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -68,9 +53,6 @@ importers:
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
-      stripe:
-        specifier: ^18.1.0
-        version: 18.1.0(@types/node@22.15.18)
       swr:
         specifier: ^2.3.3
         version: 2.3.3(react@19.1.0)
