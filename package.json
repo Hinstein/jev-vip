@@ -3,7 +3,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "jev:e2e": "node scripts/e2e-backend.mjs"
   },
   "dependencies": {
     "@tailwindcss/postcss": "4.1.7",
