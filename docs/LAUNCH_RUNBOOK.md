@@ -17,7 +17,8 @@ This is the minimum end-to-end path that must pass before public sales.
 2. Confirm the payment/compliance setting required by New API before creating
    redemption codes.
 3. Keep password login and password registration enabled.
-4. Keep new-user initial quota at 0.\n5. Verify `QuotaPerUnit = 500000` and treat it as immutable after launch.
+4. Keep new-user initial quota at 0.
+5. Verify `QuotaPerUnit = 500000` and treat it as immutable after launch.
 6. Keep automatic default-token generation disabled.
 7. Enable quota-consumption logs.
 8. Keep the New API Pricing module enabled and readable without New API browser login; the JEV server reads internal `/api/pricing` to render the current retail rate. New API itself remains private/localhost.
