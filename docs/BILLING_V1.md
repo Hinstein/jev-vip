@@ -111,7 +111,9 @@ New API is the source of truth for all of these:
 - new-user starting quota
 
 Changing the `jev` model price affects future API calls immediately. Existing
-redemption codes keep the quota value they were issued with.
+redemption codes keep the quota value they were issued with. The JEV pricing and
+top-up pages read New API `/api/pricing` dynamically, so the displayed token
+rate changes with the backend configuration without a JEV deploy.
 
 ## Rate limiting
 
