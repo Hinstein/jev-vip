@@ -45,7 +45,10 @@ export function KeyManager({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
       });
-      const payload = (await response.json()) as { key?: string; error?: string };
+      const payload = (await response.json()) as {
+        key?: string;
+        error?: string;
+      };
 
       if (!response.ok || !payload.key) {
         throw new Error(payload.error || 'Unable to create API key.');
@@ -54,7 +57,9 @@ export function KeyManager({
       setNewKey(payload.key);
       router.refresh();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Unable to create API key.');
+      setError(
+        cause instanceof Error ? cause.message : 'Unable to create API key.'
+      );
     } finally {
       setPending(false);
     }
@@ -80,7 +85,9 @@ export function KeyManager({
 
       router.refresh();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Unable to revoke API key.');
+      setError(
+        cause instanceof Error ? cause.message : 'Unable to revoke API key.'
+      );
     } finally {
       setDeleting(null);
     }
@@ -94,7 +101,7 @@ export function KeyManager({
     <div className="space-y-6">
       {!configured ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          New API is not configured on this server yet.
+          The Jev backend is not configured on this server yet.
         </div>
       ) : null}
 
@@ -125,7 +132,7 @@ export function KeyManager({
       {newKey ? (
         <div className="rounded-xl border border-green-200 bg-green-50 p-4">
           <p className="font-medium text-green-950">
-            Copy this key now. ZEV will not show it again in this interface.
+            Copy this key now. It will not be shown again in this interface.
           </p>
           <div className="mt-3 flex gap-2">
             <code className="min-w-0 flex-1 overflow-x-auto rounded-lg bg-white px-3 py-2 text-sm">
@@ -151,7 +158,7 @@ export function KeyManager({
             <KeyRound className="h-8 w-8 text-gray-400" />
             <p className="mt-4 font-medium">No API keys yet</p>
             <p className="mt-1 max-w-md text-sm text-gray-500">
-              Create a key to access the ZEV API.
+              Create a key to call the Jev API.
             </p>
           </div>
         ) : (
@@ -163,7 +170,9 @@ export function KeyManager({
               >
                 <div>
                   <p className="font-medium">{key.name || 'Unnamed key'}</p>
-                  <p className="mt-1 font-mono text-sm text-gray-500">{key.key}</p>
+                  <p className="mt-1 font-mono text-sm text-gray-500">
+                    {key.key}
+                  </p>
                   <p className="mt-1 text-xs text-gray-400">
                     {key.created_time
                       ? new Date(key.created_time * 1000).toLocaleString()
