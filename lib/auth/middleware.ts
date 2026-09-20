@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { getUser } from '@/lib/db/queries';
+import { getUser } from '@/lib/new-api/user';
 import type { NewApiUser } from '@/lib/new-api/types';
 
 export type ActionState = {
