@@ -10,10 +10,14 @@ export function quotaToUsd(quota: number) {
   return quota / NEW_API_QUOTA_PER_USD;
 }
 
-export function quotaToApproxInputTokens(quota: number) {
-  return (
-    (quotaToUsd(quota) / JEV_RETAIL_INPUT_USD_PER_MILLION) * 1_000_000
-  );
+export function quotaToApproxInputTokens(
+  quota: number,
+  inputUsdPerMillion = JEV_RETAIL_INPUT_USD_PER_MILLION
+) {
+  if (!Number.isFinite(inputUsdPerMillion) || inputUsdPerMillion <= 0) {
+    return 0;
+  }
+  return (quotaToUsd(quota) / inputUsdPerMillion) * 1_000_000;
 }
 
 export function formatUsdFromQuota(quota: number) {
@@ -25,8 +29,11 @@ export function formatUsdFromQuota(quota: number) {
   }).format(quotaToUsd(quota));
 }
 
-export function formatApproxInputTokens(quota: number) {
-  const tokens = quotaToApproxInputTokens(quota);
+export function formatApproxInputTokens(
+  quota: number,
+  inputUsdPerMillion = JEV_RETAIL_INPUT_USD_PER_MILLION
+) {
+  const tokens = quotaToApproxInputTokens(quota, inputUsdPerMillion);
   if (tokens >= 1_000_000) {
     return `${(tokens / 1_000_000).toFixed(2)}M`;
   }
