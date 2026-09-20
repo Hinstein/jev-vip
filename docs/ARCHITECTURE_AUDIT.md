@@ -126,7 +126,7 @@ treated as explicit migrations and rerun E2E.
    or API agreement shown during console onboarding.
 
 2. **Real New API bootstrap**
-   Root setup, production secrets, Secure cookies, trusted URL, compliance
+   Root setup, production secrets, Secure cookies, trusted origins, compliance
    confirmation, registration settings, and admin access controls must be
    configured on the deployed instance.
 
