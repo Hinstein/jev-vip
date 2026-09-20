@@ -1,24 +1,7 @@
 import 'server-only';
 
-import { createHmac } from 'node:crypto';
-
-type LocalUser = {
-  id: number;
-  email: string;
-  name?: string | null;
-};
-
-export type NewApiSelf = {
-  id: number;
-  username: string;
-  display_name?: string;
-  role: number;
-  status: number;
-  group: string;
-  quota: number;
-  used_quota: number;
-  request_count: number;
-};
+import { getSession } from '@/lib/auth/session';
+import type { NewApiUser } from './types';
 
 export type NewApiToken = {
   id: number;
@@ -42,58 +25,27 @@ type ApiEnvelope<T> = {
   data?: T;
 };
 
-type LoginData = {
-  access_token?: string;
-  access_expires_at?: number;
-  user?: NewApiSelf;
-};
-
-const authCache = new Map<
-  number,
-  { accessToken: string; expiresAt: number }
->();
-
-function getConfig() {
+function getBaseUrl() {
   const baseUrl = process.env.NEW_API_BASE_URL?.replace(/\/+$/, '');
-  const identitySecret =
-    process.env.NEW_API_IDENTITY_SECRET || process.env.AUTH_SECRET;
-
-  if (!baseUrl || !identitySecret) {
-    throw new Error('New API backend is not configured');
-  }
-
-  return { baseUrl, identitySecret };
+  if (!baseUrl) throw new Error('New API backend is not configured');
+  return baseUrl;
 }
 
 export function isNewApiConfigured() {
-  return Boolean(
-    process.env.NEW_API_BASE_URL &&
-      (process.env.NEW_API_IDENTITY_SECRET || process.env.AUTH_SECRET)
-  );
+  return Boolean(process.env.NEW_API_BASE_URL);
 }
 
-function backendUsername(user: LocalUser) {
-  return `zev_${user.id}`;
-}
-
-function backendPassword(user: LocalUser) {
-  const { identitySecret } = getConfig();
-  return createHmac('sha256', identitySecret)
-    .update(`new-api-user:${user.id}`)
-    .digest('hex');
-}
-
-async function rawRequest<T>(
+export async function newApiRequest<T>(
+  accessToken: string,
   path: string,
   init?: RequestInit
-): Promise<{ ok: boolean; status: number; payload: ApiEnvelope<T> }> {
-  const { baseUrl } = getConfig();
-
+): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`${baseUrl}${path}`, {
+    response = await fetch(`${getBaseUrl()}${path}`, {
       ...init,
       headers: {
+        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
         ...(init?.headers ?? {}),
       },
@@ -115,92 +67,19 @@ async function rawRequest<T>(
     }
   }
 
-  return { ok: response.ok, status: response.status, payload };
-}
-
-async function login(user: LocalUser) {
-  const result = await rawRequest<LoginData>('/api/user/login', {
-    method: 'POST',
-    body: JSON.stringify({
-      username: backendUsername(user),
-      password: backendPassword(user),
-    }),
-  });
-
-  const accessToken = result.payload.data?.access_token;
-  if (result.ok && result.payload.success !== false && accessToken) {
-    const expiresAt =
-      typeof result.payload.data?.access_expires_at === 'number'
-        ? result.payload.data.access_expires_at
-        : Math.floor(Date.now() / 1000) + 30 * 60;
-
-    authCache.set(user.id, { accessToken, expiresAt });
-    return accessToken;
-  }
-
-  return null;
-}
-
-async function register(user: LocalUser) {
-  const result = await rawRequest<unknown>('/api/user/register', {
-    method: 'POST',
-    body: JSON.stringify({
-      username: backendUsername(user),
-      password: backendPassword(user),
-    }),
-  });
-
-  if (!result.ok || result.payload.success === false) {
+  if (!response.ok || payload.success === false) {
     throw new Error(
-      result.payload.message ||
-        'Unable to provision the user in the New API backend'
-    );
-  }
-}
-
-async function getAccessToken(user: LocalUser) {
-  const cached = authCache.get(user.id);
-  const now = Math.floor(Date.now() / 1000);
-  if (cached && cached.expiresAt - 60 > now) {
-    return cached.accessToken;
-  }
-
-  let token = await login(user);
-  if (token) return token;
-
-  await register(user);
-  token = await login(user);
-
-  if (!token) {
-    throw new Error(
-      'New API login did not return an access token. Disable backend 2FA/login challenges for ZEV service users.'
+      payload.message || `New API request failed: HTTP ${response.status}`
     );
   }
 
-  return token;
+  return payload.data as T;
 }
 
-async function userRequest<T>(
-  user: LocalUser,
-  path: string,
-  init?: RequestInit
-): Promise<T> {
-  const accessToken = await getAccessToken(user);
-  const result = await rawRequest<T>(path, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      ...(init?.headers ?? {}),
-    },
-  });
-
-  if (!result.ok || result.payload.success === false) {
-    throw new Error(
-      result.payload.message || `New API request failed: HTTP ${result.status}`
-    );
-  }
-
-  return result.payload.data as T;
+async function currentAccessToken() {
+  const session = await getSession();
+  if (!session) throw new Error('User is not authenticated');
+  return session.accessToken;
 }
 
 function extractItems(payload: unknown): NewApiToken[] {
@@ -216,17 +95,26 @@ function extractItems(payload: unknown): NewApiToken[] {
   return [];
 }
 
-export async function getNewApiSelf(user: LocalUser) {
-  return userRequest<NewApiSelf>(user, '/api/user/self');
+export async function getNewApiSelfByAccessToken(accessToken: string) {
+  return newApiRequest<NewApiUser>(accessToken, '/api/user/self');
 }
 
-export async function listNewApiTokens(user: LocalUser) {
-  const data = await userRequest<unknown>(user, '/api/token/?page=1&page_size=100');
+export async function getNewApiSelf() {
+  return getNewApiSelfByAccessToken(await currentAccessToken());
+}
+
+export async function listNewApiTokens() {
+  const data = await newApiRequest<unknown>(
+    await currentAccessToken(),
+    '/api/token/?page=1&page_size=100'
+  );
   return extractItems(data);
 }
 
-export async function createNewApiToken(user: LocalUser, name: string) {
-  await userRequest<unknown>(user, '/api/token/', {
+export async function createNewApiToken(name: string) {
+  const accessToken = await currentAccessToken();
+
+  await newApiRequest<unknown>(accessToken, '/api/token/', {
     method: 'POST',
     body: JSON.stringify({
       name,
@@ -239,7 +127,11 @@ export async function createNewApiToken(user: LocalUser, name: string) {
     }),
   });
 
-  const tokens = await listNewApiTokens(user);
+  const data = await newApiRequest<unknown>(
+    accessToken,
+    '/api/token/?page=1&page_size=100'
+  );
+  const tokens = extractItems(data);
   const created = [...tokens]
     .filter((token) => token.name === name)
     .sort((a, b) => b.id - a.id)[0];
@@ -248,8 +140,8 @@ export async function createNewApiToken(user: LocalUser, name: string) {
     throw new Error('New API created the key but it could not be located');
   }
 
-  const reveal = await userRequest<{ key?: string }>(
-    user,
+  const reveal = await newApiRequest<{ key?: string }>(
+    accessToken,
     `/api/token/${created.id}/key`,
     { method: 'POST' }
   );
@@ -258,23 +150,23 @@ export async function createNewApiToken(user: LocalUser, name: string) {
     throw new Error('New API did not return the generated key');
   }
 
-  return {
-    key: reveal.key,
-    token: created,
-  };
+  return { key: reveal.key, token: created };
 }
 
-export async function deleteNewApiToken(user: LocalUser, tokenId: number) {
-  await userRequest<unknown>(user, `/api/token/${tokenId}`, {
-    method: 'DELETE',
-  });
+export async function deleteNewApiToken(tokenId: number) {
+  await newApiRequest<unknown>(
+    await currentAccessToken(),
+    `/api/token/${tokenId}`,
+    { method: 'DELETE' }
+  );
 }
 
-export async function redeemNewApiCode(user: LocalUser, code: string) {
-  const credited = await userRequest<number>(user, '/api/user/topup', {
+export async function redeemNewApiCode(code: string) {
+  const accessToken = await currentAccessToken();
+  const credited = await newApiRequest<number>(accessToken, '/api/user/topup', {
     method: 'POST',
     body: JSON.stringify({ key: code }),
   });
-  const self = await getNewApiSelf(user);
+  const self = await getNewApiSelfByAccessToken(accessToken);
   return { credited: Number(credited || 0), self };
 }

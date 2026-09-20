@@ -6,124 +6,108 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Gauge, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { signIn, signUp } from './actions';
-import { ActionState } from '@/lib/auth/middleware';
+import type { ActionState } from '@/lib/auth/middleware';
 
 export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');
-  const priceId = searchParams.get('priceId');
-  const inviteId = searchParams.get('inviteId');
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     mode === 'signin' ? signIn : signUp,
     { error: '' }
   );
 
   return (
-    <div className="min-h-[100dvh] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Link href="/" className="flex justify-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-950 text-white">
-            <Gauge className="h-6 w-6" />
+    <main className="min-h-[100dvh] bg-[#f7f7f4] px-4 py-12">
+      <div className="mx-auto flex min-h-[calc(100dvh-6rem)] max-w-md flex-col justify-center">
+        <Link href="/" className="mb-10 inline-flex items-baseline gap-2">
+          <span className="text-2xl font-semibold tracking-[-0.04em] text-gray-950">
+            Jev
+          </span>
+          <span className="text-xs font-medium uppercase tracking-[0.18em] text-gray-400">
+            prepaid API
           </span>
         </Link>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {mode === 'signin' ? 'Sign in to JEV VIP' : 'Create your JEV VIP account'}
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-500">
-          Independent Jev prepaid access dashboard
-        </p>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <form className="space-y-6" action={formAction}>
-          <input type="hidden" name="redirect" value={redirect || ''} />
-          <input type="hidden" name="priceId" value={priceId || ''} />
-          <input type="hidden" name="inviteId" value={inviteId || ''} />
-          <div>
-            <Label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </Label>
-            <div className="mt-1">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+          <p className="text-sm font-medium text-gray-500">
+            {mode === 'signin' ? 'Welcome back' : 'Create account'}
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950">
+            {mode === 'signin' ? 'Sign in to Jev' : 'Start using Jev'}
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-gray-500">
+            Account authentication, roles and permissions are managed by the
+            New API backend.
+          </p>
+
+          <form className="mt-8 space-y-5" action={formAction}>
+            <input type="hidden" name="redirect" value={redirect || ''} />
+
+            <div>
+              <Label htmlFor="username">
+                {mode === 'signin' ? 'Username or email' : 'Username'}
+              </Label>
               <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                defaultValue={state.email}
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                defaultValue={state.username}
                 required
-                maxLength={50}
-                className="appearance-none rounded-full relative block w-full px-3 py-2"
-                placeholder="Enter your email"
+                maxLength={mode === 'signin' ? 255 : 20}
+                className="mt-2 h-11"
+                placeholder={mode === 'signin' ? 'your account' : 'choose a username'}
               />
             </div>
-          </div>
 
-          <div>
-            <Label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </Label>
-            <div className="mt-1">
+            <div>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 name="password"
                 type="password"
                 autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                defaultValue={state.password}
                 required
                 minLength={8}
-                maxLength={100}
-                className="appearance-none rounded-full relative block w-full px-3 py-2"
-                placeholder="Enter your password"
+                maxLength={128}
+                className="mt-2 h-11"
+                placeholder="At least 8 characters"
               />
             </div>
-          </div>
 
-          {state?.error && <div className="text-red-500 text-sm">{state.error}</div>}
+            {state?.error ? (
+              <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                {state.error}
+              </div>
+            ) : null}
 
-          <Button
-            type="submit"
-            className="w-full rounded-full"
-            disabled={pending}
-          >
-            {pending ? (
-              <>
-                <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                Loading...
-              </>
-            ) : mode === 'signin' ? (
-              'Sign in'
-            ) : (
-              'Sign up'
-            )}
-          </Button>
-        </form>
+            <Button type="submit" className="h-11 w-full" disabled={pending}>
+              {pending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Please wait
+                </>
+              ) : mode === 'signin' ? (
+                'Sign in'
+              ) : (
+                'Create account'
+              )}
+            </Button>
+          </form>
 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500">
-                {mode === 'signin' ? 'New here?' : 'Already have an account?'}
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6">
+          <p className="mt-6 text-center text-sm text-gray-500">
+            {mode === 'signin' ? 'New to Jev?' : 'Already have an account?'}{' '}
             <Link
-              href={`${mode === 'signin' ? '/sign-up' : '/sign-in'}${
-                redirect ? `?redirect=${redirect}` : ''
-              }${priceId ? `&priceId=${priceId}` : ''}`}
-              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              href={mode === 'signin' ? '/sign-up' : '/sign-in'}
+              className="font-medium text-gray-950 underline underline-offset-4"
             >
-              {mode === 'signin' ? 'Create an account' : 'Sign in instead'}
+              {mode === 'signin' ? 'Create account' : 'Sign in'}
             </Link>
-          </div>
+          </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

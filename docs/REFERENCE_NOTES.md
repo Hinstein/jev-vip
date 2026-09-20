@@ -2,35 +2,28 @@
 
 Reference reviewed: https://jevtypesafeai.com/
 
-## Product mechanics worth reusing
+## Product mechanics to reference
 
-The reference product turns Jev access into a familiar prepaid developer SaaS:
+The reference presents hosted Jev access as a simple prepaid developer product:
 
-1. User creates an account.
-2. User prepays a credit balance.
-3. User receives/manages an API key from the dashboard.
-4. API usage deducts against prepaid credits.
-5. Dashboard exposes remaining balance and usage.
-6. Documentation provides a simple Bearer-token API workflow.
-7. The service clearly discloses that it is independent from TypeSafe AI.
+1. Sign in.
+2. Prepay a balance.
+3. Create/manage an API key.
+4. Call a Jev-shaped endpoint with Bearer authentication.
+5. Usage deducts from the prepaid balance.
+6. The dashboard keeps balance, keys and usage easy to find.
+7. The service clearly states that it is independent from TypeSafe AI.
 
-## What JEV VIP adopts in phase 1
+## JEV frontend direction
 
-- Customer dashboard as the product center
-- Credit balance as the primary account state
-- API Keys as a first-class dashboard section
-- Usage visibility
-- Top-up packs
-- Order history
-- Clear independent-service disclaimer
+Our frontend should keep the same information hierarchy:
 
-## What is intentionally not copied
+- balance/credits are immediately visible
+- top-up is a primary action
+- API Keys are first-class
+- usage is visible
+- the API endpoint and auth pattern are shown directly
+- visual treatment is minimal, developer-oriented and mostly neutral
 
-- Branding, logo, wording, proprietary assets or visual identity
-- Their exact checkout implementation
-- Their backend proxy implementation
-- Their secret/key issuance implementation
-- Their pricing markup
-
-The UI uses the Next.js SaaS Starter's existing component system and an original
-JEV VIP layout.
+We reference the product pattern, not the site's proprietary implementation,
+branding, wording, assets or exact layout.

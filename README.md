@@ -1,39 +1,41 @@
-# ZEV / JEV VIP
+# JEV prepaid API platform
 
-ZEV is a branded prepaid-access frontend for the JEV/TypeSafe API.
+This repository is the customer-facing recharge and hosted-access platform for
+Jev.
 
 ## Architecture
 
 ```text
 Customer
-   -> ZEV Next.js frontend
-      -> New API
-         -> users / quota / redemption
-         -> API keys / usage / logs
-         -> routing / admin console
-         -> internal JEV protocol adapter
-            -> TypeSafe /v1/systemone
+  -> JEV Next.js frontend
+       -> New API
+          -> login / users / roles / permissions
+          -> quota / redemption codes
+          -> API keys / usage / logs
+          -> routing / administrator console
+          -> internal Jev protocol adapter
+               -> TypeSafe /v1/systemone
 ```
 
-The customer-facing frontend remains ours. New API is the business backend and
-administrator console.
+New API is the source of truth for customer identity and commercial API state.
+The JEV frontend does not maintain a second user/permission system or credit
+ledger.
 
-## Current backend migration
+The TypeSafe upstream is not OpenAI-compatible, so
+`relay/jev-adapter` remains as a narrow protocol converter. It owns no users,
+keys, quota or billing state.
 
-The active customer flows now use New API for:
+## Customer product
 
-- quota and redemption codes
-- API-key create/list/revoke
-- gateway authentication and routing
-- usage counters and request accounting
+- New API-backed registration and login
+- prepaid credit balance
+- recharge-code redemption
+- API key create/list/revoke
+- usage visibility
+- hosted `POST /api/v1/decide`
 
-The existing TypeSafe endpoint is not OpenAI-compatible, so
-`relay/jev-adapter` is intentionally kept as a tiny protocol adapter. It owns
-no commercial state.
-
-Legacy OfferKit/LiteLLM files are temporarily retained only as rollback
-reference and are no longer on the active API-key, redemption or
-`/api/v1/decide` request paths.
+The customer experience references the product mechanics of
+jevtypesafeai.com while keeping independent branding and implementation.
 
 ## Setup
 
@@ -41,17 +43,12 @@ reference and are no longer on the active API-key, redemption or
 pnpm install --frozen-lockfile
 pnpm db:migrate
 pnpm db:seed
+pnpm jev:configure-products
 docker compose -f docker-compose.backend.yml up -d
 pnpm dev
 ```
 
-See `docs/NEW_API_BACKEND.md` for New API first-boot and channel setup.
+See `docs/NEW_API_BACKEND.md` and `docs/DEPLOYMENT.md`.
 
-## Security boundary
-
-- TypeSafe upstream credentials exist only in the internal adapter.
-- New API is bound to localhost by default; publish its admin UI only through a
-  protected HTTPS reverse proxy.
-- Customer API keys are returned by ZEV only at explicit creation time.
-- `NEW_API_IDENTITY_SECRET`, database credentials and adapter shared key are
-  server-side secrets.
+This is an independent service and is not affiliated with, endorsed by, or
+operated by TypeSafe AI.

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getUser } from '@/lib/db/queries';
 import { redeemNewApiCode } from '@/lib/new-api/client';
 
 const redeemSchema = z.object({
@@ -27,14 +26,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json(
-      { ok: false, code: 'unauthorized', message: 'Please sign in first.' },
-      { status: 401 }
-    );
-  }
-
   let body: unknown;
   try {
     body = await request.json();
@@ -54,10 +45,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await redeemNewApiCode(user, parsed.data.code);
+    const result = await redeemNewApiCode(parsed.data.code);
     return NextResponse.json({
       ok: true,
-      productName: 'ZEV Credits',
+      productName: 'Jev credits',
       credited: result.credited,
       balance: result.self.quota,
       alreadyApplied: false,

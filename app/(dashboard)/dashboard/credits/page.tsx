@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { WalletCards } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { getUser } from '@/lib/db/queries';
-import { getNewApiSelf } from '@/lib/new-api/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,51 +13,45 @@ export default async function CreditsPage() {
   const user = await getUser();
   if (!user) redirect('/sign-in');
 
-  let quota = 0;
-  let usedQuota = 0;
-  let requestCount = 0;
-
-  try {
-    const backend = await getNewApiSelf(user);
-    quota = backend.quota;
-    usedQuota = backend.used_quota;
-    requestCount = backend.request_count;
-  } catch (error) {
-    console.error('Unable to load New API wallet', error);
-  }
-
   return (
-    <section className="flex-1 p-4 lg:p-8">
-      <p className="text-sm text-gray-500">Wallet</p>
-      <h1 className="text-2xl font-semibold tracking-tight">Credits</h1>
+    <section className="flex-1 px-4 py-8 lg:px-10 lg:py-10">
+      <div className="mx-auto max-w-5xl">
+        <p className="text-sm font-medium text-gray-500">Balance</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Credits</h1>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardContent className="pt-6">
-            <WalletCards className="h-5 w-5 text-gray-500" />
-            <p className="mt-3 text-sm text-gray-500">Available quota</p>
-            <p className="mt-1 text-3xl font-semibold">{formatCredits(quota)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-gray-500">Used quota</p>
-            <p className="mt-3 text-3xl font-semibold">{formatCredits(usedQuota)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-gray-500">Requests</p>
-            <p className="mt-3 text-3xl font-semibold">{formatCredits(requestCount)}</p>
-          </CardContent>
-        </Card>
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <Card className="shadow-none">
+            <CardContent className="p-6">
+              <WalletCards className="h-5 w-5 text-gray-400" />
+              <p className="mt-4 text-sm text-gray-500">Available</p>
+              <p className="mt-1 text-3xl font-semibold">
+                {formatCredits(user.quota)}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-none">
+            <CardContent className="p-6">
+              <p className="text-sm text-gray-500">Used</p>
+              <p className="mt-4 text-3xl font-semibold">
+                {formatCredits(user.used_quota)}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-none">
+            <CardContent className="p-6">
+              <p className="text-sm text-gray-500">Requests</p>
+              <p className="mt-4 text-3xl font-semibold">
+                {formatCredits(user.request_count)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <p className="mt-6 text-sm text-gray-500">
+          Balance and consumption are read directly from the New API account
+          ledger. JEV does not maintain a second credit balance.
+        </p>
       </div>
-
-      <p className="mt-6 max-w-2xl text-sm text-gray-500">
-        Wallet quota and API consumption are sourced from New API. Redemption
-        history and administrative adjustments are managed in the New API
-        admin console.
-      </p>
     </section>
   );
 }

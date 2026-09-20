@@ -14,7 +14,7 @@ services:
       TZ: Asia/Shanghai
       ERROR_LOG_ENABLED: "true"
       BATCH_UPDATE_ENABLED: "true"
-      NODE_NAME: zev-new-api-1
+      NODE_NAME: jev-new-api-1
     depends_on:
       new-api-postgres:
         condition: service_healthy
@@ -26,7 +26,7 @@ services:
       - new_api_data:/data
       - new_api_logs:/app/logs
     networks:
-      - zev-backend
+      - jev-backend
 
   jev-adapter:
     build:
@@ -45,7 +45,7 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - zev-backend
+      - jev-backend
 
   new-api-postgres:
     image: postgres:16-alpine
@@ -62,14 +62,14 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - zev-backend
+      - jev-backend
 
   new-api-redis:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--requirepass", "${NEW_API_REDIS_PASSWORD}"]
     networks:
-      - zev-backend
+      - jev-backend
 
 volumes:
   new_api_data:
@@ -77,5 +77,5 @@ volumes:
   new_api_pg:
 
 networks:
-  zev-backend:
+  jev-backend:
     driver: bridge

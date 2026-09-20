@@ -1,87 +1,94 @@
-# New API backend migration
+# New API backend
 
-## Decision
+## Source-of-truth boundary
 
-Keep the existing ZEV Next.js frontend and local sign-in UX. Replace the
-business backend with upstream New API.
+The JEV Next.js application is the customer-facing frontend. New API is the
+account and business backend.
 
 New API owns:
 
-- mirrored backend users
-- quota
+- registration and login
+- user id, status, role, group and permissions
+- login sessions
+- account quota
 - redemption codes
-- API keys
-- gateway authentication
-- routing
+- customer API keys
+- gateway authentication and routing
 - usage / spend accounting
-- request logs
-- administrator console
+- request and administrator logs
+- the administrator console
 
-The ZEV application owns:
+JEV does not keep a second business user, role table, permission model or credit
+balance.
 
-- branded public/customer UI
-- local frontend session
-- product/sales links
-- the public JEV-shaped endpoint `/api/v1/decide`
+The JEV frontend stores only an HttpOnly signed session envelope containing the
+current New API access token/user snapshot plus the New API refresh credential.
+Access tokens are refreshed through New API's session endpoint.
 
-A small internal adapter only converts the existing TypeSafe
-`/v1/systemone` protocol to OpenAI chat-completions format. It does not own
-users, keys, quota, billing or logs.
-
-## Why the adapter remains
-
-The TypeSafe upstream is not OpenAI-compatible. New API can therefore own the
-gateway, but it still needs a channel whose upstream speaks the OpenAI
-chat-completions contract. The adapter performs only this protocol conversion.
-
-Request path:
+## Login path
 
 ```text
-customer ZEV key
-  -> POST /api/v1/decide
+JEV sign-in form
+  -> POST New API /api/user/login
+  -> New API validates username/password, status and login policy
+  -> JEV stores the returned New API session in HttpOnly cookies
+  -> protected JEV pages read /api/user/self
+```
+
+Role values remain New API's values:
+
+- common user: 1
+- admin: 10
+- root: 100
+
+Sensitive operations are still enforced by New API. The JEV frontend should
+never implement a parallel authorization decision.
+
+## Jev request path
+
+The official TypeSafe endpoint is not OpenAI-compatible, so a narrow protocol
+adapter remains:
+
+```text
+customer API key
+  -> JEV /api/v1/decide
   -> New API /v1/chat/completions
-       -> authenticate token
+       -> authenticate key
        -> enforce quota/model
-       -> meter/log request
+       -> meter/log
        -> route model "jev"
   -> jev-adapter /v1/chat/completions
   -> TypeSafe /v1/systemone
 ```
 
+The adapter owns no users, keys, quota, redemption codes or billing state.
+
 ## First boot
 
-1. Fill the New API and adapter variables in `.env`.
+1. Fill `.env`.
 2. Start the backend:
 
    ```bash
    docker compose -f docker-compose.backend.yml up -d
    ```
 
-3. Open the New API console through a protected HTTPS reverse proxy to
-   `127.0.0.1:3001` and complete root setup.
-4. Keep password registration/login enabled for ZEV's private mirrored users.
-   Disable New API email verification for this integration. Do not expose the
-   New API signup page publicly.
-5. Disable automatic default-token generation; ZEV creates tokens explicitly.
+3. Put the New API administrator console behind a protected HTTPS reverse proxy
+   to `127.0.0.1:3001` and complete root setup.
+4. Keep New API password registration/login enabled for the JEV customer
+   frontend. For the current simple JEV signup form, keep Turnstile, email
+   verification and password-login encryption disabled until those flows are
+   explicitly implemented in JEV.
+5. Disable automatic default-token generation; JEV creates customer API keys
+   explicitly.
 6. Create an OpenAI-compatible channel:
    - Base URL: `http://jev-adapter:4100`
-   - API key: value of `JEV_ADAPTER_SHARED_KEY`
+   - API key: `JEV_ADAPTER_SHARED_KEY`
    - Model: `jev`
-7. Configure the model price/quota rules for `jev` in New API.
-8. Generate redemption-code batches from the New API admin console.
+7. Configure the `jev` model ratio/quota rules in New API.
+8. Generate recharge-code batches from the New API admin console.
 
-## User mirroring
+## Frontend reference
 
-The existing ZEV login UI remains unchanged. A local user is lazily mirrored
-into New API as `zev_<local user id>`. The backend-only password is derived
-with HMAC from `NEW_API_IDENTITY_SECRET`; the customer's actual password is
-never sent to New API.
-
-This deliberately avoids a risky all-at-once auth rewrite while moving all
-commercial API capabilities to New API.
-
-## Rollback
-
-Legacy OfferKit/LiteLLM source files remain in this migration branch for one
-release as rollback reference, but active routes no longer call them. Delete
-them only after deployment verification.
+The customer experience intentionally follows the same product mechanics as
+jevtypesafeai.com: prepaid balance, API keys, usage visibility and a direct Jev
+API quick start. Branding, copy and implementation remain independent.

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getUser } from '@/lib/db/queries';
 import {
   createNewApiToken,
   deleteNewApiToken,
@@ -28,13 +27,8 @@ function sameOrigin(request: NextRequest) {
 }
 
 export async function GET() {
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
-    const keys = await listNewApiTokens(user);
+    const keys = await listNewApiTokens();
     return NextResponse.json({ keys });
   } catch (error) {
     console.error('Failed to list New API keys', error);
@@ -48,11 +42,6 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) {
     return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
-  }
-
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   let body: unknown;
@@ -71,7 +60,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const created = await createNewApiToken(user, parsed.data.name);
+    const created = await createNewApiToken(parsed.data.name);
     return NextResponse.json(
       { key: created.key, token: created.token },
       { status: 201 }
@@ -90,11 +79,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
   }
 
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   let body: unknown;
   try {
     body = await request.json();
@@ -108,7 +92,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    await deleteNewApiToken(user, parsed.data.tokenId);
+    await deleteNewApiToken(parsed.data.tokenId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Failed to revoke New API key', error);

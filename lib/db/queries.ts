@@ -1,41 +1,22 @@
-import { desc, and, eq, isNull } from 'drizzle-orm';
+import { desc, and, eq } from 'drizzle-orm';
 import { db } from './drizzle';
 import { activityLogs, teamMembers, teams, users } from './schema';
-import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth/session';
+import { getSession } from '@/lib/auth/session';
+import { getNewApiSelfByAccessToken } from '@/lib/new-api/client';
 
 export async function getUser() {
-  const sessionCookie = (await cookies()).get('session');
-  if (!sessionCookie || !sessionCookie.value) {
+  const session = await getSession();
+  if (!session) return null;
+
+  try {
+    return await getNewApiSelfByAccessToken(session.accessToken);
+  } catch {
     return null;
   }
-
-  const sessionData = await verifyToken(sessionCookie.value);
-  if (
-    !sessionData ||
-    !sessionData.user ||
-    typeof sessionData.user.id !== 'number'
-  ) {
-    return null;
-  }
-
-  if (new Date(sessionData.expires) < new Date()) {
-    return null;
-  }
-
-  const user = await db
-    .select()
-    .from(users)
-    .where(and(eq(users.id, sessionData.user.id), isNull(users.deletedAt)))
-    .limit(1);
-
-  if (user.length === 0) {
-    return null;
-  }
-
-  return user[0];
 }
 
+// Legacy SaaS-starter helpers below remain only for database compatibility
+// during migration. They are not authentication or authorization sources.
 export async function getTeamByStripeCustomerId(customerId: string) {
   const result = await db
     .select()
@@ -59,7 +40,7 @@ export async function updateTeamSubscription(
     .update(teams)
     .set({
       ...subscriptionData,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     })
     .where(eq(teams.id, teamId));
 }
@@ -68,7 +49,7 @@ export async function getUserWithTeam(userId: number) {
   const result = await db
     .select({
       user: users,
-      teamId: teamMembers.teamId
+      teamId: teamMembers.teamId,
     })
     .from(users)
     .leftJoin(teamMembers, eq(users.id, teamMembers.userId))
@@ -80,17 +61,15 @@ export async function getUserWithTeam(userId: number) {
 
 export async function getActivityLogs() {
   const user = await getUser();
-  if (!user) {
-    throw new Error('User not authenticated');
-  }
+  if (!user) throw new Error('User not authenticated');
 
-  return await db
+  return db
     .select({
       id: activityLogs.id,
       action: activityLogs.action,
       timestamp: activityLogs.timestamp,
       ipAddress: activityLogs.ipAddress,
-      userName: users.name
+      userName: users.name,
     })
     .from(activityLogs)
     .leftJoin(users, eq(activityLogs.userId, users.id))
@@ -101,9 +80,7 @@ export async function getActivityLogs() {
 
 export async function getTeamForUser() {
   const user = await getUser();
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   const result = await db.query.teamMembers.findFirst({
     where: eq(teamMembers.userId, user.id),
@@ -116,14 +93,14 @@ export async function getTeamForUser() {
                 columns: {
                   id: true,
                   name: true,
-                  email: true
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   return result?.team || null;

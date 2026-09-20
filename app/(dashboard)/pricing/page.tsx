@@ -8,15 +8,16 @@ export default async function PricingPage() {
   const products = await getActiveProducts();
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+    <main className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
-        <p className="text-sm font-medium text-gray-500">JEV Credits</p>
+        <p className="text-sm font-medium text-gray-500">Prepaid credits</p>
         <h1 className="mt-2 text-4xl font-semibold tracking-tight">
-          Choose a credit package
+          Choose a Jev credit pack
         </h1>
         <p className="mt-4 text-gray-600">
-          Purchase through Xianyu, receive a unique voucher code, then redeem it
-          to your JEV VIP account.
+          Buy a recharge code through the listed sales channel, then redeem it
+          to your account. Credits are managed by New API and do not expire in
+          the JEV frontend.
         </p>
       </div>
 
@@ -24,10 +25,8 @@ export default async function PricingPage() {
         <ProductGrid products={products} />
       </div>
 
-      <p className="mx-auto mt-8 max-w-3xl text-center text-xs text-gray-500">
-        {productConfig.officialDisclaimer} Xianyu is only a sales channel.
-        Voucher lifecycle is handled by OfferKit; JEV VIP remains the source of
-        truth for credits.
+      <p className="mx-auto mt-8 max-w-3xl text-center text-xs leading-5 text-gray-500">
+        {productConfig.officialDisclaimer}
       </p>
     </main>
   );

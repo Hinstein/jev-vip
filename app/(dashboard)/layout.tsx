@@ -1,32 +1,34 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Gauge, Home, LogOut } from 'lucide-react';
+import { Home, LogOut } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { signOut } from '@/app/(login)/actions';
 import { useRouter } from 'next/navigation';
-import { User } from '@/lib/db/schema';
+import type { NewApiUser } from '@/lib/new-api/types';
 import useSWR, { mutate } from 'swr';
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = (url: string) =>
+  fetch(url).then(async (res) => (res.ok ? res.json() : null));
 
 function UserMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { data: user } = useSWR<User>('/api/user', fetcher);
+  const { data: user } = useSWR<NewApiUser | null>('/api/user', fetcher);
   const router = useRouter();
 
   async function handleSignOut() {
     await signOut();
-    mutate('/api/user');
+    await mutate('/api/user', null, false);
     router.push('/');
+    router.refresh();
   }
 
   if (!user) {
@@ -34,41 +36,41 @@ function UserMenu() {
       <>
         <Link
           href="/pricing"
-          className="text-sm font-medium text-gray-700 hover:text-gray-900"
+          className="text-sm font-medium text-gray-600 hover:text-gray-950"
         >
-          Credits
+          Pricing
         </Link>
-        <Button asChild className="rounded-full">
-          <Link href="/sign-up">Sign Up</Link>
+        <Button asChild size="sm">
+          <Link href="/sign-in">Sign in</Link>
         </Button>
       </>
     );
   }
 
+  const label = user.display_name || user.username || 'U';
+
   return (
     <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
       <DropdownMenuTrigger>
-        <Avatar className="cursor-pointer size-9">
-          <AvatarFallback>
-            {(user.name || user.email || 'U').slice(0, 1).toUpperCase()}
-          </AvatarFallback>
+        <Avatar className="size-9 cursor-pointer">
+          <AvatarFallback>{label.slice(0, 1).toUpperCase()}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="flex flex-col gap-1">
-        <DropdownMenuItem className="cursor-pointer">
+      <DropdownMenuContent align="end" className="min-w-48">
+        <div className="px-2 py-1.5">
+          <p className="text-sm font-medium">{label}</p>
+          <p className="text-xs text-gray-500">{user.group}</p>
+        </div>
+        <DropdownMenuItem asChild>
           <Link href="/dashboard" className="flex w-full items-center">
             <Home className="mr-2 h-4 w-4" />
-            <span>Dashboard</span>
+            Dashboard
           </Link>
         </DropdownMenuItem>
-        <form action={handleSignOut} className="w-full">
-          <button type="submit" className="flex w-full">
-            <DropdownMenuItem className="w-full flex-1 cursor-pointer">
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Sign out</span>
-            </DropdownMenuItem>
-          </button>
-        </form>
+        <DropdownMenuItem onSelect={() => void handleSignOut()}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -77,21 +79,24 @@ function UserMenu() {
 function Header() {
   return (
     <header className="border-b border-gray-200 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-950 text-white">
-            <Gauge className="h-5 w-5" />
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
+        <Link href="/" className="flex items-baseline gap-2">
+          <span className="text-xl font-semibold tracking-[-0.04em] text-gray-950">
+            Jev
           </span>
-          <span className="ml-2 text-xl font-semibold text-gray-950">JEV VIP</span>
+          <span className="hidden text-xs font-medium uppercase tracking-[0.18em] text-gray-400 sm:inline">
+            prepaid API
+          </span>
         </Link>
-        <div className="flex items-center space-x-4">
+
+        <div className="flex items-center gap-4">
           <Link
             href="/pricing"
-            className="hidden sm:inline text-sm font-medium text-gray-600 hover:text-gray-950"
+            className="hidden text-sm font-medium text-gray-600 hover:text-gray-950 sm:inline"
           >
-            Top up
+            Credits
           </Link>
-          <Suspense fallback={<div className="h-9" />}>
+          <Suspense fallback={<div className="h-9 w-9" />}>
             <UserMenu />
           </Suspense>
         </div>
@@ -102,7 +107,7 @@ function Header() {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <section className="flex flex-col min-h-screen">
+    <section className="flex min-h-screen flex-col bg-white">
       <Header />
       {children}
     </section>

@@ -1,15 +1,9 @@
 export const productConfig = {
-  name: 'JEV VIP',
+  name: 'Jev',
   description:
-    'Independent prepaid access and account management for Jev users.',
+    'Independent prepaid access and account management for the Jev API.',
   dashboardDescription:
-    'Manage credits, API keys, usage and voucher redemption from one place.',
+    'Manage credits, API keys, usage and recharge-code redemption in one place.',
   officialDisclaimer:
-    'JEV VIP is an independent service and is not affiliated with or operated by TypeSafe AI.'
-} as const;
-
-export const dashboardPlaceholderMetrics = {
-  requests: 0,
-  inputTokens: 0,
-  activeKeys: 0
+    'This is an independent Jev access service and is not affiliated with, endorsed by, or operated by TypeSafe AI.',
 } as const;

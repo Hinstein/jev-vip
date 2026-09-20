@@ -10,14 +10,12 @@ import {
   KeyRound,
   LayoutDashboard,
   Menu,
-  Settings,
-  Shield,
   TicketCheck,
-  WalletCards
+  WalletCards,
 } from 'lucide-react';
 
 export default function DashboardLayout({
-  children
+  children,
 }: {
   children: React.ReactNode;
 }) {
@@ -27,18 +25,16 @@ export default function DashboardLayout({
   const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
     { href: '/dashboard/credits', icon: WalletCards, label: 'Credits' },
-    { href: '/redeem', icon: TicketCheck, label: 'Redeem' },
-    { href: '/dashboard/top-up', icon: CreditCard, label: 'Buy Credits' },
     { href: '/dashboard/api-keys', icon: KeyRound, label: 'API Keys' },
     { href: '/dashboard/usage', icon: Activity, label: 'Usage' },
-    { href: '/dashboard/general', icon: Settings, label: 'Account' },
-    { href: '/dashboard/security', icon: Shield, label: 'Security' }
+    { href: '/dashboard/top-up', icon: CreditCard, label: 'Top up' },
+    { href: '/redeem', icon: TicketCheck, label: 'Redeem code' },
   ];
 
   return (
-    <div className="flex flex-col min-h-[calc(100dvh-68px)] max-w-7xl mx-auto w-full">
-      <div className="lg:hidden flex items-center justify-between bg-white border-b border-gray-200 p-4">
-        <span className="font-medium">JEV VIP</span>
+    <div className="mx-auto flex min-h-[calc(100dvh-65px)] w-full max-w-7xl flex-col">
+      <div className="flex items-center justify-between border-b bg-white p-4 lg:hidden">
+        <span className="font-medium">Jev dashboard</span>
         <Button
           className="-mr-3"
           variant="ghost"
@@ -49,15 +45,16 @@ export default function DashboardLayout({
         </Button>
       </div>
 
-      <div className="flex flex-1 overflow-hidden h-full">
+      <div className="flex flex-1 overflow-hidden">
         <aside
-          className={`w-64 bg-white lg:bg-gray-50 border-r border-gray-200 lg:block ${
-            isSidebarOpen ? 'block' : 'hidden'
-          } lg:relative absolute inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+          className={`absolute inset-y-0 left-0 z-40 w-64 transform border-r bg-[#f7f7f4] transition-transform duration-200 lg:relative lg:block lg:translate-x-0 ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
           <nav className="h-full overflow-y-auto p-4">
+            <p className="mb-3 px-3 text-xs font-medium uppercase tracking-[0.16em] text-gray-400">
+              Account
+            </p>
             {navItems.map((item) => {
               const active =
                 item.href === '/dashboard'
@@ -65,12 +62,10 @@ export default function DashboardLayout({
                   : pathname.startsWith(item.href);
 
               return (
-                <Link key={item.href} href={item.href} passHref>
+                <Link key={item.href} href={item.href}>
                   <Button
                     variant={active ? 'secondary' : 'ghost'}
-                    className={`shadow-none my-1 w-full justify-start ${
-                      active ? 'bg-gray-100' : ''
-                    }`}
+                    className="my-1 w-full justify-start shadow-none"
                     onClick={() => setIsSidebarOpen(false)}
                   >
                     <item.icon className="h-4 w-4" />
@@ -82,7 +77,7 @@ export default function DashboardLayout({
           </nav>
         </aside>
 
-        <main className="flex-1 overflow-y-auto p-0 lg:p-4">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-white">{children}</main>
       </div>
     </div>
   );

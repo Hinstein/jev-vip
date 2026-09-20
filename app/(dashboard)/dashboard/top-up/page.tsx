@@ -7,16 +7,20 @@ export default async function TopUpPage() {
   const products = await getActiveProducts();
 
   return (
-    <section className="flex-1 p-4 lg:p-8">
-      <p className="text-sm text-gray-500">Sales channel</p>
-      <h1 className="text-2xl font-semibold tracking-tight">Buy Credits</h1>
-      <p className="mt-2 max-w-2xl text-sm text-gray-500">
-        JEV VIP does not process payment in this phase. Buy a package on Xianyu
-        and redeem the delivered code on this site.
-      </p>
+    <section className="flex-1 px-4 py-8 lg:px-10 lg:py-10">
+      <div className="mx-auto max-w-5xl">
+        <p className="text-sm font-medium text-gray-500">Top up</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">
+          Buy Jev credits
+        </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
+          Choose a pack, complete the purchase in the configured sales channel,
+          then redeem the delivered code on this site.
+        </p>
 
-      <div className="mt-6">
-        <ProductGrid products={products} />
+        <div className="mt-8">
+          <ProductGrid products={products} />
+        </div>
       </div>
     </section>
   );

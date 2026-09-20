@@ -1,13 +1,7 @@
 import { redirect } from 'next/navigation';
 import { BadgeCheck, WalletCards } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { getUser } from '@/lib/db/queries';
-import { getCreditBalance } from '@/lib/credits/queries';
 import { RedeemForm } from './redeem-form';
 
 export const dynamic = 'force-dynamic';
@@ -18,54 +12,45 @@ function formatCredits(value: number) {
 
 export default async function RedeemPage() {
   const user = await getUser();
-  if (!user) {
-    redirect('/sign-in?redirect=%2Fredeem');
-  }
-
-  const balance = await getCreditBalance(user.id);
+  if (!user) redirect('/sign-in?redirect=%2Fredeem');
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
-      <div className="mb-8">
-        <p className="text-sm text-gray-500">Voucher redemption</p>
+    <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6">
+      <div className="border-b pb-7">
+        <p className="text-sm font-medium text-gray-500">Top up</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-          Redeem JEV Credits
+          Redeem a code
         </h1>
-        <p className="mt-3 text-gray-600">
-          Buy a package from the configured sales channel, then redeem the code
-          here. OfferKit only validates and consumes the code; JEV VIP owns your
-          credit balance.
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
+          Enter the one-time code you received after purchase. New API validates
+          the code and credits this account directly.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-[1fr_260px]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Enter your code</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <div className="mt-8 grid gap-6 md:grid-cols-[1fr_260px]">
+        <Card className="shadow-none">
+          <CardContent className="p-6">
             <RedeemForm />
           </CardContent>
         </Card>
 
         <div className="space-y-4">
-          <Card>
-            <CardContent className="pt-6">
-              <WalletCards className="h-5 w-5 text-gray-500" />
-              <p className="mt-3 text-sm text-gray-500">Current balance</p>
+          <Card className="shadow-none">
+            <CardContent className="p-6">
+              <WalletCards className="h-5 w-5 text-gray-400" />
+              <p className="mt-4 text-sm text-gray-500">Available credits</p>
               <p className="mt-1 text-2xl font-semibold">
-                {formatCredits(balance)}
+                {formatCredits(user.quota)}
               </p>
-              <p className="text-xs text-gray-500">JEV Credits</p>
             </CardContent>
           </Card>
 
-          <div className="rounded-xl border bg-white p-4 text-sm text-gray-600">
+          <div className="rounded-xl border bg-white p-4 text-sm leading-6 text-gray-500">
             <div className="flex gap-2">
-              <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-gray-900" />
+              <BadgeCheck className="mt-1 h-4 w-4 shrink-0 text-gray-900" />
               <p>
-                A successful voucher can credit an account only once. Raw
-                voucher codes are not stored in the JEV database.
+                Redemption state and quota are owned by New API, so the JEV
+                frontend cannot double-credit a used code.
               </p>
             </div>
           </div>

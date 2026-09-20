@@ -29,23 +29,25 @@ export function ProductGrid({ products }: { products: DisplayProduct[] }) {
       {products.map((product) => (
         <div key={product.id} className="rounded-2xl border bg-white p-6">
           <h2 className="text-lg font-semibold">{product.name}</h2>
-          <p className="mt-4 text-4xl font-semibold">{formatPrice(product)}</p>
+          <p className="mt-4 text-4xl font-semibold tracking-tight">
+            {formatPrice(product)}
+          </p>
           <p className="mt-2 text-sm text-gray-500">
-            {formatCredits(product.credits)} JEV Credits
+            {formatCredits(product.credits)} Jev credits
           </p>
 
           <ul className="mt-6 space-y-3 text-sm text-gray-600">
             <li className="flex gap-2">
               <Check className="h-4 w-4 text-gray-950" />
-              One-time voucher redemption
+              One-time recharge code
             </li>
             <li className="flex gap-2">
               <Check className="h-4 w-4 text-gray-950" />
-              Credits stored in JEV VIP
+              Balance credited by New API
             </li>
             <li className="flex gap-2">
               <Check className="h-4 w-4 text-gray-950" />
-              Full credit ledger
+              Works with your dashboard API key
             </li>
           </ul>
 
@@ -56,12 +58,12 @@ export function ProductGrid({ products }: { products: DisplayProduct[] }) {
                 target="_blank"
                 rel="noopener noreferrer nofollow"
               >
-                Buy on Xianyu
+                Buy recharge code
               </a>
             </Button>
           ) : (
             <Button className="mt-6 w-full" disabled>
-              Xianyu link pending
+              Purchase link pending
             </Button>
           )}
 

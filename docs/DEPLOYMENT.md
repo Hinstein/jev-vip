@@ -1,11 +1,10 @@
 # Deployment checklist
 
-## JEV VIP
+## JEV frontend
 
 1. Install Node 22+, pnpm and PostgreSQL 16+.
-2. Clone the repository.
-3. Copy `.env.example` to `.env` and set real values.
-4. Run:
+2. Copy `.env.example` to `.env` and set production secrets.
+3. Install and build:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -13,24 +12,31 @@ pnpm db:migrate
 pnpm db:seed
 pnpm jev:configure-products
 pnpm build
-pnpm start
 ```
 
-5. Put Caddy or Nginx in front of port 3000 and serve the site over HTTPS. Session cookies are secure-only.
+4. Start the backend stack:
 
-Stripe is not required for this phase.
+```bash
+docker compose -f docker-compose.backend.yml up -d
+```
 
-## OfferKit
+5. Start the Next.js frontend with `pnpm start`.
+6. Put both the JEV site and the New API administrator console behind HTTPS.
 
-Deploy OfferKit independently. Pin a stable release rather than an edge image for production. Configure its own Postgres/Redis, admin credentials and API key, then create the three JEV campaigns described in `docs/OFFERKIT_INTEGRATION.md`.
+## New API checks before public sales
 
-Before opening redemption to users, verify the OfferKit readiness endpoint and redeem one disposable test voucher end to end.
+- New API root setup completed.
+- Password login and registration match the JEV frontend configuration.
+- Customer roles/status/groups are visible in the New API admin console.
+- The `jev` channel points only to the internal JEV adapter.
+- TypeSafe credentials exist only in the adapter environment.
+- Recharge-code batches can be generated and redeemed.
+- A redeemed account can create a token and call `/api/v1/decide`.
+- Usage reduces New API quota and appears in New API logs.
+- Database and Redis backups are configured.
 
-## Before public sales
+## Sales channel
 
-- Set all three real OfferKit campaign UUIDs.
-- Set Xianyu product URLs.
-- Test valid, invalid, expired and already-used codes.
-- Test two simultaneous submissions of the same code.
-- Back up both JEV Postgres and OfferKit Postgres.
-- Add application or reverse-proxy rate limiting to `POST /api/redeem`.
+Set the public purchase URLs used by the JEV product cards. The sales channel
+only sells recharge codes; New API is the source of truth for code state and
+credited quota.

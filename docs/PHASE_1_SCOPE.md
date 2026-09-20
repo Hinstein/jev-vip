@@ -1,48 +1,39 @@
-# Phase 1 scope
+# Current scope
 
-## Goal
+## Product
 
-Ship the reusable SaaS shell before implementing recharge delivery.
-
-## Fixed architecture
-
-Use the upstream `nextjs/saas-starter` for generic SaaS concerns. Do not
-replace its auth/session/database foundation with a custom framework.
+This repository is a JEV prepaid API/recharge platform.
 
 Customer flow:
 
 ```text
 landing
-  -> sign up / sign in
+  -> New API-backed sign up / sign in
   -> dashboard
-      -> balance
-      -> top up
+      -> available credits
+      -> top up / redeem code
       -> API keys
       -> usage
-      -> orders
-      -> account/security
+  -> POST /api/v1/decide
 ```
 
-## Phase 2 integration boundaries
+## Fixed architecture
 
-Payment and Jev delivery should later be added behind these modules:
+- JEV Next.js: branded customer frontend and Jev-shaped API facade.
+- New API: authentication, users, roles, permissions, quota, redemption,
+  customer tokens, usage, logs, routing and admin console.
+- JEV adapter: protocol conversion only.
+- TypeSafe: official upstream Jev model endpoint.
 
-- credit ledger
-- top-up orders
-- payment adapter
-- delivery adapter
-- API key store
-- Jev upstream/proxy adapter
-- usage meter
+Do not add another customer user table, permission system, credit ledger or API
+key store to the JEV frontend.
 
-Do not put payment-provider code directly in dashboard components. Do not put
-upstream Jev secrets in client components.
+## Acceptance
 
-## Phase 1 acceptance
-
-- Existing starter auth remains intact.
-- `/dashboard` remains protected.
-- Customer navigation contains Overview, API Keys, Usage, Top Up, Orders,
-  Account and Security.
-- Top-up and API-key actions do not execute real money/key operations.
-- UI explicitly marks unfinished delivery functions as phase 2.
+- JEV naming is consistent; no ZEV branding remains.
+- Dashboard product mechanics follow the hosted Jev reference: balance, top up,
+  API key management, usage and a simple API quick start.
+- JEV login is New API login.
+- User role/status/group/permissions are sourced from New API.
+- Recharge codes are generated and managed in New API.
+- Public Jev API keys are issued and metered by New API.
