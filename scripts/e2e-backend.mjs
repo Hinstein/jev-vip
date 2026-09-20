@@ -134,8 +134,33 @@ async function deleteApiKey(accessToken, id) {
   await api(accessToken, `/api/token/${id}`, { method: 'DELETE' });
 }
 
-function expectedQuota(inputTokens) {
-  return Math.round((inputTokens / 1_000_000) * 0.42 * 500_000);
+async function currentInputPrice() {
+  const result = await jsonRequest(`${newApiBase}/api/pricing`);
+  const payload = result.body;
+  if (!result.response.ok || payload?.success === false || !Array.isArray(payload?.data)) {
+    throw new Error(`pricing lookup failed: ${JSON.stringify(payload)}`);
+  }
+
+  const model = payload.data.find((entry) => entry.model_name === 'jev');
+  if (!model) throw new Error('jev pricing is missing from New API');
+
+  if (model.billing_mode === 'tiered_expr' && typeof model.billing_expr === 'string') {
+    const match = model.billing_expr.match(/\\bp\\s*\\*\\s*([0-9]+(?:\\.[0-9]+)?)/i);
+    if (!match) throw new Error(`unsupported jev billing expression: ${model.billing_expr}`);
+    return Number(match[1]);
+  }
+
+  if (model.quota_type === 0 && Number.isFinite(Number(model.model_ratio))) {
+    return Number(model.model_ratio) * 2;
+  }
+
+  throw new Error('unsupported jev pricing mode');
+}
+
+function expectedQuota(inputTokens, inputUsdPerMillion) {
+  return Math.round(
+    (inputTokens / 1_000_000) * inputUsdPerMillion * 500_000
+  );
 }
 
 async function main() {
@@ -198,7 +223,8 @@ async function main() {
 
     const afterCall = await self(accessToken);
     const actualDelta = Number(afterRedeem.quota) - Number(afterCall.quota);
-    const expected = expectedQuota(inputTokens);
+    const inputUsdPerMillion = await currentInputPrice();
+    const expected = expectedQuota(inputTokens, inputUsdPerMillion);
 
     if (actualDelta <= 0) {
       throw new Error(
@@ -218,6 +244,7 @@ async function main() {
       quotaBeforeRedeem: initial.quota,
       quotaAfterRedeem: afterRedeem.quota,
       inputTokens,
+      inputUsdPerMillion,
       expectedQuota: expected,
       actualQuota: actualDelta,
       remainingQuota: afterCall.quota,
