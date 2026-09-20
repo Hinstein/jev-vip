@@ -1,6 +1,6 @@
 services:
   new-api:
-    image: calciumion/new-api:latest
+    image: ${NEW_API_IMAGE:-calciumion/new-api:v1.0.0-rc.38}
     restart: unless-stopped
     command: --log-dir /app/logs
     ports:
@@ -14,6 +14,11 @@ services:
       TZ: Asia/Shanghai
       ERROR_LOG_ENABLED: "true"
       BATCH_UPDATE_ENABLED: "true"
+      GENERATE_DEFAULT_TOKEN: "false"
+      # JEV relays customer traffic through this internal service, so a global
+      # per-IP API limiter would collapse all customers onto the JEV server IP.
+      # Use New API user/group/token limits instead.
+      GLOBAL_API_RATE_LIMIT_ENABLE: "false"
       NODE_NAME: jev-new-api-1
     depends_on:
       new-api-postgres:

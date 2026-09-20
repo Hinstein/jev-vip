@@ -6,6 +6,7 @@ import { Loader2, TicketCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { formatUsdFromQuota } from '@/lib/jev/billing';
 
 type RedeemResponse =
   | {
@@ -20,10 +21,6 @@ type RedeemResponse =
       code: string;
       message: string;
     };
-
-function formatCredits(value: number) {
-  return new Intl.NumberFormat('en-US').format(value);
-}
 
 export function RedeemForm() {
   const router = useRouter();
@@ -107,13 +104,12 @@ export function RedeemForm() {
             result.alreadyApplied ? (
               <p>
                 This code was already processed for your account. Current
-                balance: {formatCredits(result.balance)} JEV Credits.
+                balance: {formatUsdFromQuota(result.balance)}.
               </p>
             ) : (
               <p>
-                Redeemed {result.productName}: +
-                {formatCredits(result.credited)} JEV Credits. Current balance:{' '}
-                {formatCredits(result.balance)}.
+                Recharge successful: +{formatUsdFromQuota(result.credited)}.
+                Current balance: {formatUsdFromQuota(result.balance)}.
               </p>
             )
           ) : (

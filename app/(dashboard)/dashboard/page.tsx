@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { getUser } from '@/lib/db/queries';
 import { listNewApiTokens } from '@/lib/new-api/client';
+import { formatUsdFromQuota } from '@/lib/jev/billing';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,13 +33,13 @@ export default async function DashboardPage() {
 
   const metrics = [
     {
-      label: 'Available credits',
-      value: formatNumber(user.quota),
+      label: 'Available balance',
+      value: formatUsdFromQuota(user.quota),
       icon: WalletCards,
     },
     {
-      label: 'Used credits',
-      value: formatNumber(user.used_quota),
+      label: 'API spend',
+      value: formatUsdFromQuota(user.used_quota),
       icon: Zap,
     },
     {

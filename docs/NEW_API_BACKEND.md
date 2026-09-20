@@ -55,13 +55,17 @@ customer API key
   -> New API /v1/chat/completions
        -> authenticate key
        -> enforce quota/model
-       -> meter/log
+       -> pre-consume quota
        -> route model "jev"
   -> jev-adapter /v1/chat/completions
   -> TypeSafe /v1/systemone
+  -> authoritative usage.input_tokens
+  -> New API settlement/logging
 ```
 
-The adapter owns no users, keys, quota, redemption codes or billing state.
+The adapter owns no users, keys, quota, redemption codes or billing state. It
+fails closed when a successful TypeSafe response does not contain valid token
+usage, preventing an unmetered successful call.
 
 ## First boot
 
@@ -78,14 +82,21 @@ The adapter owns no users, keys, quota, redemption codes or billing state.
    frontend. For the current simple JEV signup form, keep Turnstile, email
    verification and password-login encryption disabled until those flows are
    explicitly implemented in JEV.
-5. Disable automatic default-token generation; JEV creates customer API keys
-   explicitly.
-6. Create an OpenAI-compatible channel:
+5. Keep new-user quota at 0 and automatic default-token generation disabled.
+6. Confirm New API payment/compliance settings so redemption-code generation is
+   allowed.
+7. Create an OpenAI-compatible channel:
    - Base URL: `http://jev-adapter:4100`
    - API key: `JEV_ADAPTER_SHARED_KEY`
    - Model: `jev`
-7. Configure the `jev` model ratio/quota rules in New API.
-8. Generate recharge-code batches from the New API admin console.
+8. Configure model `jev` to input $0.42/M and output $0/M.
+9. Configure default group ratio 1.0 and V1 group rate limit 120 RPM.
+10. Keep New API's global per-IP API limiter disabled on this internal relay
+    deployment; customer limits belong at the user/group/token level.
+11. Enable consumption logs.
+12. Generate test and production recharge-code batches.
+
+See `docs/BILLING_V1.md` and `docs/LAUNCH_RUNBOOK.md`.
 
 ## Frontend reference
 

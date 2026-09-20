@@ -44,6 +44,23 @@ function extractJevPayload(body) {
   return payload;
 }
 
+function extractUsage(data) {
+  const usage = data?.usage;
+  const inputTokens = Number(usage?.input_tokens);
+  const outputTokens = Number(usage?.output_tokens ?? 0);
+
+  if (
+    !Number.isSafeInteger(inputTokens) ||
+    inputTokens < 0 ||
+    !Number.isSafeInteger(outputTokens) ||
+    outputTokens < 0
+  ) {
+    throw new Error('invalid_usage');
+  }
+
+  return { inputTokens, outputTokens };
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/healthz') {
     return sendJson(res, 200, { ok: true });
@@ -96,9 +113,18 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    const usage = data?.usage && typeof data.usage === 'object' ? data.usage : {};
-    const promptTokens = Number(usage.input_tokens || 0);
-    const completionTokens = Number(usage.output_tokens || 0);
+    let inputTokens;
+    let outputTokens;
+    try {
+      ({ inputTokens, outputTokens } = extractUsage(data));
+    } catch {
+      // Billing is settled from authoritative upstream usage. A successful
+      // response without input token usage must fail closed rather than become
+      // a free request or be charged from an unrelated chat-token estimate.
+      return sendJson(res, 502, {
+        error: { message: 'Upstream response did not include valid token usage' },
+      });
+    }
 
     return sendJson(res, 200, {
       id: `jev-${randomUUID()}`,
@@ -116,18 +142,17 @@ const server = http.createServer(async (req, res) => {
         },
       ],
       usage: {
-        prompt_tokens: promptTokens,
-        completion_tokens: completionTokens,
-        total_tokens: promptTokens + completionTokens,
+        prompt_tokens: inputTokens,
+        completion_tokens: outputTokens,
+        total_tokens: inputTokens + outputTokens,
       },
     });
   } catch (error) {
-    const message =
-      error instanceof Error && error.message === 'body_too_large'
-        ? 'Request body is too large'
-        : 'Invalid JEV request payload';
-    return sendJson(res, error instanceof Error && error.message === 'body_too_large' ? 413 : 400, {
-      error: { message },
+    const tooLarge = error instanceof Error && error.message === 'body_too_large';
+    return sendJson(res, tooLarge ? 413 : 400, {
+      error: {
+        message: tooLarge ? 'Request body is too large' : 'Invalid JEV request payload',
+      },
     });
   }
 });

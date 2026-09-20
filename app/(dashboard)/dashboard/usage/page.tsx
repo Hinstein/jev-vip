@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { Activity } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { getUser } from '@/lib/db/queries';
+import { formatUsdFromQuota } from '@/lib/jev/billing';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,8 +22,8 @@ export default async function UsagePage() {
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <Metric label="Requests" value={formatNumber(user.request_count)} />
-          <Metric label="Used credits" value={formatNumber(user.used_quota)} />
-          <Metric label="Remaining credits" value={formatNumber(user.quota)} />
+          <Metric label="API spend" value={formatUsdFromQuota(user.used_quota)} />
+          <Metric label="Remaining" value={formatUsdFromQuota(user.quota)} />
         </div>
 
         <Card className="mt-6 shadow-none">
@@ -31,8 +32,8 @@ export default async function UsagePage() {
             <div>
               <p className="font-medium">Usage updates automatically</p>
               <p className="mt-1 text-sm leading-6 text-gray-500">
-                Every successful Jev API request is counted against the same
-                prepaid balance shown in your dashboard.
+                Each successful request is settled against the input-token count
+                reported by the Jev upstream response.
               </p>
             </div>
           </CardContent>

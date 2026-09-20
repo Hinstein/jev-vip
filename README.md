@@ -25,10 +25,20 @@ The TypeSafe upstream is not OpenAI-compatible, so
 `relay/jev-adapter` remains as a narrow protocol converter. It owns no users,
 keys, quota or billing state.
 
+## Billing V1
+
+- retail Jev input: $0.42 / 1M tokens
+- output: free
+- New API internal quota: 500,000 = $1
+- recharge packs: ¥10 / ¥30 / ¥50
+- authoritative settlement: TypeSafe `usage.input_tokens`
+
+See `docs/BILLING_V1.md`.
+
 ## Customer product
 
 - New API-backed registration and login
-- prepaid credit balance
+- prepaid API balance
 - recharge-code redemption
 - API key create/list/revoke
 - usage visibility
@@ -48,7 +58,7 @@ docker compose -f docker-compose.backend.yml up -d
 pnpm dev
 ```
 
-See `docs/NEW_API_BACKEND.md` and `docs/DEPLOYMENT.md`.
+Before public sales, run the full checklist in `docs/LAUNCH_RUNBOOK.md`.
 
 This is an independent service and is not affiliated with, endorsed by, or
 operated by TypeSafe AI.

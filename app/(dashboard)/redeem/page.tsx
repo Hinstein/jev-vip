@@ -3,12 +3,9 @@ import { BadgeCheck, WalletCards } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { getUser } from '@/lib/db/queries';
 import { RedeemForm } from './redeem-form';
+import { formatUsdFromQuota } from '@/lib/jev/billing';
 
 export const dynamic = 'force-dynamic';
-
-function formatCredits(value: number) {
-  return new Intl.NumberFormat('en-US').format(value);
-}
 
 export default async function RedeemPage() {
   const user = await getUser();
@@ -22,7 +19,7 @@ export default async function RedeemPage() {
           Redeem a code
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
-          Enter the one-time code you received after purchase. Credits are
+          Enter the one-time code you received after purchase. API balance is
           added to this account immediately after a successful redemption.
         </p>
       </div>
@@ -38,9 +35,9 @@ export default async function RedeemPage() {
           <Card className="shadow-none">
             <CardContent className="p-6">
               <WalletCards className="h-5 w-5 text-gray-400" />
-              <p className="mt-4 text-sm text-gray-500">Available credits</p>
+              <p className="mt-4 text-sm text-gray-500">Available balance</p>
               <p className="mt-1 text-2xl font-semibold">
-                {formatCredits(user.quota)}
+                {formatUsdFromQuota(user.quota)}
               </p>
             </CardContent>
           </Card>
@@ -49,8 +46,8 @@ export default async function RedeemPage() {
             <div className="flex gap-2">
               <BadgeCheck className="mt-1 h-4 w-4 shrink-0 text-gray-900" />
               <p>
-                Each recharge code can only be credited according to its
-                backend redemption state.
+                Each recharge code can be credited once according to its backend
+                redemption state.
               </p>
             </div>
           </div>

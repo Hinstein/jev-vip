@@ -7,7 +7,7 @@ const defaultProducts = [
     priceMinor: 1000,
     currency: 'CNY',
     offerkitCampaignKey: 'JEV_10',
-    credits: 1000000,
+    credits: 750000,
     active: true,
   },
   {
@@ -15,7 +15,7 @@ const defaultProducts = [
     priceMinor: 3000,
     currency: 'CNY',
     offerkitCampaignKey: 'JEV_30',
-    credits: 3500000,
+    credits: 2250000,
     active: true,
   },
   {
@@ -23,7 +23,7 @@ const defaultProducts = [
     priceMinor: 5000,
     currency: 'CNY',
     offerkitCampaignKey: 'JEV_50',
-    credits: 6000000,
+    credits: 3750000,
     active: true,
   },
 ] as const;
@@ -33,7 +33,17 @@ async function seed() {
     await db
       .insert(products)
       .values(product)
-      .onConflictDoNothing({ target: products.offerkitCampaignKey });
+      .onConflictDoUpdate({
+        target: products.offerkitCampaignKey,
+        set: {
+          name: product.name,
+          priceMinor: product.priceMinor,
+          currency: product.currency,
+          credits: product.credits,
+          active: product.active,
+          updatedAt: new Date(),
+        },
+      });
   }
 
   console.log('JEV product defaults are ready.');
