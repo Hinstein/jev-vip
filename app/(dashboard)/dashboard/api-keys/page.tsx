@@ -18,25 +18,25 @@ export default async function ApiKeysPage() {
 
   if (configured) {
     try {
-      keys = await listNewApiTokens(user);
+      keys = await listNewApiTokens();
     } catch (error) {
-      console.error('Unable to load New API keys', error);
+      console.error('Unable to load Jev API keys', error);
     }
   }
 
   return (
-    <section className="flex-1 p-4 lg:p-8">
-      <div>
-        <p className="text-sm text-gray-500">Access</p>
-        <h1 className="text-2xl font-semibold tracking-tight">API Keys</h1>
-        <p className="mt-2 max-w-2xl text-sm text-gray-500">
-          Create and revoke ZEV API keys. Keys, quota, usage and access control
-          are managed by the New API backend.
+    <section className="flex-1 px-4 py-8 lg:px-10 lg:py-10">
+      <div className="mx-auto max-w-5xl">
+        <p className="text-sm font-medium text-gray-500">Access</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">API Keys</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
+          Create and revoke Jev API keys. Key status, model access, quota and
+          usage enforcement are managed by New API.
         </p>
-      </div>
 
-      <div className="mt-6">
-        <KeyManager initialKeys={keys} configured={configured} />
+        <div className="mt-8">
+          <KeyManager initialKeys={keys} configured={configured} />
+        </div>
       </div>
     </section>
   );
