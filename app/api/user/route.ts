@@ -1,4 +1,4 @@
-import { getUser } from '@/lib/db/queries';
+import { getUser } from '@/lib/new-api/user';
 
 export async function GET() {
   const user = await getUser();

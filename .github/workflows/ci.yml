@@ -8,22 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: jev_vip
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d jev_vip"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     env:
-      POSTGRES_URL: postgres://postgres:postgres@localhost:5432/jev_vip
       AUTH_SECRET: ci-only-auth-secret-ci-only-auth-secret
       BASE_URL: http://localhost:3000
     steps:
@@ -38,6 +23,4 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc --noEmit
       - run: node --check relay/jev-adapter/server.mjs
-      - run: pnpm db:migrate
-      - run: pnpm db:seed
       - run: pnpm build

@@ -2,15 +2,14 @@
 
 ## JEV frontend
 
-1. Install Node 22+, pnpm and PostgreSQL 16+.
+The JEV Next.js frontend is stateless and has no application database.
+
+1. Install Node 22+ and pnpm.
 2. Copy `.env.example` to `.env` and set production secrets.
 3. Install and build:
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm db:migrate
-pnpm db:seed
-pnpm jev:configure-products
 pnpm build
 ```
 
@@ -20,23 +19,27 @@ pnpm build
 docker compose -f docker-compose.backend.yml up -d
 ```
 
-5. Start the Next.js frontend with `pnpm start`.
-6. Put both the JEV site and the New API administrator console behind HTTPS.
+5. Start the JEV frontend with `pnpm start`.
+6. Put both the JEV site and New API administrator console behind HTTPS.
+7. In production enable Secure New API session cookies and configure the trusted
+   admin URL.
 
-## New API checks before public sales
+## New API state
 
-- New API root setup completed.
-- Password login and registration match the JEV frontend configuration.
-- Customer roles/status/groups are visible in the New API admin console.
-- The `jev` channel points only to the internal JEV adapter.
-- TypeSafe credentials exist only in the adapter environment.
+New API PostgreSQL and Redis are the persistent backend state. Back up New API
+PostgreSQL before public sales. Redis is operational/cache state and should be
+configured for reliable restart behavior.
+
+## Before public sales
+
+- Root setup completed.
+- Password registration/login settings match the JEV frontend.
+- `jev` channel points only to the internal JEV adapter.
+- TypeSafe credential exists only in the adapter environment.
+- Model price is $0.42/M input and $0/M output.
+- Default group ratio and rate limit are configured.
 - Recharge-code batches can be generated and redeemed.
-- A redeemed account can create a token and call `/api/v1/decide`.
+- A fresh account can create a key and call `/api/v1/decide`.
 - Usage reduces New API quota and appears in New API logs.
-- Database and Redis backups are configured.
-
-## Sales channel
-
-Set the public purchase URLs used by the JEV product cards. The sales channel
-only sells recharge codes; New API is the source of truth for code state and
-credited quota.
+- New API PostgreSQL backups are configured.
+- Public sales-channel URLs are set in the JEV environment.

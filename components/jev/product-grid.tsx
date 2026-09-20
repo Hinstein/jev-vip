@@ -1,29 +1,17 @@
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Product } from '@/lib/db/schema';
+import type { JevProduct } from '@/lib/jev/products';
 import {
   formatApproxInputTokens,
   formatUsdFromQuota,
 } from '@/lib/jev/billing';
 
-type DisplayProduct = Pick<
-  Product,
-  'id' | 'name' | 'priceMinor' | 'currency' | 'credits' | 'purchaseUrl'
->;
-
-function formatPrice(product: DisplayProduct) {
-  if (product.currency === 'CNY') {
-    return `¥${(product.priceMinor / 100).toFixed(0)}`;
-  }
-
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: product.currency,
-  }).format(product.priceMinor / 100);
+function formatPrice(product: JevProduct) {
+  return `¥${(product.priceMinor / 100).toFixed(0)}`;
 }
 
-export function ProductGrid({ products }: { products: DisplayProduct[] }) {
+export function ProductGrid({ products }: { products: JevProduct[] }) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {products.map((product) => (

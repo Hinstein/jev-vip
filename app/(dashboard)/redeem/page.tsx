@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { BadgeCheck, WalletCards } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { getUser } from '@/lib/db/queries';
+import { getUser } from '@/lib/new-api/user';
 import { RedeemForm } from './redeem-form';
 import { formatUsdFromQuota } from '@/lib/jev/billing';
 

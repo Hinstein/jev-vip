@@ -7,19 +7,20 @@ Jev.
 
 ```text
 Customer
-  -> JEV Next.js frontend
+  -> JEV Next.js frontend (stateless; no local database)
        -> New API
           -> login / users / roles / permissions
           -> quota / redemption codes
           -> API keys / usage / logs
           -> routing / administrator console
+          -> PostgreSQL + Redis
           -> internal Jev protocol adapter
                -> TypeSafe /v1/systemone
 ```
 
-New API is the source of truth for customer identity and commercial API state.
-The JEV frontend does not maintain a second user/permission system or credit
-ledger.
+New API is the only source of truth for customer identity and commercial API
+state. The JEV frontend does not maintain a second user database, permission
+system, credit ledger or API-key store.
 
 The TypeSafe upstream is not OpenAI-compatible, so
 `relay/jev-adapter` remains as a narrow protocol converter. It owns no users,
@@ -33,6 +34,10 @@ keys, quota or billing state.
 - recharge packs: ¥10 / ¥30 / ¥50
 - authoritative settlement: TypeSafe `usage.input_tokens`
 
+Recharge-pack metadata is static in `lib/jev/products.ts`; only public sales
+URLs come from environment variables. Pack purchase configuration is not a
+second billing database.
+
 See `docs/BILLING_V1.md`.
 
 ## Customer product
@@ -44,16 +49,10 @@ See `docs/BILLING_V1.md`.
 - usage visibility
 - hosted `POST /api/v1/decide`
 
-The customer experience references the product mechanics of
-jevtypesafeai.com while keeping independent branding and implementation.
-
 ## Setup
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm db:migrate
-pnpm db:seed
-pnpm jev:configure-products
 docker compose -f docker-compose.backend.yml up -d
 pnpm dev
 ```

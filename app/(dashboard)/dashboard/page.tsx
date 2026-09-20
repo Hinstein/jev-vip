@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { getUser } from '@/lib/db/queries';
+import { getUser } from '@/lib/new-api/user';
 import { listNewApiTokens } from '@/lib/new-api/client';
 import { formatUsdFromQuota } from '@/lib/jev/billing';
 

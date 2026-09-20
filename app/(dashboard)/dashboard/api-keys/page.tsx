@@ -4,7 +4,7 @@ import {
   listNewApiTokens,
   type NewApiToken,
 } from '@/lib/new-api/client';
-import { getUser } from '@/lib/db/queries';
+import { getUser } from '@/lib/new-api/user';
 import { KeyManager } from './key-manager';
 
 export const dynamic = 'force-dynamic';

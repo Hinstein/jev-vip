@@ -1,17 +1,17 @@
 import { ProductGrid } from '@/components/jev/product-grid';
-import { getActiveProducts } from '@/lib/credits/queries';
+import { getActiveProducts } from '@/lib/jev/products';
 
 export const dynamic = 'force-dynamic';
 
-export default async function TopUpPage() {
-  const products = await getActiveProducts();
+export default function TopUpPage() {
+  const products = getActiveProducts();
 
   return (
     <section className="flex-1 px-4 py-8 lg:px-10 lg:py-10">
       <div className="mx-auto max-w-5xl">
         <p className="text-sm font-medium text-gray-500">Top up</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-          Buy Jev credits
+          Buy Jev API balance
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
           Choose a pack, complete the purchase in the configured sales channel,

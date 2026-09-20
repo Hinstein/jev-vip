@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { Activity } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { getUser } from '@/lib/db/queries';
+import { getUser } from '@/lib/new-api/user';
 import { formatUsdFromQuota } from '@/lib/jev/billing';
 
 export const dynamic = 'force-dynamic';
