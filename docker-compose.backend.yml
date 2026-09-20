@@ -19,6 +19,9 @@ services:
       # per-IP API limiter would collapse all customers onto the JEV server IP.
       # Use New API user/group/token limits instead.
       GLOBAL_API_RATE_LIMIT_ENABLE: "false"
+      # Auth/login/refresh rate limits use ClientIP. JEV forwards the
+      # edge-sanitized client chain; only private/loopback proxy hops are trusted.
+      TRUSTED_PROXIES: ${NEW_API_TRUSTED_PROXIES:-127.0.0.0/8,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7}
       NODE_NAME: jev-new-api-1
     depends_on:
       new-api-postgres:

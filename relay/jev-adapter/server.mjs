@@ -62,8 +62,6 @@ function normalizeUpstreamResult(data) {
     throw new Error('invalid_answers');
   }
 
-  // Deliberately allowlist the public System One response shape. Do not pass
-  // upstream billing/account metadata through to JEV customers.
   return {
     model: typeof data.model === 'string' ? data.model : 'jev',
     answers: data.answers,
@@ -74,8 +72,17 @@ function normalizeUpstreamResult(data) {
   };
 }
 
+function upstreamFailureStatus(status) {
+  if (status === 400 || status === 422) return 400;
+  if (status === 408 || status === 429) return 503;
+  return 502;
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/healthz') {
+    if (!upstreamKey || !sharedKey) {
+      return sendJson(res, 503, { ok: false });
+    }
     return sendJson(res, 200, { ok: true });
   }
 
@@ -88,8 +95,8 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (!upstreamKey) {
-    return sendJson(res, 500, {
-      error: { message: 'TypeSafe upstream key is not configured' },
+    return sendJson(res, 503, {
+      error: { message: 'Jev upstream is not configured' },
     });
   }
 
@@ -113,19 +120,21 @@ const server = http.createServer(async (req, res) => {
       data = text ? JSON.parse(text) : {};
     } catch {
       return sendJson(res, 502, {
-        error: { message: 'Upstream returned invalid JSON' },
+        error: { message: 'Jev upstream returned an invalid response' },
       });
     }
 
     if (!upstream.ok) {
-      return sendJson(res, upstream.status, {
+      console.error('TypeSafe request failed', {
+        status: upstream.status,
+        requestId: upstream.headers.get('x-request-id') || undefined,
+      });
+      return sendJson(res, upstreamFailureStatus(upstream.status), {
         error: {
           message:
-            typeof data?.message === 'string'
-              ? data.message
-              : typeof data?.error === 'string'
-                ? data.error
-                : 'TypeSafe upstream request failed',
+            upstream.status === 400 || upstream.status === 422
+              ? 'Invalid Jev request'
+              : 'Jev upstream is temporarily unavailable',
         },
       });
     }
@@ -134,11 +143,8 @@ const server = http.createServer(async (req, res) => {
     try {
       result = normalizeUpstreamResult(data);
     } catch {
-      // Billing is settled from authoritative upstream usage. A successful
-      // response without the documented System One result shape must fail
-      // closed rather than become free or leak upstream account metadata.
       return sendJson(res, 502, {
-        error: { message: 'Upstream response did not match the Jev response schema' },
+        error: { message: 'Jev upstream returned an invalid response' },
       });
     }
 

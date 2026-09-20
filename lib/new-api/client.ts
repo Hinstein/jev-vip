@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { randomUUID } from 'node:crypto';
 import { getSession } from '@/lib/auth/session';
 import type { NewApiUser } from './types';
 
@@ -17,6 +18,8 @@ export type NewApiToken = {
   model_limits_enabled?: boolean;
   model_limits?: string;
   group?: string;
+  allow_ips?: string | null;
+  cross_group_retry?: boolean;
 };
 
 type ApiEnvelope<T> = {
@@ -63,7 +66,7 @@ export async function newApiRequest<T>(
     try {
       payload = JSON.parse(text) as ApiEnvelope<T>;
     } catch {
-      payload = { success: false, message: text.slice(0, 500) };
+      payload = { success: false, message: 'Invalid New API response' };
     }
   }
 
@@ -95,6 +98,14 @@ function extractItems(payload: unknown): NewApiToken[] {
   return [];
 }
 
+async function listTokensWithAccess(accessToken: string) {
+  const data = await newApiRequest<unknown>(
+    accessToken,
+    '/api/token/?page=1&page_size=100'
+  );
+  return extractItems(data);
+}
+
 export async function getNewApiSelfByAccessToken(accessToken: string) {
   return newApiRequest<NewApiUser>(accessToken, '/api/user/self');
 }
@@ -104,54 +115,78 @@ export async function getNewApiSelf() {
 }
 
 export async function listNewApiTokens() {
-  const data = await newApiRequest<unknown>(
-    await currentAccessToken(),
-    '/api/token/?page=1&page_size=100'
-  );
-  return extractItems(data);
+  return listTokensWithAccess(await currentAccessToken());
 }
 
 export async function createNewApiToken(name: string) {
   const accessToken = await currentAccessToken();
+  const model = process.env.NEW_API_JEV_MODEL || 'jev';
+  const suffix = randomUUID().replaceAll('-', '').slice(0, 10);
+  const temporaryName = `${name.slice(0, 39)}-${suffix}`;
 
   await newApiRequest<unknown>(accessToken, '/api/token/', {
     method: 'POST',
     body: JSON.stringify({
-      name,
+      name: temporaryName,
       expired_time: -1,
       remain_quota: 0,
       unlimited_quota: true,
       model_limits_enabled: true,
-      model_limits: process.env.NEW_API_JEV_MODEL || 'jev',
-      // Empty group follows New API's normal user/default-group resolution.
+      model_limits: model,
       group: '',
     }),
   });
 
-  const data = await newApiRequest<unknown>(
-    accessToken,
-    '/api/token/?page=1&page_size=100'
-  );
-  const tokens = extractItems(data);
-  const created = [...tokens]
-    .filter((token) => token.name === name)
-    .sort((a, b) => b.id - a.id)[0];
+  const tokens = await listTokensWithAccess(accessToken);
+  const created = tokens.find((token) => token.name === temporaryName);
 
   if (!created) {
     throw new Error('New API created the key but it could not be located');
   }
 
-  const reveal = await newApiRequest<{ key?: string }>(
-    accessToken,
-    `/api/token/${created.id}/key`,
-    { method: 'POST' }
-  );
+  try {
+    const reveal = await newApiRequest<{ key?: string }>(
+      accessToken,
+      `/api/token/${created.id}/key`,
+      { method: 'POST' }
+    );
 
-  if (!reveal?.key) {
-    throw new Error('New API did not return the generated key');
+    if (!reveal?.key) {
+      throw new Error('New API did not return the generated key');
+    }
+
+    await newApiRequest<unknown>(accessToken, '/api/token/', {
+      method: 'PUT',
+      body: JSON.stringify({
+        id: created.id,
+        name,
+        expired_time: created.expired_time ?? -1,
+        remain_quota: created.remain_quota ?? 0,
+        unlimited_quota: true,
+        model_limits_enabled: true,
+        model_limits: model,
+        allow_ips: created.allow_ips ?? null,
+        group: created.group ?? '',
+        cross_group_retry: false,
+      }),
+    });
+
+    return {
+      key: reveal.key,
+      token: { ...created, name },
+    };
+  } catch (error) {
+    try {
+      await newApiRequest<unknown>(
+        accessToken,
+        `/api/token/${created.id}`,
+        { method: 'DELETE' }
+      );
+    } catch {
+      // Preserve the original error; cleanup is best effort.
+    }
+    throw error;
   }
-
-  return { key: reveal.key, token: created };
 }
 
 export async function deleteNewApiToken(tokenId: number) {

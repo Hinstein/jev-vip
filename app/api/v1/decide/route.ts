@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  readJsonWithLimit,
+  RequestBodyTooLargeError,
+} from '@/lib/http/json';
 
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
 
@@ -8,24 +12,50 @@ function newApiBaseUrl() {
   return value;
 }
 
+function gatewayError(status: number) {
+  if (status === 401) {
+    return NextResponse.json({ error: 'Invalid API key.' }, { status: 401 });
+  }
+  if (status === 402) {
+    return NextResponse.json(
+      { error: 'Insufficient API balance.' },
+      { status: 402 }
+    );
+  }
+  if (status === 403) {
+    return NextResponse.json({ error: 'Access denied.' }, { status: 403 });
+  }
+  if (status === 429) {
+    return NextResponse.json(
+      { error: 'Rate limit or API quota exceeded.' },
+      { status: 429 }
+    );
+  }
+  if (status >= 400 && status < 500) {
+    return NextResponse.json({ error: 'Invalid Jev request.' }, { status: 400 });
+  }
+  return NextResponse.json(
+    { error: 'Jev gateway is temporarily unavailable.' },
+    { status: 503 }
+  );
+}
+
 export async function POST(request: NextRequest) {
   const authorization = request.headers.get('authorization');
   if (!authorization?.startsWith('Bearer ')) {
     return NextResponse.json({ error: 'Missing API key.' }, { status: 401 });
   }
 
-  const contentLength = Number(request.headers.get('content-length') || '0');
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-    return NextResponse.json(
-      { error: 'Request body is too large.' },
-      { status: 413 }
-    );
-  }
-
   let body: unknown;
   try {
-    body = await request.json();
-  } catch {
+    body = await readJsonWithLimit(request, MAX_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { error: 'Request body is too large.' },
+        { status: 413 }
+      );
+    }
     return NextResponse.json(
       { error: 'Invalid JSON request body.' },
       { status: 400 }
@@ -69,15 +99,7 @@ export async function POST(request: NextRequest) {
 
   const relayText = await relayResponse.text();
   if (!relayResponse.ok) {
-    let errorBody: unknown = { error: 'Jev gateway request failed.' };
-    if (relayText) {
-      try {
-        errorBody = JSON.parse(relayText);
-      } catch {
-        errorBody = { error: relayText.slice(0, 1000) };
-      }
-    }
-    return NextResponse.json(errorBody, { status: relayResponse.status });
+    return gatewayError(relayResponse.status);
   }
 
   try {

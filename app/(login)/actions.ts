@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import {
   loginNewApi,
   logoutNewApiAuth,
@@ -14,6 +14,7 @@ import {
   REFRESH_COOKIE,
   setSession,
 } from '@/lib/auth/session';
+import { forwardedForFromHeaders } from '@/lib/http/client-ip';
 import { validatedAction } from '@/lib/auth/middleware';
 
 const signInSchema = z.object({
@@ -21,9 +22,21 @@ const signInSchema = z.object({
   password: z.string().min(8).max(128),
 });
 
+async function requestMeta() {
+  const requestHeaders = await headers();
+  return {
+    forwardedFor: forwardedForFromHeaders(requestHeaders),
+    userAgent: requestHeaders.get('user-agent'),
+  };
+}
+
 export const signIn = validatedAction(signInSchema, async (data, formData) => {
   try {
-    const bundle = await loginNewApi(data.username, data.password);
+    const bundle = await loginNewApi(
+      data.username,
+      data.password,
+      await requestMeta()
+    );
     await setSession(bundle);
   } catch (error) {
     return {
@@ -59,8 +72,9 @@ const signUpSchema = z.object({
 
 export const signUp = validatedAction(signUpSchema, async (data, formData) => {
   try {
-    await registerNewApi(data.username, data.password);
-    const bundle = await loginNewApi(data.username, data.password);
+    const meta = await requestMeta();
+    await registerNewApi(data.username, data.password, meta);
+    const bundle = await loginNewApi(data.username, data.password, meta);
     await setSession(bundle);
   } catch (error) {
     return {
@@ -85,7 +99,11 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
 });
 
 export async function signOut() {
-  const [session, store] = await Promise.all([getSession(), cookies()]);
+  const [session, store, meta] = await Promise.all([
+    getSession(),
+    cookies(),
+    requestMeta(),
+  ]);
   const refreshToken = store.get(REFRESH_COOKIE)?.value;
 
   if (session || refreshToken) {
@@ -93,6 +111,7 @@ export async function signOut() {
       accessToken: session?.accessToken,
       refreshToken,
       sid: session?.sid,
+      ...meta,
     });
   }
 

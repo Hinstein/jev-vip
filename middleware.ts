@@ -3,10 +3,12 @@ import type { NextRequest } from 'next/server';
 import {
   REFRESH_COOKIE,
   SESSION_COOKIE,
+  sessionCookieSecure,
   sessionFromBundle,
   signToken,
   verifyToken,
 } from '@/lib/auth/session';
+import { forwardedForFromHeaders } from '@/lib/http/client-ip';
 import { refreshNewApiAuth } from '@/lib/new-api/auth';
 
 function unauthorized(request: NextRequest) {
@@ -51,14 +53,13 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    const bundle = await refreshNewApiAuth(
-      refreshToken,
-      session.sid,
-      request.headers.get('user-agent')
-    );
+    const bundle = await refreshNewApiAuth(refreshToken, session.sid, {
+      forwardedFor: forwardedForFromHeaders(request.headers),
+      userAgent: request.headers.get('user-agent'),
+    });
     const nextSession = sessionFromBundle(bundle);
     const response = NextResponse.next();
-    const secure = request.nextUrl.protocol === 'https:';
+    const secure = sessionCookieSecure();
     const expires = new Date(nextSession.expires);
 
     response.cookies.set(SESSION_COOKIE, await signToken(nextSession), {

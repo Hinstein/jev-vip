@@ -18,6 +18,11 @@ type AuthResponseData = {
   user?: NewApiUser;
 };
 
+type RequestMeta = {
+  forwardedFor?: string;
+  userAgent?: string | null;
+};
+
 function baseUrl() {
   const value = process.env.NEW_API_BASE_URL?.replace(/\/+$/, '');
   if (!value) throw new Error('New API backend is not configured');
@@ -25,7 +30,16 @@ function baseUrl() {
 }
 
 function trustedOrigin() {
-  return process.env.BASE_URL || 'http://localhost:3000';
+  const value = process.env.BASE_URL;
+  if (!value) throw new Error('BASE_URL must be configured');
+  return value;
+}
+
+function requestMetaHeaders(meta?: RequestMeta) {
+  const headers: Record<string, string> = {};
+  if (meta?.forwardedFor) headers['X-Forwarded-For'] = meta.forwardedFor;
+  if (meta?.userAgent) headers['User-Agent'] = meta.userAgent;
+  return headers;
 }
 
 function extractRefreshToken(setCookie: string | null) {
@@ -43,7 +57,7 @@ async function parseEnvelope<T>(response: Response): Promise<ApiEnvelope<T>> {
   } catch {
     return {
       success: false,
-      message: text.slice(0, 500),
+      message: 'Invalid account-service response',
     };
   }
 }
@@ -79,6 +93,9 @@ function authError(
   if (payload.code === 'AUTH_USER_DISABLED') {
     return new Error('This account is disabled.');
   }
+  if (response.status === 429) {
+    return new Error('Too many attempts. Please try again later.');
+  }
   return new Error(payload.message || `${fallback} (HTTP ${response.status})`);
 }
 
@@ -100,7 +117,7 @@ function normalizeAuthBundle(
   ) {
     if (response.ok && payload.success !== false && data && !data.access_token) {
       throw new Error(
-        'This account requires an additional New API login verification step that the JEV frontend does not expose yet.'
+        'This account requires an additional login verification step that JEV does not expose yet.'
       );
     }
     throw authError(response, payload, 'Unable to create login session');
@@ -115,21 +132,33 @@ function normalizeAuthBundle(
   };
 }
 
-export async function loginNewApi(username: string, password: string) {
+export async function loginNewApi(
+  username: string,
+  password: string,
+  meta?: RequestMeta
+) {
   const { response, payload } = await authRequest('/api/user/login', {
     method: 'POST',
+    headers: requestMetaHeaders(meta),
     body: JSON.stringify({ username, password }),
   });
 
   return normalizeAuthBundle(response, payload);
 }
 
-export async function registerNewApi(username: string, password: string) {
+export async function registerNewApi(
+  username: string,
+  password: string,
+  meta?: RequestMeta
+) {
   let response: Response;
   try {
     response = await fetch(`${baseUrl()}/api/user/register`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...requestMetaHeaders(meta),
+      },
       body: JSON.stringify({ username, password }),
       cache: 'no-store',
       signal: AbortSignal.timeout(10000),
@@ -140,25 +169,21 @@ export async function registerNewApi(username: string, password: string) {
 
   const payload = await parseEnvelope<unknown>(response);
   if (!response.ok || payload.success === false) {
-    throw authError(
-      response,
-      payload,
-      'Unable to create account. Check the New API registration settings.'
-    );
+    throw authError(response, payload, 'Unable to create account');
   }
 }
 
 export async function refreshNewApiAuth(
   refreshToken: string,
   sid?: string,
-  userAgent?: string | null
+  meta?: RequestMeta
 ) {
   const headers: Record<string, string> = {
     Cookie: `new_api_refresh=${refreshToken}`,
     Origin: trustedOrigin(),
+    ...requestMetaHeaders(meta),
   };
   if (sid) headers['X-Auth-Session'] = sid;
-  if (userAgent) headers['User-Agent'] = userAgent;
 
   const { response, payload } = await authRequest('/api/user/auth/refresh', {
     method: 'POST',
@@ -172,9 +197,12 @@ export async function logoutNewApiAuth(input: {
   accessToken?: string;
   refreshToken?: string;
   sid?: string;
+  forwardedFor?: string;
+  userAgent?: string | null;
 }) {
   const headers: Record<string, string> = {
     Origin: trustedOrigin(),
+    ...requestMetaHeaders(input),
   };
   if (input.accessToken) {
     headers.Authorization = `Bearer ${input.accessToken}`;

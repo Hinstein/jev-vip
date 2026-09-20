@@ -1,15 +1,37 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import type { NewApiAuthBundle, NewApiUser } from '@/lib/new-api/types';
+import type { NewApiAuthBundle } from '@/lib/new-api/types';
 
 export const SESSION_COOKIE = 'jev_session';
 export const REFRESH_COOKIE = 'jev_refresh';
 
-const key = new TextEncoder().encode(process.env.AUTH_SECRET);
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60;
 
+function authKey() {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret || Buffer.byteLength(secret, 'utf8') < 32) {
+    throw new Error('AUTH_SECRET must be configured with at least 32 bytes');
+  }
+  return new TextEncoder().encode(secret);
+}
+
+export function sessionCookieSecure() {
+  const baseUrl = process.env.BASE_URL;
+  if (!baseUrl) {
+    throw new Error('BASE_URL must be configured');
+  }
+
+  let url: URL;
+  try {
+    url = new URL(baseUrl);
+  } catch {
+    throw new Error('BASE_URL must be an absolute URL');
+  }
+
+  return url.protocol === 'https:';
+}
+
 export type SessionData = {
-  user: NewApiUser;
   accessToken: string;
   accessExpiresAt: number;
   sid: string;
@@ -22,7 +44,6 @@ export function sessionFromBundle(bundle: NewApiAuthBundle): SessionData {
     : new Date(Date.now() + SESSION_TTL_SECONDS * 1000);
 
   return {
-    user: bundle.user,
     accessToken: bundle.accessToken,
     accessExpiresAt: bundle.accessExpiresAt,
     sid: bundle.session.sid,
@@ -35,18 +56,14 @@ export async function signToken(payload: SessionData) {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS)
-    .sign(key);
+    .sign(authKey());
 }
 
 export async function verifyToken(input: string) {
-  const { payload } = await jwtVerify(input, key, {
+  const { payload } = await jwtVerify(input, authKey(), {
     algorithms: ['HS256'],
   });
   return payload as unknown as SessionData;
-}
-
-function secureCookie() {
-  return (process.env.BASE_URL || '').startsWith('https://');
 }
 
 export async function getSession() {
@@ -66,10 +83,11 @@ export async function setSession(bundle: NewApiAuthBundle) {
   const store = await cookies();
   const session = sessionFromBundle(bundle);
   const expires = new Date(session.expires);
+  const secure = sessionCookieSecure();
 
   store.set(SESSION_COOKIE, await signToken(session), {
     httpOnly: true,
-    secure: secureCookie(),
+    secure,
     sameSite: 'lax',
     path: '/',
     expires,
@@ -77,7 +95,7 @@ export async function setSession(bundle: NewApiAuthBundle) {
 
   store.set(REFRESH_COOKIE, bundle.refreshToken, {
     httpOnly: true,
-    secure: secureCookie(),
+    secure,
     sameSite: 'strict',
     path: '/',
     expires,

@@ -5,6 +5,13 @@ import {
   deleteNewApiToken,
   listNewApiTokens,
 } from '@/lib/new-api/client';
+import { hasSameOrigin } from '@/lib/http/origin';
+import {
+  readJsonWithLimit,
+  RequestBodyTooLargeError,
+} from '@/lib/http/json';
+
+const MAX_MUTATION_BODY_BYTES = 16 * 1024;
 
 const createSchema = z.object({
   name: z.string().trim().min(1).max(50),
@@ -14,15 +21,26 @@ const deleteSchema = z.object({
   tokenId: z.number().int().positive(),
 });
 
-function sameOrigin(request: NextRequest) {
-  const origin = request.headers.get('origin');
-  const baseUrl = process.env.BASE_URL;
-  if (!origin || !baseUrl) return true;
-
+function rejectBadOrigin(request: NextRequest) {
   try {
-    return new URL(origin).origin === new URL(baseUrl).origin;
-  } catch {
-    return false;
+    return !hasSameOrigin(request);
+  } catch (error) {
+    console.error('Origin validation is not configured', error);
+    return null;
+  }
+}
+
+async function readMutationBody(request: NextRequest) {
+  try {
+    return await readJsonWithLimit(request, MAX_MUTATION_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { error: 'Request body is too large.' },
+        { status: 413 }
+      );
+    }
+    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
 }
 
@@ -40,16 +58,16 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  if (!sameOrigin(request)) {
+  const badOrigin = rejectBadOrigin(request);
+  if (badOrigin === null) {
+    return NextResponse.json({ error: 'Server is not configured.' }, { status: 500 });
+  }
+  if (badOrigin) {
     return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
-  }
+  const body = await readMutationBody(request);
+  if (body instanceof NextResponse) return body;
 
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
@@ -75,16 +93,16 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  if (!sameOrigin(request)) {
+  const badOrigin = rejectBadOrigin(request);
+  if (badOrigin === null) {
+    return NextResponse.json({ error: 'Server is not configured.' }, { status: 500 });
+  }
+  if (badOrigin) {
     return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
-  }
+  const body = await readMutationBody(request);
+  if (body instanceof NextResponse) return body;
 
   const parsed = deleteSchema.safeParse(body);
   if (!parsed.success) {

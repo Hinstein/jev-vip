@@ -39,3 +39,16 @@ if (!compose.includes('GENERATE_DEFAULT_TOKEN: "false"')) {
 }
 
 console.log('JEV architecture invariants: PASS');
+
+
+const requiredRuntimeVersions = {
+  next: '15.5.25',
+  react: '19.1.5',
+  'react-dom': '19.1.5',
+};
+
+for (const [name, version] of Object.entries(requiredRuntimeVersions)) {
+  if (packageJson.dependencies?.[name] !== version) {
+    throw new Error(`Production runtime must pin ${name}@${version}`);
+  }
+}

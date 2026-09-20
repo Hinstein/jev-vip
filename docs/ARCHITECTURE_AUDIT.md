@@ -192,3 +192,19 @@ change economic meaning.
 
 Likewise, changing model price affects future consumption; already-issued
 redemption codes retain the quota value with which they were generated.
+
+
+## Final pre-deploy code hardening
+
+The pre-deploy audit additionally fixed:
+
+- fail-closed `AUTH_SECRET` validation (minimum 32 bytes)
+- session cookie refresh retaining `Secure` based on canonical `BASE_URL`
+- client IP forwarding for New API's critical auth rate limiter
+- same-origin mutation checks failing closed instead of allowing missing Origin
+- streaming request-size enforcement for `/api/v1/decide`
+- sanitized gateway/upstream errors
+- race-safe API-key creation using a unique temporary token name
+- adapter health failure when required secrets are absent
+- removal of experimental Next.js runtime flags
+- Next.js / React security patch upgrades before deployment

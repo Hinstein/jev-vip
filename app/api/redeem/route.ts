@@ -1,35 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { redeemNewApiCode } from '@/lib/new-api/client';
+import { hasSameOrigin } from '@/lib/http/origin';
+import {
+  readJsonWithLimit,
+  RequestBodyTooLargeError,
+} from '@/lib/http/json';
+
+const MAX_MUTATION_BODY_BYTES = 16 * 1024;
 
 const redeemSchema = z.object({
   code: z.string().trim().min(4).max(128),
 });
 
-function isAllowedOrigin(request: NextRequest) {
-  const origin = request.headers.get('origin');
-  const baseUrl = process.env.BASE_URL;
-  if (!origin || !baseUrl) return true;
-
-  try {
-    return new URL(origin).origin === new URL(baseUrl).origin;
-  } catch {
-    return false;
-  }
-}
-
 export async function POST(request: NextRequest) {
-  if (!isAllowedOrigin(request)) {
+  try {
+    if (!hasSameOrigin(request)) {
+      return NextResponse.json(
+        { ok: false, code: 'invalid_origin', message: 'Invalid request origin.' },
+        { status: 403 }
+      );
+    }
+  } catch (error) {
+    console.error('Origin validation is not configured', error);
     return NextResponse.json(
-      { ok: false, code: 'invalid_origin', message: 'Invalid request origin.' },
-      { status: 403 }
+      { ok: false, code: 'server_config', message: 'Server is not configured.' },
+      { status: 500 }
     );
   }
 
   let body: unknown;
   try {
-    body = await request.json();
-  } catch {
+    body = await readJsonWithLimit(request, MAX_MUTATION_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { ok: false, code: 'too_large', message: 'Request body is too large.' },
+        { status: 413 }
+      );
+    }
     return NextResponse.json(
       { ok: false, code: 'invalid_request', message: 'Invalid request body.' },
       { status: 400 }
@@ -59,7 +68,7 @@ export async function POST(request: NextRequest) {
       {
         ok: false,
         code: 'redeem_failed',
-        message: error instanceof Error ? error.message : 'Redemption failed.',
+        message: 'This code could not be redeemed.',
       },
       { status: 400 }
     );

@@ -43,3 +43,19 @@ configured for reliable restart behavior.
 - Usage reduces New API quota and appears in New API logs.
 - New API PostgreSQL backups are configured.
 - Public sales-channel URLs are set in the JEV environment.
+
+
+## Reverse-proxy security requirement
+
+Do not expose the Next.js process directly to the public Internet. The public
+HTTPS reverse proxy/CDN must **overwrite** client-address headers
+(`X-Forwarded-For`, `X-Real-IP`, or `CF-Connecting-IP`) so a caller cannot
+choose another user's rate-limit identity.
+
+JEV forwards that sanitized client identity to New API for login/register,
+session refresh and logout. New API trusts only the private/loopback proxy
+ranges configured by `NEW_API_TRUSTED_PROXIES`.
+
+The reverse proxy should also enforce a request-body limit of 2 MiB on
+`/api/v1/decide`; JEV enforces the same limit while streaming the body so
+chunked requests cannot bypass it.
