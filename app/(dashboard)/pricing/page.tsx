@@ -1,94 +1,64 @@
-import { checkoutAction } from '@/lib/payments/actions';
+import Link from 'next/link';
 import { Check } from 'lucide-react';
-import { getStripePrices, getStripeProducts } from '@/lib/payments/stripe';
-import { SubmitButton } from './submit-button';
+import { Button } from '@/components/ui/button';
+import { creditPacks, productConfig } from '@/lib/jev/config';
 
-// Prices are fresh for one hour max
-export const revalidate = 3600;
-
-export default async function PricingPage() {
-  const [prices, products] = await Promise.all([
-    getStripePrices(),
-    getStripeProducts(),
-  ]);
-
-  const basePlan = products.find((product) => product.name === 'Base');
-  const plusPlan = products.find((product) => product.name === 'Plus');
-
-  const basePrice = prices.find((price) => price.productId === basePlan?.id);
-  const plusPrice = prices.find((price) => price.productId === plusPlan?.id);
-
+export default function PricingPage() {
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="grid md:grid-cols-2 gap-8 max-w-xl mx-auto">
-        <PricingCard
-          name={basePlan?.name || 'Base'}
-          price={basePrice?.unitAmount || 800}
-          interval={basePrice?.interval || 'month'}
-          trialDays={basePrice?.trialPeriodDays || 7}
-          features={[
-            'Unlimited Usage',
-            'Unlimited Workspace Members',
-            'Email Support',
-          ]}
-          priceId={basePrice?.id}
-        />
-        <PricingCard
-          name={plusPlan?.name || 'Plus'}
-          price={plusPrice?.unitAmount || 1200}
-          interval={plusPrice?.interval || 'month'}
-          trialDays={plusPrice?.trialPeriodDays || 7}
-          features={[
-            'Everything in Base, and:',
-            'Early Access to New Features',
-            '24/7 Support + Slack Access',
-          ]}
-          priceId={plusPrice?.id}
-        />
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+      <div className="mx-auto max-w-2xl text-center">
+        <p className="text-sm font-medium text-gray-500">Prepaid credits</p>
+        <h1 className="mt-2 text-4xl font-semibold tracking-tight">
+          Choose a top-up amount
+        </h1>
+        <p className="mt-4 text-gray-600">
+          Phase 1 exposes the product and dashboard flow only. Checkout and
+          automatic credit delivery will be connected next.
+        </p>
       </div>
-    </main>
-  );
-}
 
-function PricingCard({
-  name,
-  price,
-  interval,
-  trialDays,
-  features,
-  priceId,
-}: {
-  name: string;
-  price: number;
-  interval: string;
-  trialDays: number;
-  features: string[];
-  priceId?: string;
-}) {
-  return (
-    <div className="pt-6">
-      <h2 className="text-2xl font-medium text-gray-900 mb-2">{name}</h2>
-      <p className="text-sm text-gray-600 mb-4">
-        with {trialDays} day free trial
-      </p>
-      <p className="text-4xl font-medium text-gray-900 mb-6">
-        ${price / 100}{' '}
-        <span className="text-xl font-normal text-gray-600">
-          per user / {interval}
-        </span>
-      </p>
-      <ul className="space-y-4 mb-8">
-        {features.map((feature, index) => (
-          <li key={index} className="flex items-start">
-            <Check className="h-5 w-5 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
-            <span className="text-gray-700">{feature}</span>
-          </li>
+      <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {creditPacks.map((pack) => (
+          <div
+            key={pack.amount}
+            className={`rounded-2xl border bg-white p-6 ${
+              pack.popular ? 'ring-2 ring-gray-950' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="font-medium">{pack.label}</h2>
+              {pack.popular ? (
+                <span className="rounded-full bg-gray-950 px-2 py-1 text-xs text-white">
+                  Popular
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-5 text-4xl font-semibold">${pack.amount}</p>
+            <ul className="mt-6 space-y-3 text-sm text-gray-600">
+              <li className="flex gap-2">
+                <Check className="h-4 w-4 text-gray-950" />
+                Prepaid balance
+              </li>
+              <li className="flex gap-2">
+                <Check className="h-4 w-4 text-gray-950" />
+                Dashboard usage visibility
+              </li>
+              <li className="flex gap-2">
+                <Check className="h-4 w-4 text-gray-950" />
+                API key management
+              </li>
+            </ul>
+            <Button asChild className="mt-6 w-full">
+              <Link href="/sign-up">Create account</Link>
+            </Button>
+          </div>
         ))}
-      </ul>
-      <form action={checkoutAction}>
-        <input type="hidden" name="priceId" value={priceId} />
-        <SubmitButton />
-      </form>
-    </div>
+      </div>
+
+      <p className="mx-auto mt-8 max-w-3xl text-center text-xs text-gray-500">
+        {productConfig.officialDisclaimer} Pricing and delivery terms shown in
+        the product will be finalized before payment is enabled.
+      </p>
+    </main>
   );
 }
