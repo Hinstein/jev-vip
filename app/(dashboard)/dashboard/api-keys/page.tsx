@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import {
   isLiteLLMConfigured,
   listLiteLLMVirtualKeys,
+  type LiteLLMVirtualKey,
 } from '@/lib/litellm/client';
 import { getUser } from '@/lib/db/queries';
 import { KeyManager } from './key-manager';
@@ -13,7 +14,7 @@ export default async function ApiKeysPage() {
   if (!user) redirect('/sign-in');
 
   const configured = isLiteLLMConfigured();
-  let keys = [];
+  let keys: LiteLLMVirtualKey[] = [];
 
   if (configured) {
     try {
