@@ -21,7 +21,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec tsc --noEmit
+      - run: pnpm arch:check\n      - run: pnpm exec tsc --noEmit
       - run: node --check relay/jev-adapter/server.mjs
       - run: node --check scripts/e2e-backend.mjs
       - run: pnpm build

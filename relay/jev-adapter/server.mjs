@@ -44,7 +44,7 @@ function extractJevPayload(body) {
   return payload;
 }
 
-function extractUsage(data) {
+function normalizeUpstreamResult(data) {
   const usage = data?.usage;
   const inputTokens = Number(usage?.input_tokens);
   const outputTokens = Number(usage?.output_tokens ?? 0);
@@ -58,7 +58,20 @@ function extractUsage(data) {
     throw new Error('invalid_usage');
   }
 
-  return { inputTokens, outputTokens };
+  if (!data?.answers || typeof data.answers !== 'object' || Array.isArray(data.answers)) {
+    throw new Error('invalid_answers');
+  }
+
+  // Deliberately allowlist the public System One response shape. Do not pass
+  // upstream billing/account metadata through to JEV customers.
+  return {
+    model: typeof data.model === 'string' ? data.model : 'jev',
+    answers: data.answers,
+    usage: {
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
+    },
+  };
 }
 
 const server = http.createServer(async (req, res) => {
@@ -75,7 +88,9 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (!upstreamKey) {
-    return sendJson(res, 500, { error: { message: 'TypeSafe upstream key is not configured' } });
+    return sendJson(res, 500, {
+      error: { message: 'TypeSafe upstream key is not configured' },
+    });
   }
 
   try {
@@ -97,7 +112,9 @@ const server = http.createServer(async (req, res) => {
     try {
       data = text ? JSON.parse(text) : {};
     } catch {
-      return sendJson(res, 502, { error: { message: 'Upstream returned invalid JSON' } });
+      return sendJson(res, 502, {
+        error: { message: 'Upstream returned invalid JSON' },
+      });
     }
 
     if (!upstream.ok) {
@@ -113,16 +130,15 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    let inputTokens;
-    let outputTokens;
+    let result;
     try {
-      ({ inputTokens, outputTokens } = extractUsage(data));
+      result = normalizeUpstreamResult(data);
     } catch {
       // Billing is settled from authoritative upstream usage. A successful
-      // response without input token usage must fail closed rather than become
-      // a free request or be charged from an unrelated chat-token estimate.
+      // response without the documented System One result shape must fail
+      // closed rather than become free or leak upstream account metadata.
       return sendJson(res, 502, {
-        error: { message: 'Upstream response did not include valid token usage' },
+        error: { message: 'Upstream response did not match the Jev response schema' },
       });
     }
 
@@ -130,28 +146,31 @@ const server = http.createServer(async (req, res) => {
       id: `jev-${randomUUID()}`,
       object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
-      model: typeof data?.model === 'string' ? data.model : 'jev',
+      model: result.model,
       choices: [
         {
           index: 0,
           finish_reason: 'stop',
           message: {
             role: 'assistant',
-            content: JSON.stringify(data),
+            content: JSON.stringify(result),
           },
         },
       ],
       usage: {
-        prompt_tokens: inputTokens,
-        completion_tokens: outputTokens,
-        total_tokens: inputTokens + outputTokens,
+        prompt_tokens: result.usage.input_tokens,
+        completion_tokens: result.usage.output_tokens,
+        total_tokens:
+          result.usage.input_tokens + result.usage.output_tokens,
       },
     });
   } catch (error) {
     const tooLarge = error instanceof Error && error.message === 'body_too_large';
     return sendJson(res, tooLarge ? 413 : 400, {
       error: {
-        message: tooLarge ? 'Request body is too large' : 'Invalid JEV request payload',
+        message: tooLarge
+          ? 'Request body is too large'
+          : 'Invalid JEV request payload',
       },
     });
   }

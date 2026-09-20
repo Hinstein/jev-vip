@@ -17,14 +17,14 @@ This is the minimum end-to-end path that must pass before public sales.
 2. Confirm the payment/compliance setting required by New API before creating
    redemption codes.
 3. Keep password login and password registration enabled.
-4. Keep new-user initial quota at 0.
-5. Keep automatic default-token generation disabled.
-6. Enable quota-consumption logs.
-7. Keep the New API Pricing module enabled and readable without New API browser login; the JEV server reads internal `/api/pricing` to render the current retail rate. New API itself remains private/localhost.
-8. Configure the default user group:
+4. Keep new-user initial quota at 0.\n5. Verify `QuotaPerUnit = 500000` and treat it as immutable after launch.
+6. Keep automatic default-token generation disabled.
+7. Enable quota-consumption logs.
+8. Keep the New API Pricing module enabled and readable without New API browser login; the JEV server reads internal `/api/pricing` to render the current retail rate. New API itself remains private/localhost.
+9. Configure the default user group:
    - price ratio: 1.0
    - rate limit: 120 RPM, no hourly cap for V1.
-9. Keep the global per-IP API limiter disabled for the internal JEV -> New API
+10. Keep the global per-IP API limiter disabled for the internal JEV -> New API
    relay path.
 
 ## C. Jev upstream channel
@@ -145,3 +145,22 @@ than hard-coded into the JEV request path.
 - record which redemption batch belongs to which sales SKU/channel
 - do not promise an upstream rate limit until the actual TypeSafe account limit
   is verified
+
+
+## J. Automated production smoke test
+
+After the disposable test redemption code exists, run:
+
+```bash
+JEV_E2E_REDEMPTION_CODE=<one-time-test-code> pnpm jev:e2e
+```
+
+The script now fails if any of these invariants are wrong:
+
+- New API `QuotaPerUnit` is not 500,000
+- `jev` is not $0.42/M input and $0/M output
+- redemption does not add quota
+- a generated API key cannot call JEV
+- the successful Jev result lacks input-token usage
+- wallet deduction differs from New API pricing
+- upstream commercial/account fields leak through the public JEV response

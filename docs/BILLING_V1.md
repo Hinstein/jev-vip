@@ -23,6 +23,18 @@ Sources checked on 2026-09-21:
 - https://jevtypesafeai.com/pricing
 - https://jevtypesafeai.com/docs
 
+## Accounting-unit invariant
+
+`QuotaPerUnit = 500,000` is a permanent JEV V1 accounting invariant: 500,000
+internal quota equals $1 of API balance. Do **not** use QuotaPerUnit as an
+operational price knob after customers or redemption codes exist.
+
+To change retail pricing, edit the `jev` model input/output price or a group
+price ratio. To change recharge value, issue new redemption-code denominations.
+The JEV storefront and E2E test fail closed if New API reports a different
+QuotaPerUnit, so an accidental global unit change cannot silently revalue
+existing balances.
+
 ## New API model pricing
 
 In the New API administrator console:

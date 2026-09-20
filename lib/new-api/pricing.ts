@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { NEW_API_QUOTA_PER_USD } from '@/lib/jev/billing';
+
 export type JevRetailPricing = {
   inputUsdPerMillion: number;
   outputUsdPerMillion: number;
@@ -19,10 +21,28 @@ type NewApiPricingResponse = {
   data?: NewApiPricingModel[];
 };
 
+type NewApiStatusResponse = {
+  success?: boolean;
+  data?: {
+    quota_per_unit?: number;
+  };
+};
+
 function baseUrl() {
   const value = process.env.NEW_API_BASE_URL?.replace(/\/+$/, '');
   if (!value) throw new Error('New API backend is not configured');
   return value;
+}
+
+async function readJson<T>(path: string): Promise<T> {
+  const response = await fetch(`${baseUrl()}${path}`, {
+    cache: 'no-store',
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!response.ok) {
+    throw new Error(`New API ${path} unavailable: HTTP ${response.status}`);
+  }
+  return (await response.json()) as T;
 }
 
 function parseSimpleExpression(expression: string): JevRetailPricing | null {
@@ -46,16 +66,27 @@ function parseSimpleExpression(expression: string): JevRetailPricing | null {
   return { inputUsdPerMillion, outputUsdPerMillion };
 }
 
-export async function getJevRetailPricing(): Promise<JevRetailPricing> {
-  const response = await fetch(`${baseUrl()}/api/pricing`, {
-    cache: 'no-store',
-    signal: AbortSignal.timeout(5000),
-  });
-  if (!response.ok) {
-    throw new Error(`New API pricing unavailable: HTTP ${response.status}`);
+async function assertQuotaUnitInvariant() {
+  const payload = await readJson<NewApiStatusResponse>('/api/status');
+  const quotaPerUnit = Number(payload.data?.quota_per_unit);
+
+  if (!Number.isFinite(quotaPerUnit)) {
+    throw new Error('New API status did not expose quota_per_unit');
   }
 
-  const payload = (await response.json()) as NewApiPricingResponse;
+  if (quotaPerUnit !== NEW_API_QUOTA_PER_USD) {
+    throw new Error(
+      `New API QuotaPerUnit must remain ${NEW_API_QUOTA_PER_USD}; got ${quotaPerUnit}. Change Jev model pricing or group ratios instead of changing the accounting unit.`
+    );
+  }
+}
+
+export async function getJevRetailPricing(): Promise<JevRetailPricing> {
+  const [payload] = await Promise.all([
+    readJson<NewApiPricingResponse>('/api/pricing'),
+    assertQuotaUnitInvariant(),
+  ]);
+
   if (payload.success === false || !Array.isArray(payload.data)) {
     throw new Error('New API pricing response is invalid');
   }
@@ -82,7 +113,7 @@ export async function getJevRetailPricing(): Promise<JevRetailPricing> {
     Number.isFinite(model.completion_ratio)
   ) {
     // In New API legacy token-ratio billing, ModelRatio=1 corresponds to
-    // $2/M input tokens because 1 USD = 500,000 quota.
+    // $2/M input tokens when QuotaPerUnit remains 500,000.
     const inputUsdPerMillion = Number(model.model_ratio) * 2;
     const outputUsdPerMillion =
       inputUsdPerMillion * Number(model.completion_ratio);

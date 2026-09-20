@@ -1,5 +1,9 @@
 import { randomBytes } from 'node:crypto';
 
+const EXPECTED_QUOTA_PER_USD = 500_000;
+const EXPECTED_INPUT_USD_PER_MILLION = 0.42;
+const EXPECTED_OUTPUT_USD_PER_MILLION = 0;
+
 const newApiBase = (process.env.NEW_API_BASE_URL || 'http://127.0.0.1:3001').replace(/\/+$/, '');
 const jevBase = (process.env.JEV_E2E_BASE_URL || process.env.BASE_URL || 'http://127.0.0.1:3000').replace(/\/+$/, '');
 const redemptionCode = process.env.JEV_E2E_REDEMPTION_CODE;
@@ -49,10 +53,7 @@ async function register() {
     body: JSON.stringify({ username, password }),
   });
 
-  if (
-    !result.response.ok ||
-    result.body?.success === false
-  ) {
+  if (!result.response.ok || result.body?.success === false) {
     const message = String(result.body?.message || '');
     if (!/exist|已存在|already/i.test(message)) {
       throw new Error(
@@ -92,6 +93,75 @@ async function self(accessToken) {
 function pageItems(data) {
   if (Array.isArray(data)) return data;
   return data?.items || data?.data || data?.tokens || [];
+}
+
+async function assertAccountingUnit() {
+  const result = await jsonRequest(`${newApiBase}/api/status`);
+  const data = requireSuccess(result, '/api/status');
+  const quotaPerUnit = Number(data?.quota_per_unit);
+  if (quotaPerUnit !== EXPECTED_QUOTA_PER_USD) {
+    throw new Error(
+      `QuotaPerUnit must be ${EXPECTED_QUOTA_PER_USD}; got ${quotaPerUnit}`
+    );
+  }
+}
+
+function parseExpressionPricing(expression) {
+  const input = expression.match(/\bp\s*\*\s*([0-9]+(?:\.[0-9]+)?)/i);
+  const output = expression.match(/\bc\s*\*\s*([0-9]+(?:\.[0-9]+)?)/i);
+  if (!input || !output) return null;
+  return {
+    inputUsdPerMillion: Number(input[1]),
+    outputUsdPerMillion: Number(output[1]),
+  };
+}
+
+async function currentPricing() {
+  const result = await jsonRequest(`${newApiBase}/api/pricing`);
+  const payload = result.body;
+  if (!result.response.ok || payload?.success === false || !Array.isArray(payload?.data)) {
+    throw new Error(`pricing lookup failed: ${JSON.stringify(payload)}`);
+  }
+
+  const model = payload.data.find((entry) => entry.model_name === 'jev');
+  if (!model) throw new Error('jev pricing is missing from New API');
+
+  if (model.billing_mode === 'tiered_expr' && typeof model.billing_expr === 'string') {
+    const parsed = parseExpressionPricing(model.billing_expr);
+    if (!parsed) {
+      throw new Error(`unsupported jev billing expression: ${model.billing_expr}`);
+    }
+    return parsed;
+  }
+
+  if (
+    model.quota_type === 0 &&
+    Number.isFinite(Number(model.model_ratio)) &&
+    Number.isFinite(Number(model.completion_ratio))
+  ) {
+    const inputUsdPerMillion = Number(model.model_ratio) * 2;
+    return {
+      inputUsdPerMillion,
+      outputUsdPerMillion:
+        inputUsdPerMillion * Number(model.completion_ratio),
+    };
+  }
+
+  throw new Error('unsupported jev pricing mode');
+}
+
+async function assertRetailPricing() {
+  const pricing = await currentPricing();
+  const epsilon = 1e-9;
+  if (
+    Math.abs(pricing.inputUsdPerMillion - EXPECTED_INPUT_USD_PER_MILLION) > epsilon ||
+    Math.abs(pricing.outputUsdPerMillion - EXPECTED_OUTPUT_USD_PER_MILLION) > epsilon
+  ) {
+    throw new Error(
+      `JEV V1 pricing mismatch: expected input=${EXPECTED_INPUT_USD_PER_MILLION}, output=${EXPECTED_OUTPUT_USD_PER_MILLION}; got input=${pricing.inputUsdPerMillion}, output=${pricing.outputUsdPerMillion}`
+    );
+  }
+  return pricing;
 }
 
 async function createApiKey(accessToken) {
@@ -134,38 +204,20 @@ async function deleteApiKey(accessToken, id) {
   await api(accessToken, `/api/token/${id}`, { method: 'DELETE' });
 }
 
-async function currentInputPrice() {
-  const result = await jsonRequest(`${newApiBase}/api/pricing`);
-  const payload = result.body;
-  if (!result.response.ok || payload?.success === false || !Array.isArray(payload?.data)) {
-    throw new Error(`pricing lookup failed: ${JSON.stringify(payload)}`);
-  }
-
-  const model = payload.data.find((entry) => entry.model_name === 'jev');
-  if (!model) throw new Error('jev pricing is missing from New API');
-
-  if (model.billing_mode === 'tiered_expr' && typeof model.billing_expr === 'string') {
-    const match = model.billing_expr.match(/\\bp\\s*\\*\\s*([0-9]+(?:\\.[0-9]+)?)/i);
-    if (!match) throw new Error(`unsupported jev billing expression: ${model.billing_expr}`);
-    return Number(match[1]);
-  }
-
-  if (model.quota_type === 0 && Number.isFinite(Number(model.model_ratio))) {
-    return Number(model.model_ratio) * 2;
-  }
-
-  throw new Error('unsupported jev pricing mode');
-}
-
 function expectedQuota(inputTokens, inputUsdPerMillion) {
   return Math.round(
-    (inputTokens / 1_000_000) * inputUsdPerMillion * 500_000
+    (inputTokens / 1_000_000) *
+      inputUsdPerMillion *
+      EXPECTED_QUOTA_PER_USD
   );
 }
 
 async function main() {
   console.log('JEV backend E2E');
   console.log({ newApiBase, jevBase, username });
+
+  await assertAccountingUnit();
+  const pricing = await assertRetailPricing();
 
   if (!process.env.JEV_E2E_USERNAME) {
     await register();
@@ -221,10 +273,23 @@ async function main() {
       );
     }
 
+    if (!decision.body?.answers || typeof decision.body.answers !== 'object') {
+      throw new Error('JEV response is missing answers');
+    }
+
+    // The public facade must not expose upstream commercial/account fields.
+    for (const forbidden of ['cost_usd', 'credits_remaining_usd', 'balance']) {
+      if (Object.prototype.hasOwnProperty.call(decision.body, forbidden)) {
+        throw new Error(`JEV response leaked upstream field: ${forbidden}`);
+      }
+    }
+
     const afterCall = await self(accessToken);
     const actualDelta = Number(afterRedeem.quota) - Number(afterCall.quota);
-    const inputUsdPerMillion = await currentInputPrice();
-    const expected = expectedQuota(inputTokens, inputUsdPerMillion);
+    const expected = expectedQuota(
+      inputTokens,
+      pricing.inputUsdPerMillion
+    );
 
     if (actualDelta <= 0) {
       throw new Error(
@@ -244,7 +309,7 @@ async function main() {
       quotaBeforeRedeem: initial.quota,
       quotaAfterRedeem: afterRedeem.quota,
       inputTokens,
-      inputUsdPerMillion,
+      inputUsdPerMillion: pricing.inputUsdPerMillion,
       expectedQuota: expected,
       actualQuota: actualDelta,
       remainingQuota: afterCall.quota,
