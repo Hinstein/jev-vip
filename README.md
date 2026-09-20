@@ -33,6 +33,9 @@ OfferKit never owns or deducts JEV Credits.
 - Credits dashboard
 - Safe retry after partial OfferKit/JEV failure
 - Production migration + CI migration check
+- LiteLLM v1.101.0 relay sidecar
+- LiteLLM Virtual Key create/list/revoke from the existing Dashboard
+- Public `POST /api/v1/decide` backed by a LiteLLM custom JEV provider
 
 Default products:
 
@@ -46,7 +49,6 @@ Default products:
 
 - WeChat/Alipay/Stripe payment collection
 - Voucher generation or voucher inventory inside JEV VIP
-- JEV API-key delivery
 - JEV request metering and credit debits
 - Xianyu automatic fulfillment
 - A global admin console
@@ -67,5 +69,6 @@ See:
 
 - `docs/OFFERKIT_INTEGRATION.md`
 - `docs/DEPLOYMENT.md`
+- `docs/LITELLM_RELAY.md`
 
 JEV VIP is independent and is not affiliated with or operated by TypeSafe AI.

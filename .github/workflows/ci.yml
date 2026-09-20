@@ -37,6 +37,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec tsc --noEmit
+      - run: python -m py_compile relay/litellm/jev_provider.py
       - run: pnpm db:migrate
       - run: pnpm db:seed
       - run: pnpm build

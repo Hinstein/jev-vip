@@ -1,42 +1,42 @@
-import { KeyRound, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { redirect } from 'next/navigation';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+  isLiteLLMConfigured,
+  listLiteLLMVirtualKeys,
+} from '@/lib/litellm/client';
+import { getUser } from '@/lib/db/queries';
+import { KeyManager } from './key-manager';
 
-export default function ApiKeysPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function ApiKeysPage() {
+  const user = await getUser();
+  if (!user) redirect('/sign-in');
+
+  const configured = isLiteLLMConfigured();
+  let keys = [];
+
+  if (configured) {
+    try {
+      keys = await listLiteLLMVirtualKeys(user.id);
+    } catch (error) {
+      console.error('Unable to load LiteLLM keys', error);
+    }
+  }
+
   return (
     <section className="flex-1 p-4 lg:p-8">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm text-gray-500">Access</p>
-          <h1 className="text-2xl font-semibold tracking-tight">API Keys</h1>
-        </div>
-        <Button disabled>
-          <Plus className="mr-2 h-4 w-4" />
-          Create API key
-        </Button>
+      <div>
+        <p className="text-sm text-gray-500">Access</p>
+        <h1 className="text-2xl font-semibold tracking-tight">API Keys</h1>
+        <p className="mt-2 max-w-2xl text-sm text-gray-500">
+          These are JEV VIP keys backed by LiteLLM Virtual Keys. Your upstream
+          TypeSafe credential is never exposed.
+        </p>
       </div>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Your keys</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-14 text-center">
-            <KeyRound className="h-8 w-8 text-gray-400" />
-            <p className="mt-4 font-medium">No API keys yet</p>
-            <p className="mt-1 max-w-md text-sm text-gray-500">
-              Key issuance is intentionally disabled in phase 1. The page and
-              navigation are ready; phase 2 will connect key creation to a
-              funded credit balance and the Jev delivery service.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="mt-6">
+        <KeyManager initialKeys={keys} configured={configured} />
+      </div>
     </section>
   );
 }

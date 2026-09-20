@@ -1,0 +1,18 @@
+model_list:
+  - model_name: jev
+    litellm_params:
+      model: jev_typesafe/systemone
+      api_base: os.environ/TYPESAFE_API_BASE
+      api_key: os.environ/TYPESAFE_API_KEY
+    model_info:
+      mode: chat
+
+litellm_settings:
+  drop_params: true
+  custom_provider_map:
+    - provider: jev_typesafe
+      custom_handler: jev_provider.jev_handler
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/LITELLM_DATABASE_URL
