@@ -140,8 +140,7 @@ treated as explicit migrations and rerun E2E.
    channel test.
 
 5. **Model billing**
-   Configure `jev` at $0.42/M input, $0/M output, group ratio 1.0. Make a
-   request and verify actual quota settlement.
+   Configure `jev` at $0.42/M input, $0/M output, group ratio 1.0. Keep the internal New API Pricing module enabled/public-to-the-private-network so the JEV BFF can read `/api/pricing`. Make a request and verify actual quota settlement and storefront display.
 
 6. **Rate limits**
    Start conservatively at 120 RPM for the default group, then adjust after the
