@@ -20,10 +20,11 @@ This is the minimum end-to-end path that must pass before public sales.
 4. Keep new-user initial quota at 0.
 5. Keep automatic default-token generation disabled.
 6. Enable quota-consumption logs.
-7. Configure the default user group:
+7. Keep the New API Pricing module enabled and readable without New API browser login; the JEV server reads internal `/api/pricing` to render the current retail rate. New API itself remains private/localhost.
+8. Configure the default user group:
    - price ratio: 1.0
    - rate limit: 120 RPM, no hourly cap for V1.
-8. Keep the global per-IP API limiter disabled for the internal JEV -> New API
+9. Keep the global per-IP API limiter disabled for the internal JEV -> New API
    relay path.
 
 ## C. Jev upstream channel
