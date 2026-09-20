@@ -23,6 +23,9 @@ export default function GeneralPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const username = user?.username;
+    if (!username) return;
+
     setPending(true);
     setMessage(null);
     try {
@@ -30,7 +33,7 @@ export default function GeneralPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: user.username,
+          username,
           display_name: displayName.trim(),
         }),
       });
