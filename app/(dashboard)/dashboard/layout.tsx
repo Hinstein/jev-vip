@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import {
   Activity,
   CreditCard,
-  FileClock,
   KeyRound,
   LayoutDashboard,
   Menu,
   Settings,
-  Shield
+  Shield,
+  TicketCheck,
+  WalletCards
 } from 'lucide-react';
 
 export default function DashboardLayout({
@@ -25,10 +26,11 @@ export default function DashboardLayout({
 
   const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
+    { href: '/dashboard/credits', icon: WalletCards, label: 'Credits' },
+    { href: '/redeem', icon: TicketCheck, label: 'Redeem' },
+    { href: '/dashboard/top-up', icon: CreditCard, label: 'Buy Credits' },
     { href: '/dashboard/api-keys', icon: KeyRound, label: 'API Keys' },
     { href: '/dashboard/usage', icon: Activity, label: 'Usage' },
-    { href: '/dashboard/top-up', icon: CreditCard, label: 'Top Up' },
-    { href: '/dashboard/orders', icon: FileClock, label: 'Orders' },
     { href: '/dashboard/general', icon: Settings, label: 'Account' },
     { href: '/dashboard/security', icon: Shield, label: 'Security' }
   ];

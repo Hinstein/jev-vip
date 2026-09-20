@@ -1,10 +1,11 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import {
   ArrowRight,
-  CircleDollarSign,
   KeyRound,
   MousePointerClick,
-  TextCursorInput
+  TextCursorInput,
+  WalletCards
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,32 +14,48 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
+import { getUser } from '@/lib/db/queries';
+import { getCreditBalance } from '@/lib/credits/queries';
 import { dashboardPlaceholderMetrics } from '@/lib/jev/config';
 
-const metrics = [
-  {
-    label: 'Credit balance',
-    value: `$${dashboardPlaceholderMetrics.balanceUsd.toFixed(2)}`,
-    icon: CircleDollarSign
-  },
-  {
-    label: 'Requests',
-    value: dashboardPlaceholderMetrics.requests.toLocaleString(),
-    icon: MousePointerClick
-  },
-  {
-    label: 'Input tokens',
-    value: dashboardPlaceholderMetrics.inputTokens.toLocaleString(),
-    icon: TextCursorInput
-  },
-  {
-    label: 'Active API keys',
-    value: dashboardPlaceholderMetrics.activeKeys.toString(),
-    icon: KeyRound
-  }
-];
+export const dynamic = 'force-dynamic';
 
-export default function DashboardPage() {
+function formatCredits(value: number) {
+  return new Intl.NumberFormat('en-US').format(value);
+}
+
+export default async function DashboardPage() {
+  const user = await getUser();
+  if (!user) redirect('/sign-in');
+
+  const balance = await getCreditBalance(user.id);
+  const offerkitConfigured = Boolean(
+    process.env.OFFERKIT_API_URL && process.env.OFFERKIT_API_KEY
+  );
+
+  const metrics = [
+    {
+      label: 'JEV Credits',
+      value: formatCredits(balance),
+      icon: WalletCards
+    },
+    {
+      label: 'Requests',
+      value: dashboardPlaceholderMetrics.requests.toLocaleString(),
+      icon: MousePointerClick
+    },
+    {
+      label: 'Input tokens',
+      value: dashboardPlaceholderMetrics.inputTokens.toLocaleString(),
+      icon: TextCursorInput
+    },
+    {
+      label: 'Active API keys',
+      value: dashboardPlaceholderMetrics.activeKeys.toString(),
+      icon: KeyRound
+    }
+  ];
+
   return (
     <section className="flex-1 p-4 lg:p-8">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -47,8 +64,8 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
         </div>
         <Button asChild>
-          <Link href="/dashboard/top-up">
-            Top up credits
+          <Link href="/redeem">
+            Redeem a code
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
@@ -73,14 +90,14 @@ export default function DashboardPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Get started</CardTitle>
+            <CardTitle>How credits work</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {[
-              ['1', 'Create your account', 'Completed by signing in to this dashboard.'],
-              ['2', 'Top up credits', 'Payment flow will be connected in phase 2.'],
-              ['3', 'Create an API key', 'Key issuance will unlock after credit delivery is wired.'],
-              ['4', 'Track usage', 'Requests and token usage will appear automatically.']
+              ['1', 'Buy on Xianyu', 'Xianyu is only the sales channel.'],
+              ['2', 'Receive a unique code', 'OfferKit owns voucher validity and one-time redemption.'],
+              ['3', 'Redeem on JEV VIP', 'The matching product credits are added to your account.'],
+              ['4', 'Use JEV', 'Future API usage will debit the same JEV credit ledger.']
             ].map(([step, title, description]) => (
               <div key={step} className="flex gap-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-950 text-xs font-medium text-white">
@@ -101,10 +118,13 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <StatusRow label="SaaS authentication" status="Ready" />
-            <StatusRow label="Customer dashboard" status="Ready" />
-            <StatusRow label="Credit purchase" status="Phase 2" />
-            <StatusRow label="Jev delivery / proxy" status="Phase 2" />
-            <StatusRow label="Usage metering" status="Phase 2" />
+            <StatusRow label="JEV credit ledger" status="Ready" />
+            <StatusRow
+              label="OfferKit voucher adapter"
+              status={offerkitConfigured ? 'Configured' : 'Needs env'}
+            />
+            <StatusRow label="JEV API delivery" status="Phase 2" />
+            <StatusRow label="Usage metering / debit" status="Phase 2" />
           </CardContent>
         </Card>
       </div>
@@ -113,7 +133,7 @@ export default function DashboardPage() {
 }
 
 function StatusRow({ label, status }: { label: string; status: string }) {
-  const ready = status === 'Ready';
+  const ready = status === 'Ready' || status === 'Configured';
 
   return (
     <div className="flex items-center justify-between rounded-lg border px-3 py-2">

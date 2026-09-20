@@ -8,7 +8,8 @@
     "db:seed": "npx tsx lib/db/seed.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "jev:configure-products": "node scripts/configure-products.mjs"
   },
   "dependencies": {
     "@tailwindcss/postcss": "4.1.7",

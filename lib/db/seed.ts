@@ -1,84 +1,49 @@
-import { stripe } from '../payments/stripe';
-import { db } from './drizzle';
-import { users, teams, teamMembers } from './schema';
-import { hashPassword } from '@/lib/auth/session';
+import { client, db } from './drizzle';
+import { products } from './schema';
 
-async function createStripeProducts() {
-  console.log('Creating Stripe products and prices...');
-
-  const baseProduct = await stripe.products.create({
-    name: 'Base',
-    description: 'Base subscription plan',
-  });
-
-  await stripe.prices.create({
-    product: baseProduct.id,
-    unit_amount: 800, // $8 in cents
-    currency: 'usd',
-    recurring: {
-      interval: 'month',
-      trial_period_days: 7,
-    },
-  });
-
-  const plusProduct = await stripe.products.create({
-    name: 'Plus',
-    description: 'Plus subscription plan',
-  });
-
-  await stripe.prices.create({
-    product: plusProduct.id,
-    unit_amount: 1200, // $12 in cents
-    currency: 'usd',
-    recurring: {
-      interval: 'month',
-      trial_period_days: 7,
-    },
-  });
-
-  console.log('Stripe products and prices created successfully.');
-}
+const defaultProducts = [
+  {
+    name: 'Starter',
+    priceMinor: 1000,
+    currency: 'CNY',
+    offerkitCampaignKey: 'JEV_10',
+    credits: 1000000,
+    active: true,
+  },
+  {
+    name: 'Standard',
+    priceMinor: 3000,
+    currency: 'CNY',
+    offerkitCampaignKey: 'JEV_30',
+    credits: 3500000,
+    active: true,
+  },
+  {
+    name: 'Pro',
+    priceMinor: 5000,
+    currency: 'CNY',
+    offerkitCampaignKey: 'JEV_50',
+    credits: 6000000,
+    active: true,
+  },
+] as const;
 
 async function seed() {
-  const email = 'test@test.com';
-  const password = 'admin123';
-  const passwordHash = await hashPassword(password);
+  for (const product of defaultProducts) {
+    await db
+      .insert(products)
+      .values(product)
+      .onConflictDoNothing({ target: products.offerkitCampaignKey });
+  }
 
-  const [user] = await db
-    .insert(users)
-    .values([
-      {
-        email: email,
-        passwordHash: passwordHash,
-        role: "owner",
-      },
-    ])
-    .returning();
-
-  console.log('Initial user created.');
-
-  const [team] = await db
-    .insert(teams)
-    .values({
-      name: 'Test Team',
-    })
-    .returning();
-
-  await db.insert(teamMembers).values({
-    teamId: team.id,
-    userId: user.id,
-    role: 'owner',
-  });
-
-  await createStripeProducts();
+  console.log('JEV product defaults are ready.');
 }
 
 seed()
   .catch((error) => {
-    console.error('Seed process failed:', error);
-    process.exit(1);
+    console.error('Seed failed:', error);
+    process.exitCode = 1;
   })
-  .finally(() => {
-    console.log('Seed process finished. Exiting...');
-    process.exit(0);
+  .finally(async () => {
+    await client.end();
   });

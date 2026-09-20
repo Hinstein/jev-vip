@@ -1,68 +1,71 @@
 # JEV VIP
 
-JEV VIP is an independent prepaid-access SaaS foundation for Jev users.
+JEV VIP is an independent prepaid-access SaaS for Jev users, built on the MIT-licensed `nextjs/saas-starter`.
 
-## Foundation
+## Architecture
 
-This repository intentionally starts from the MIT-licensed
-[nextjs/saas-starter](https://github.com/nextjs/saas-starter) rather than
-rebuilding common SaaS infrastructure.
+```text
+Xianyu (sales only)
+   -> unique voucher code
+OfferKit (voucher lifecycle only)
+   -> successful atomic redemption
+JEV VIP
+   -> products
+   -> user credit balance
+   -> credit transaction ledger
+```
 
-Inherited starter capabilities:
+OfferKit never owns or deducts JEV Credits.
 
-- Next.js + React
-- Postgres + Drizzle ORM
-- Email/password authentication
-- Protected dashboard routes
-- Team/RBAC foundation
-- Activity logging
-- Stripe integration kept available for later use
-- shadcn/ui primitives
+## Implemented
 
-## Phase 1: SaaS shell
+- Email/password sign up, sign in and session-protected dashboard
+- Account and password settings
+- Product catalog
+- Xianyu purchase-link slots
+- `/redeem` customer flow
+- Server-only OfferKit adapter
+- OfferKit atomic redemption + stable idempotency key
+- Product mapping by actual OfferKit campaign UUID
+- JEV credit balances
+- Immutable credit transaction history
+- Local ledger idempotency
+- Credits dashboard
+- Safe retry after partial OfferKit/JEV failure
+- Production migration + CI migration check
 
-Implemented now:
+Default products:
 
-- Marketing landing page
-- Sign up / sign in
-- JEV VIP dashboard shell
-- Overview metrics
-- API Keys page and empty state
-- Usage page and empty state
-- Top-up pack UI
-- Orders page and empty state
-- Existing account and security settings
+| Product | Price | Credits | Campaign key |
+| --- | ---: | ---: | --- |
+| Starter | ¥10 | 1,000,000 | JEV_10 |
+| Standard | ¥30 | 3,500,000 | JEV_30 |
+| Pro | ¥50 | 6,000,000 | JEV_50 |
 
-Not implemented in phase 1:
+## Intentionally not implemented yet
 
-- Real payment collection
-- Recharge settlement
-- Automatic Jev account/key delivery
-- Jev proxying
-- Usage metering
-- Credit ledger
+- WeChat/Alipay/Stripe payment collection
+- Voucher generation or voucher inventory inside JEV VIP
+- JEV API-key delivery
+- JEV request metering and credit debits
+- Xianyu automatic fulfillment
+- A global admin console
 
-Those belong to phase 2 and must plug into the existing dashboard rather than
-replacing authentication or the SaaS shell.
+These are separate concerns and should not be mixed into the voucher adapter.
 
-## Local development
+## Setup
 
 ```bash
-pnpm install
-pnpm db:setup
+pnpm install --frozen-lockfile
 pnpm db:migrate
 pnpm db:seed
+pnpm jev:configure-products
 pnpm dev
 ```
 
-The starter's environment and Stripe variables remain available in
-`.env.example`.
+See:
 
-## Product reference
-
-The product flow was informed by the public structure of
-`jevtypesafeai.com`: prepaid credits, API-key management, usage visibility and
-a customer dashboard. JEV VIP does not copy that site's branding or proprietary
-assets.
+- `docs/OFFERKIT_INTEGRATION.md`
+- `docs/DEPLOYMENT.md`
 
 JEV VIP is independent and is not affiliated with or operated by TypeSafe AI.
