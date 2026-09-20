@@ -11,7 +11,15 @@ function formatPrice(product: JevProduct) {
   return `¥${(product.priceMinor / 100).toFixed(0)}`;
 }
 
-export function ProductGrid({ products }: { products: JevProduct[] }) {
+export function ProductGrid({
+  products,
+  inputUsdPerMillion,
+  outputUsdPerMillion,
+}: {
+  products: JevProduct[];
+  inputUsdPerMillion: number;
+  outputUsdPerMillion: number;
+}) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {products.map((product) => (
@@ -24,7 +32,7 @@ export function ProductGrid({ products }: { products: JevProduct[] }) {
             {formatUsdFromQuota(product.credits)} API balance
           </p>
           <p className="mt-1 text-xs text-gray-400">
-            ≈ {formatApproxInputTokens(product.credits)} Jev input tokens
+            ≈ {formatApproxInputTokens(product.credits, inputUsdPerMillion)} Jev input tokens
           </p>
 
           <ul className="mt-6 space-y-3 text-sm text-gray-600">
@@ -34,11 +42,11 @@ export function ProductGrid({ products }: { products: JevProduct[] }) {
             </li>
             <li className="flex gap-2">
               <Check className="h-4 w-4 text-gray-950" />
-              $0.42 per 1M input tokens
+              ${inputUsdPerMillion.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')} per 1M input tokens
             </li>
             <li className="flex gap-2">
               <Check className="h-4 w-4 text-gray-950" />
-              Output tokens are not charged
+              Output: ${outputUsdPerMillion.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')} per 1M tokens
             </li>
           </ul>
 
