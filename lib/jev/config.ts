@@ -9,10 +9,10 @@ export const productConfig = {
 } as const;
 
 export const creditPacks = [
-  { amount: 5, label: '$5 credits' },
-  { amount: 10, label: '$10 credits' },
+  { amount: 5, label: '$5 credits', popular: false },
+  { amount: 10, label: '$10 credits', popular: false },
   { amount: 20, label: '$20 credits', popular: true },
-  { amount: 50, label: '$50 credits' }
+  { amount: 50, label: '$50 credits', popular: false }
 ] as const;
 
 export const dashboardPlaceholderMetrics = {
