@@ -123,7 +123,8 @@ export async function createNewApiToken(name: string) {
       unlimited_quota: true,
       model_limits_enabled: true,
       model_limits: process.env.NEW_API_JEV_MODEL || 'jev',
-      group: 'default',
+      // Empty group follows New API's normal user/default-group resolution.
+      group: '',
     }),
   });
 
