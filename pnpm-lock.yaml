@@ -46,10 +46,10 @@ importers:
         version: 1.4.2(@types/react-dom@19.1.5(@types/react@19.1.4))(@types/react@19.1.4)(react-dom@19.1.5(react@19.1.5))(react@19.1.5)
       react:
         specifier: 19.1.5
-        version: 19.1.0
+        version: 19.1.5
       react-dom:
         specifier: 19.1.5
-        version: 19.1.0(react@19.1.5)
+        version: 19.1.5(react@19.1.5)
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
