@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getUser } from '@/lib/db/queries';
 import { redeemVoucherForUser } from '@/lib/jev/redeem';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 const redeemSchema = z.object({
   code: z.string().trim().min(4).max(128),
@@ -33,6 +34,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { ok: false, code: 'unauthorized', message: 'Please sign in first.' },
       { status: 401 }
+    );
+  }
+
+  const rateLimit = checkRateLimit(`redeem:user:${user.id}`, 10, 10 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        ok: false,
+        code: 'rate_limited',
+        message: 'Too many redemption attempts. Please try again later.',
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(rateLimit.retryAfterSeconds),
+        },
+      }
     );
   }
 

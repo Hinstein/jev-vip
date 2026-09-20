@@ -2,8 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getUser } from '@/lib/db/queries';
 import { getCreditBalance } from '@/lib/credits/queries';
+import { hashApiKey } from '@/lib/api-keys/crypto';
+import {
+  registerApiKey,
+  revokeApiKeyForUser,
+} from '@/lib/api-keys/queries';
 import {
   createLiteLLMVirtualKey,
+  deleteLiteLLMKeyBySecret,
   deleteLiteLLMVirtualKey,
   listLiteLLMVirtualKeys,
 } from '@/lib/litellm/client';
@@ -82,6 +88,31 @@ export async function POST(request: NextRequest) {
 
   try {
     const created = await createLiteLLMVirtualKey(user.id, parsed.data.name);
+
+    try {
+      await registerApiKey({
+        userId: user.id,
+        providerTokenId: created.tokenId,
+        keyHash: hashApiKey(created.key),
+        keyName: parsed.data.name,
+      });
+    } catch (error) {
+      console.error('Failed to persist API key ownership', error);
+      try {
+        if (created.tokenId) {
+          await deleteLiteLLMVirtualKey(user.id, created.tokenId);
+        } else {
+          await deleteLiteLLMKeyBySecret(created.key);
+        }
+      } catch (cleanupError) {
+        console.error('Failed to clean up unregistered LiteLLM key', cleanupError);
+      }
+      return NextResponse.json(
+        { error: 'API key service is unavailable.' },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
     console.error('Failed to create LiteLLM key', error);
@@ -116,6 +147,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     await deleteLiteLLMVirtualKey(user.id, parsed.data.tokenId);
+    await revokeApiKeyForUser(user.id, parsed.data.tokenId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Failed to delete LiteLLM key', error);

@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import {
   User,
@@ -43,8 +43,20 @@ async function logActivity(
   await db.insert(activityLogs).values(newActivity);
 }
 
+async function getTeamMemberRole(userId: number, teamId: number) {
+  const [membership] = await db
+    .select({ role: teamMembers.role })
+    .from(teamMembers)
+    .where(
+      and(eq(teamMembers.userId, userId), eq(teamMembers.teamId, teamId))
+    )
+    .limit(1);
+
+  return membership?.role ?? null;
+}
+
 const signInSchema = z.object({
-  email: z.string().email().min(3).max(255),
+  email: z.string().trim().toLowerCase().email().min(3).max(255),
   password: z.string().min(8).max(100)
 });
 
@@ -59,14 +71,13 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
     .from(users)
     .leftJoin(teamMembers, eq(users.id, teamMembers.userId))
     .leftJoin(teams, eq(teamMembers.teamId, teams.id))
-    .where(eq(users.email, email))
+    .where(and(eq(users.email, email), isNull(users.deletedAt)))
     .limit(1);
 
   if (userWithTeam.length === 0) {
     return {
       error: 'Invalid email or password. Please try again.',
-      email,
-      password
+      email
     };
   }
 
@@ -80,8 +91,7 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
   if (!isPasswordValid) {
     return {
       error: 'Invalid email or password. Please try again.',
-      email,
-      password
+      email
     };
   }
 
@@ -103,116 +113,126 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
 });
 
 const signUpSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
+  email: z.string().trim().toLowerCase().email().max(255),
+  password: z.string().min(8).max(100),
   inviteId: z.string().optional()
 });
 
 export const signUp = validatedAction(signUpSchema, async (data, formData) => {
   const { email, password, inviteId } = data;
 
-  const existingUser = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
-
-  if (existingUser.length > 0) {
-    return {
-      error: 'Failed to create user. Please try again.',
-      email,
-      password
-    };
-  }
-
-  const passwordHash = await hashPassword(password);
-
-  const newUser: NewUser = {
-    email,
-    passwordHash,
-    role: 'owner' // Default role, will be overridden if there's an invitation
-  };
-
-  const [createdUser] = await db.insert(users).values(newUser).returning();
-
-  if (!createdUser) {
-    return {
-      error: 'Failed to create user. Please try again.',
-      email,
-      password
-    };
-  }
-
-  let teamId: number;
-  let userRole: string;
-  let createdTeam: typeof teams.$inferSelect | null = null;
-
+  let parsedInviteId: number | null = null;
   if (inviteId) {
-    // Check if there's a valid invitation
+    if (!/^\d+$/.test(inviteId)) {
+      return { error: 'Invalid or expired invitation.', email };
+    }
+
+    parsedInviteId = Number(inviteId);
+    if (!Number.isSafeInteger(parsedInviteId) || parsedInviteId <= 0) {
+      return { error: 'Invalid or expired invitation.', email };
+    }
+
     const [invitation] = await db
-      .select()
+      .select({ id: invitations.id })
       .from(invitations)
       .where(
         and(
-          eq(invitations.id, parseInt(inviteId)),
+          eq(invitations.id, parsedInviteId),
           eq(invitations.email, email),
           eq(invitations.status, 'pending')
         )
       )
       .limit(1);
 
-    if (invitation) {
-      teamId = invitation.teamId;
-      userRole = invitation.role;
-
-      await db
-        .update(invitations)
-        .set({ status: 'accepted' })
-        .where(eq(invitations.id, invitation.id));
-
-      await logActivity(teamId, createdUser.id, ActivityType.ACCEPT_INVITATION);
-
-      [createdTeam] = await db
-        .select()
-        .from(teams)
-        .where(eq(teams.id, teamId))
-        .limit(1);
-    } else {
-      return { error: 'Invalid or expired invitation.', email, password };
+    if (!invitation) {
+      return { error: 'Invalid or expired invitation.', email };
     }
-  } else {
-    // Create a new team if there's no invitation
-    const newTeam: NewTeam = {
-      name: `${email}'s Team`
-    };
-
-    [createdTeam] = await db.insert(teams).values(newTeam).returning();
-
-    if (!createdTeam) {
-      return {
-        error: 'Failed to create team. Please try again.',
-        email,
-        password
-      };
-    }
-
-    teamId = createdTeam.id;
-    userRole = 'owner';
-
-    await logActivity(teamId, createdUser.id, ActivityType.CREATE_TEAM);
   }
 
-  const newTeamMember: NewTeamMember = {
-    userId: createdUser.id,
-    teamId: teamId,
-    role: userRole
-  };
+  const passwordHash = await hashPassword(password);
 
-  await Promise.all([
-    db.insert(teamMembers).values(newTeamMember),
-    logActivity(teamId, createdUser.id, ActivityType.SIGN_UP),
-    setSession(createdUser)
-  ]);
+  let createdUser: User;
+  try {
+    const result = await db.transaction(async (tx) => {
+      const existingUser = await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      if (existingUser.length > 0) {
+        throw new Error('USER_EXISTS');
+      }
+
+      const newUser: NewUser = {
+        email,
+        passwordHash,
+        role: parsedInviteId ? 'member' : 'owner'
+      };
+      const [insertedUser] = await tx.insert(users).values(newUser).returning();
+      if (!insertedUser) throw new Error('SIGNUP_FAILED');
+
+      let joinedTeamId: number;
+      let userRole: string;
+      if (parsedInviteId) {
+        const [claimedInvitation] = await tx
+          .update(invitations)
+          .set({ status: 'accepted' })
+          .where(
+            and(
+              eq(invitations.id, parsedInviteId),
+              eq(invitations.email, email),
+              eq(invitations.status, 'pending')
+            )
+          )
+          .returning({ teamId: invitations.teamId, role: invitations.role });
+
+        if (!claimedInvitation) throw new Error('INVITATION_UNAVAILABLE');
+        joinedTeamId = claimedInvitation.teamId;
+        userRole = claimedInvitation.role;
+      } else {
+        const [createdTeam] = await tx
+          .insert(teams)
+          .values({ name: `${email}'s Team` } satisfies NewTeam)
+          .returning({ id: teams.id });
+        if (!createdTeam) throw new Error('TEAM_CREATE_FAILED');
+        joinedTeamId = createdTeam.id;
+        userRole = 'owner';
+      }
+
+      await tx.insert(teamMembers).values({
+        userId: insertedUser.id,
+        teamId: joinedTeamId,
+        role: userRole
+      } satisfies NewTeamMember);
+
+      await tx.insert(activityLogs).values([
+        {
+          teamId: joinedTeamId,
+          userId: insertedUser.id,
+          action: ActivityType.SIGN_UP,
+          ipAddress: ''
+        },
+        {
+          teamId: joinedTeamId,
+          userId: insertedUser.id,
+          action: parsedInviteId
+            ? ActivityType.ACCEPT_INVITATION
+            : ActivityType.CREATE_TEAM,
+          ipAddress: ''
+        }
+      ] satisfies NewActivityLog[]);
+
+      return { user: insertedUser };
+    });
+
+    createdUser = result.user;
+  } catch (error) {
+    console.error('Sign-up transaction failed', error);
+    return { error: 'Failed to create user. Please try again.', email };
+  }
+
+  await setSession(createdUser);
 
   const redirectTo = formData.get('redirect');
   if (
@@ -227,9 +247,11 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
 });
 
 export async function signOut() {
-  const user = (await getUser()) as User;
-  const userWithTeam = await getUserWithTeam(user.id);
-  await logActivity(userWithTeam?.teamId, user.id, ActivityType.SIGN_OUT);
+  const user = await getUser();
+  if (user) {
+    const userWithTeam = await getUserWithTeam(user.id);
+    await logActivity(userWithTeam?.teamId, user.id, ActivityType.SIGN_OUT);
+  }
   (await cookies()).delete('session');
 }
 
@@ -251,27 +273,18 @@ export const updatePassword = validatedActionWithUser(
 
     if (!isPasswordValid) {
       return {
-        currentPassword,
-        newPassword,
-        confirmPassword,
         error: 'Current password is incorrect.'
       };
     }
 
     if (currentPassword === newPassword) {
       return {
-        currentPassword,
-        newPassword,
-        confirmPassword,
         error: 'New password must be different from the current password.'
       };
     }
 
     if (confirmPassword !== newPassword) {
       return {
-        currentPassword,
-        newPassword,
-        confirmPassword,
         error: 'New password and confirmation password do not match.'
       };
     }
@@ -305,7 +318,6 @@ export const deleteAccount = validatedActionWithUser(
     const isPasswordValid = await comparePasswords(password, user.passwordHash);
     if (!isPasswordValid) {
       return {
-        password,
         error: 'Incorrect password. Account deletion failed.'
       };
     }
@@ -344,8 +356,8 @@ export const deleteAccount = validatedActionWithUser(
 );
 
 const updateAccountSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100),
-  email: z.string().email('Invalid email address')
+  name: z.string().trim().min(1, 'Name is required').max(100),
+  email: z.string().trim().toLowerCase().email('Invalid email address')
 });
 
 export const updateAccount = validatedActionWithUser(
@@ -354,8 +366,21 @@ export const updateAccount = validatedActionWithUser(
     const { name, email } = data;
     const userWithTeam = await getUserWithTeam(user.id);
 
+    const [existingUser] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.email, email), sql`${users.id} <> ${user.id}`))
+      .limit(1);
+
+    if (existingUser) {
+      return { name, error: 'That email address is already in use.' };
+    }
+
     await Promise.all([
-      db.update(users).set({ name, email }).where(eq(users.id, user.id)),
+      db
+        .update(users)
+        .set({ name, email, updatedAt: new Date() })
+        .where(eq(users.id, user.id)),
       logActivity(userWithTeam?.teamId, user.id, ActivityType.UPDATE_ACCOUNT)
     ]);
 
@@ -375,6 +400,30 @@ export const removeTeamMember = validatedActionWithUser(
 
     if (!userWithTeam?.teamId) {
       return { error: 'User is not part of a team' };
+    }
+
+    const actorRole = await getTeamMemberRole(user.id, userWithTeam.teamId);
+    if (actorRole !== 'owner' && actorRole !== 'admin') {
+      return { error: 'Only team owners or admins can remove members.' };
+    }
+
+    const [target] = await db
+      .select({ userId: teamMembers.userId, role: teamMembers.role })
+      .from(teamMembers)
+      .where(
+        and(
+          eq(teamMembers.id, memberId),
+          eq(teamMembers.teamId, userWithTeam.teamId)
+        )
+      )
+      .limit(1);
+
+    if (!target) {
+      return { error: 'Team member not found.' };
+    }
+
+    if (target.userId === user.id || target.role === 'owner') {
+      return { error: 'The team owner cannot be removed.' };
     }
 
     await db
@@ -397,7 +446,12 @@ export const removeTeamMember = validatedActionWithUser(
 );
 
 const inviteTeamMemberSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email('Invalid email address')
+    .max(255),
   role: z.enum(['member', 'owner'])
 });
 
@@ -409,6 +463,15 @@ export const inviteTeamMember = validatedActionWithUser(
 
     if (!userWithTeam?.teamId) {
       return { error: 'User is not part of a team' };
+    }
+
+    const actorRole = await getTeamMemberRole(user.id, userWithTeam.teamId);
+    if (actorRole !== 'owner' && actorRole !== 'admin') {
+      return { error: 'Only team owners or admins can invite members.' };
+    }
+
+    if (role === 'owner' && actorRole !== 'owner') {
+      return { error: 'Only the team owner can invite another owner.' };
     }
 
     const existingMember = await db

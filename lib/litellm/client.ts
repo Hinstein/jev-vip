@@ -10,8 +10,15 @@ export type LiteLLMVirtualKey = {
   models: string[];
 };
 
+export type LiteLLMKeyInfo = {
+  tokenId: string | null;
+  userId: string | null;
+  keyName: string | null;
+  keyAlias: string | null;
+  blocked: boolean;
+};
+
 type LiteLLMKeyRecord = {
-  token?: unknown;
   token_id?: unknown;
   key_name?: unknown;
   key_alias?: unknown;
@@ -21,6 +28,16 @@ type LiteLLMKeyRecord = {
   models?: unknown;
   user_id?: unknown;
 };
+
+class LiteLLMAdminError extends Error {
+  constructor(
+    message: string,
+    readonly status: number
+  ) {
+    super(message);
+    this.name = 'LiteLLMAdminError';
+  }
+}
 
 function getConfig() {
   const baseUrl = process.env.LITELLM_PROXY_URL?.replace(/\/+$/, '');
@@ -81,7 +98,10 @@ async function adminRequest(path: string, init?: RequestInit) {
         ? JSON.stringify((payload as Record<string, unknown>).error)
         : `HTTP ${response.status}`;
 
-    throw new Error(`LiteLLM admin request failed: ${message}`);
+    throw new LiteLLMAdminError(
+      `LiteLLM admin request failed: ${message}`,
+      response.status
+    );
   }
 
   return payload;
@@ -109,8 +129,12 @@ export async function createLiteLLMVirtualKey(
     throw new Error('LiteLLM did not return the generated key');
   }
 
+  const tokenId =
+    typeof payload.token_id === 'string' ? payload.token_id : null;
+
   return {
     key,
+    tokenId,
     keyName:
       typeof payload.key_name === 'string' ? payload.key_name : 'sk-...hidden',
   };
@@ -136,14 +160,12 @@ export async function listLiteLLMVirtualKeys(
     : [];
 
   return keys
-    .filter((item) => item.user_id === expectedUserId)
+    .filter((item) => String(item.user_id ?? '') === expectedUserId)
     .map((item) => {
       const tokenId =
         typeof item.token_id === 'string'
           ? item.token_id
-          : typeof item.token === 'string'
-            ? item.token
-            : '';
+          : '';
 
       return {
         tokenId,
@@ -180,4 +202,59 @@ export async function deleteLiteLLMVirtualKey(
     method: 'POST',
     body: JSON.stringify({ keys: [tokenId] }),
   });
+}
+
+export async function deleteLiteLLMKeyBySecret(key: string) {
+  await adminRequest('/key/delete', {
+    method: 'POST',
+    body: JSON.stringify({ keys: [key] }),
+  });
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function stringValue(record: Record<string, unknown> | null, key: string) {
+  if (typeof record?.[key] === 'string') return record[key] as string;
+  if (typeof record?.[key] === 'number' && Number.isSafeInteger(record[key])) {
+    return String(record[key]);
+  }
+  return null;
+}
+
+export async function getLiteLLMKeyInfo(
+  presentedKey: string
+): Promise<LiteLLMKeyInfo | null> {
+  let payload: unknown;
+  try {
+    payload = await adminRequest(
+      `/key/info?key=${encodeURIComponent(presentedKey)}`
+    );
+  } catch (error) {
+    if (error instanceof LiteLLMAdminError && error.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+
+  const root = asRecord(payload);
+  const info = asRecord(root?.info) ?? root;
+  if (!info) return null;
+
+  const metadata = asRecord(info.metadata);
+  const userId =
+    stringValue(info, 'user_id') ?? stringValue(metadata, 'jev_user_id');
+  const tokenId =
+    stringValue(info, 'token_id');
+
+  return {
+    tokenId,
+    userId,
+    keyName: stringValue(info, 'key_name'),
+    keyAlias: stringValue(info, 'key_alias'),
+    blocked: info.blocked === true,
+  };
 }

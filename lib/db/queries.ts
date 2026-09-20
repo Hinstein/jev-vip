@@ -10,7 +10,12 @@ export async function getUser() {
     return null;
   }
 
-  const sessionData = await verifyToken(sessionCookie.value);
+  let sessionData;
+  try {
+    sessionData = await verifyToken(sessionCookie.value);
+  } catch {
+    return null;
+  }
   if (
     !sessionData ||
     !sessionData.user ||
@@ -34,6 +39,16 @@ export async function getUser() {
   }
 
   return user[0];
+}
+
+export async function getUserById(userId: number) {
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+    .limit(1);
+
+  return user ?? null;
 }
 
 export async function getTeamByStripeCustomerId(customerId: string) {

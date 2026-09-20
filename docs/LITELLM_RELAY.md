@@ -36,6 +36,7 @@ customer
   -> JevTypeSafeProvider
   -> https://api.typesafe.ai/v1/systemone
   -> LiteLLM records normalized token usage
+  -> JEV VIP atomically debits 1 Credit per reported token
   -> Next.js unwraps the original JEV JSON
   -> customer
 ```
@@ -82,7 +83,10 @@ The JEV Dashboard calls LiteLLM management APIs with the server-only master key.
 - Revoke: `POST /key/delete`
 
 Keys are restricted to the `jev` model and tagged with a stable JEV user id.
-The plaintext key is returned to the customer only at creation time.
+The plaintext key is returned to the customer only at creation time. JEV VIP
+stores only a SHA-256 hash of each generated key and its LiteLLM token id.
+Successful requests are recorded in `usage_events` and debited from the local
+credit balance in one database transaction.
 
 ## Version
 

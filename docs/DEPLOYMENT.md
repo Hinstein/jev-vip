@@ -33,4 +33,7 @@ Before opening redemption to users, verify the OfferKit readiness endpoint and r
 - Test valid, invalid, expired and already-used codes.
 - Test two simultaneous submissions of the same code.
 - Back up both JEV Postgres and OfferKit Postgres.
-- Add application or reverse-proxy rate limiting to `POST /api/redeem`.
+- Keep the built-in redemption rate limit enabled; add reverse-proxy limiting
+  as a second layer for multi-instance deployments.
+- Configure LiteLLM, TypeSafe and the JEV usage-metering database migration
+  before issuing API keys publicly.

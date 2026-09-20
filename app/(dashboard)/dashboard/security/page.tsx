@@ -56,7 +56,6 @@ export default function SecurityPage() {
                 required
                 minLength={8}
                 maxLength={100}
-                defaultValue={passwordState.currentPassword}
               />
             </div>
             <div>
@@ -71,7 +70,6 @@ export default function SecurityPage() {
                 required
                 minLength={8}
                 maxLength={100}
-                defaultValue={passwordState.newPassword}
               />
             </div>
             <div>
@@ -85,7 +83,6 @@ export default function SecurityPage() {
                 required
                 minLength={8}
                 maxLength={100}
-                defaultValue={passwordState.confirmPassword}
               />
             </div>
             {passwordState.error && (
@@ -135,7 +132,6 @@ export default function SecurityPage() {
                 required
                 minLength={8}
                 maxLength={100}
-                defaultValue={deleteState.password}
               />
             </div>
             {deleteState.error && (

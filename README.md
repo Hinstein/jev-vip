@@ -36,6 +36,7 @@ OfferKit never owns or deducts JEV Credits.
 - LiteLLM v1.101.0 relay sidecar
 - LiteLLM Virtual Key create/list/revoke from the existing Dashboard
 - Public `POST /api/v1/decide` backed by a LiteLLM custom JEV provider
+- Local API-key ownership, request metering and atomic JEV Credit debits
 
 Default products:
 
@@ -49,9 +50,17 @@ Default products:
 
 - WeChat/Alipay/Stripe payment collection
 - Voucher generation or voucher inventory inside JEV VIP
-- JEV request metering and credit debits
 - Xianyu automatic fulfillment
 - A global admin console
+
+## Public API
+
+`POST /api/v1/decide` accepts a JEV-shaped JSON object with a JEV VIP Bearer
+API key. The request is relayed through LiteLLM and a successful response is
+metered at one JEV Credit per reported token. The response includes
+`X-JEV-Credits-Used`, `X-JEV-Credits-Remaining` and `X-JEV-Request-ID` headers.
+Clients may send a stable `X-Request-ID` to prevent accidental duplicate
+billing; a reused id is rejected rather than forwarded again.
 
 These are separate concerns and should not be mixed into the voucher adapter.
 

@@ -72,11 +72,19 @@ def _model_response(payload: dict[str, Any]) -> ModelResponse:
     usage = payload.get("usage")
     usage = usage if isinstance(usage, dict) else {}
 
-    input_tokens = usage.get("input_tokens", 0)
-    output_tokens = usage.get("output_tokens", 0)
+    input_tokens = usage.get("input_tokens", usage.get("prompt_tokens", 0))
+    output_tokens = usage.get(
+        "output_tokens", usage.get("completion_tokens", 0)
+    )
 
     input_tokens = input_tokens if isinstance(input_tokens, int) else 0
     output_tokens = output_tokens if isinstance(output_tokens, int) else 0
+    total_tokens = usage.get("total_tokens")
+    total_tokens = (
+        total_tokens
+        if isinstance(total_tokens, int) and total_tokens >= 0
+        else input_tokens + output_tokens
+    )
 
     resolved_model = payload.get("model")
     if not isinstance(resolved_model, str) or not resolved_model:
@@ -102,7 +110,7 @@ def _model_response(payload: dict[str, Any]) -> ModelResponse:
         usage=Usage(
             prompt_tokens=input_tokens,
             completion_tokens=output_tokens,
-            total_tokens=input_tokens + output_tokens,
+            total_tokens=total_tokens,
         ),
     )
 

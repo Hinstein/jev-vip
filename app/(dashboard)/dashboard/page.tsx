@@ -16,7 +16,9 @@ import {
 } from '@/components/ui/card';
 import { getUser } from '@/lib/db/queries';
 import { getCreditBalance } from '@/lib/credits/queries';
-import { dashboardPlaceholderMetrics } from '@/lib/jev/config';
+import { getActiveApiKeyCount } from '@/lib/api-keys/queries';
+import { getUsageSummary } from '@/lib/usage/queries';
+import { isLiteLLMConfigured } from '@/lib/litellm/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +30,11 @@ export default async function DashboardPage() {
   const user = await getUser();
   if (!user) redirect('/sign-in');
 
-  const balance = await getCreditBalance(user.id);
+  const [balance, usage, activeKeys] = await Promise.all([
+    getCreditBalance(user.id),
+    getUsageSummary(user.id),
+    getActiveApiKeyCount(user.id),
+  ]);
   const offerkitConfigured = Boolean(
     process.env.OFFERKIT_API_URL && process.env.OFFERKIT_API_KEY
   );
@@ -41,17 +47,17 @@ export default async function DashboardPage() {
     },
     {
       label: 'Requests',
-      value: dashboardPlaceholderMetrics.requests.toLocaleString(),
+      value: usage.requests.toLocaleString(),
       icon: MousePointerClick
     },
     {
       label: 'Input tokens',
-      value: dashboardPlaceholderMetrics.inputTokens.toLocaleString(),
+      value: usage.inputTokens.toLocaleString(),
       icon: TextCursorInput
     },
     {
       label: 'Active API keys',
-      value: dashboardPlaceholderMetrics.activeKeys.toString(),
+      value: activeKeys.toString(),
       icon: KeyRound
     }
   ];
@@ -97,7 +103,7 @@ export default async function DashboardPage() {
               ['1', 'Buy on Xianyu', 'Xianyu is only the sales channel.'],
               ['2', 'Receive a unique code', 'OfferKit owns voucher validity and one-time redemption.'],
               ['3', 'Redeem on JEV VIP', 'The matching product credits are added to your account.'],
-              ['4', 'Use JEV', 'Future API usage will debit the same JEV credit ledger.']
+              ['4', 'Use JEV', 'Successful API requests debit the same JEV credit ledger by token usage.']
             ].map(([step, title, description]) => (
               <div key={step} className="flex gap-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-950 text-xs font-medium text-white">
@@ -123,8 +129,11 @@ export default async function DashboardPage() {
               label="OfferKit voucher adapter"
               status={offerkitConfigured ? 'Configured' : 'Needs env'}
             />
-            <StatusRow label="JEV API delivery" status="Phase 2" />
-            <StatusRow label="Usage metering / debit" status="Phase 2" />
+            <StatusRow
+              label="JEV API relay"
+              status={isLiteLLMConfigured() ? 'Configured' : 'Needs env'}
+            />
+            <StatusRow label="Usage metering / debit" status="Ready" />
           </CardContent>
         </Card>
       </div>

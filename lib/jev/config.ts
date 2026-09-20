@@ -7,9 +7,3 @@ export const productConfig = {
   officialDisclaimer:
     'JEV VIP is an independent service and is not affiliated with or operated by TypeSafe AI.'
 } as const;
-
-export const dashboardPlaceholderMetrics = {
-  requests: 0,
-  inputTokens: 0,
-  activeKeys: 0
-} as const;

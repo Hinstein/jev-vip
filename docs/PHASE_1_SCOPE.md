@@ -23,7 +23,7 @@ landing
       -> account/security
 ```
 
-## Phase 2 integration boundaries
+## Integration boundaries
 
 Payment and Jev delivery should later be added behind these modules:
 
@@ -44,5 +44,8 @@ upstream Jev secrets in client components.
 - `/dashboard` remains protected.
 - Customer navigation contains Overview, API Keys, Usage, Top Up, Orders,
   Account and Security.
-- Top-up and API-key actions do not execute real money/key operations.
-- UI explicitly marks unfinished delivery functions as phase 2.
+- Top-up purchase/order delivery remains an unfinished phase 2 function.
+- API-key actions execute LiteLLM key management only when the relay is
+  configured; JEV VIP still owns local key ownership, usage metering and
+  credit debits.
+- UI explicitly marks unfinished payment and delivery functions as phase 2.

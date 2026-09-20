@@ -15,6 +15,13 @@
       "when": 1789914310378,
       "tag": "0001_jev_credits_vouchers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789929708163,
+      "tag": "0002_usage_metering",
+      "breakpoints": true
     }
   ]
 }

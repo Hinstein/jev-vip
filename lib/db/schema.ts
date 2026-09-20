@@ -7,6 +7,8 @@ import {
   integer,
   bigint,
   boolean,
+  index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -111,6 +113,55 @@ export const creditTransactions = pgTable('credit_transactions', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
+export const apiKeys = pgTable(
+  'api_keys',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    providerTokenId: text('provider_token_id').unique(),
+    keyHash: varchar('key_hash', { length: 64 }).notNull().unique(),
+    keyName: varchar('key_name', { length: 100 }).notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    revokedAt: timestamp('revoked_at'),
+  },
+  (table) => ({
+    userIdIndex: index('api_keys_user_id_idx').on(table.userId),
+  })
+);
+
+export const usageEvents = pgTable(
+  'usage_events',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    apiKeyId: integer('api_key_id')
+      .notNull()
+      .references(() => apiKeys.id),
+    requestId: varchar('request_id', { length: 128 }).notNull(),
+    model: varchar('model', { length: 100 }).notNull(),
+    inputTokens: bigint('input_tokens', { mode: 'number' }).notNull(),
+    outputTokens: bigint('output_tokens', { mode: 'number' }).notNull(),
+    totalTokens: bigint('total_tokens', { mode: 'number' }).notNull(),
+    credits: bigint('credits', { mode: 'number' }).notNull(),
+    status: varchar('status', { length: 32 }).notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    requestUnique: uniqueIndex('usage_events_api_key_request_id_idx').on(
+      table.apiKeyId,
+      table.requestId
+    ),
+    userCreatedAtIndex: index('usage_events_user_created_at_idx').on(
+      table.userId,
+      table.createdAt
+    ),
+  })
+);
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
   activityLogs: many(activityLogs),
@@ -122,6 +173,8 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   invitationsSent: many(invitations),
   creditBalance: one(userCreditBalances),
   creditTransactions: many(creditTransactions),
+  apiKeys: many(apiKeys),
+  usageEvents: many(usageEvents),
 }));
 
 export const invitationsRelations = relations(invitations, ({ one }) => ({
@@ -185,6 +238,25 @@ export const creditTransactionsRelations = relations(
   })
 );
 
+export const apiKeysRelations = relations(apiKeys, ({ one, many }) => ({
+  user: one(users, {
+    fields: [apiKeys.userId],
+    references: [users.id],
+  }),
+  usageEvents: many(usageEvents),
+}));
+
+export const usageEventsRelations = relations(usageEvents, ({ one }) => ({
+  user: one(users, {
+    fields: [usageEvents.userId],
+    references: [users.id],
+  }),
+  apiKey: one(apiKeys, {
+    fields: [usageEvents.apiKeyId],
+    references: [apiKeys.id],
+  }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Team = typeof teams.$inferSelect;
@@ -200,6 +272,10 @@ export type NewProduct = typeof products.$inferInsert;
 export type UserCreditBalance = typeof userCreditBalances.$inferSelect;
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
 export type NewCreditTransaction = typeof creditTransactions.$inferInsert;
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type NewApiKey = typeof apiKeys.$inferInsert;
+export type UsageEvent = typeof usageEvents.$inferSelect;
+export type NewUsageEvent = typeof usageEvents.$inferInsert;
 export type TeamDataWithMembers = Team & {
   teamMembers: (TeamMember & {
     user: Pick<User, 'id' | 'name' | 'email'>;
