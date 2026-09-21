@@ -24,6 +24,12 @@ const protectedRoutes = ['/dashboard', '/redeem'];
 const protectedApiRoutes = ['/api/keys', '/api/redeem', '/api/user'];
 
 function preferredLocale(request: NextRequest): Locale {
+  // Next may run middleware again after a locale-prefixed page is rewritten
+  // to its internal route. Preserve the locale carried on that rewrite so a
+  // direct /zh-CN/... request is not redirected back to /en/....
+  const requestLocale = request.headers.get('x-locale');
+  if (isLocale(requestLocale)) return requestLocale;
+
   const cookieLocale = request.cookies.get(localeCookieName)?.value;
   if (isLocale(cookieLocale)) return cookieLocale;
   return localeFromAcceptLanguage(request.headers.get('accept-language'));
