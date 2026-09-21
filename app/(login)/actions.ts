@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import {
+  getNewApiAuthStatus,
   loginNewApi,
   logoutNewApiAuth,
   registerNewApi,
@@ -18,9 +19,10 @@ import { validatedAction } from '@/lib/auth/middleware';
 import { newApiUsernameForLogin, usernameForEmail } from '@/lib/auth/account-identity';
 import { getLocale } from '@/lib/i18n/server';
 import { isLocale, localizedPath, type Locale } from '@/lib/i18n/config';
+import { translate } from '@/lib/i18n/messages';
 
 const signInSchema = z.object({
-  email: z.string().trim().min(1).max(255),
+  email: z.string().trim().email().max(255),
   password: z.string().min(8).max(128),
   turnstile: z.string().trim().max(4096).optional(),
 });
@@ -85,6 +87,14 @@ const signUpSchema = z.object({
 export const signUp = validatedAction(signUpSchema, async (data, formData) => {
   const locale = await actionLocale(formData);
   let requiresSignIn = false;
+  const authStatus = await getNewApiAuthStatus();
+  if (!authStatus.emailVerificationEnabled) {
+    return {
+      error: translate(locale, 'login.emailRegistrationUnavailable'),
+      email: data.email,
+      verificationCode: data.verificationCode,
+    };
+  }
   const username = usernameForEmail(data.email);
   try {
     const meta = await requestMeta();

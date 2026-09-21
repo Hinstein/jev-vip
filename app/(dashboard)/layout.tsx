@@ -43,7 +43,7 @@ function UserMenu() {
     );
   }
 
-  const label = user.email || user.display_name || user.username || 'U';
+  const label = user.email?.trim() || t('dashboard.emailNotBound');
 
   return (
     <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
@@ -55,7 +55,7 @@ function UserMenu() {
       <DropdownMenuContent align="end" className="min-w-48">
         <div className="px-2 py-1.5">
           <p className="text-sm font-medium">{label}</p>
-            <p className="text-xs text-gray-500">{user.group}</p>
+          <p className="text-xs text-gray-500">{t('dashboard.email')}</p>
         </div>
         <DropdownMenuItem asChild>
           <LocaleLink href="/dashboard" className="flex w-full items-center">

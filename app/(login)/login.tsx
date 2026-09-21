@@ -31,6 +31,8 @@ export function Login({
   const created = searchParams.get('created') === '1';
   const emailVerificationEnabled =
     mode === 'signup' && authStatus.emailVerificationEnabled;
+  const registrationUnavailable =
+    mode === 'signup' && !authStatus.emailVerificationEnabled;
   const turnstileEnabled = authStatus.turnstileCheckEnabled;
   const turnstileConfigured = Boolean(authStatus.turnstileSiteKey);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
@@ -132,6 +134,7 @@ export function Login({
 
   const submitDisabled =
     pending ||
+    registrationUnavailable ||
     (turnstileEnabled && (!turnstileConfigured || !turnstileToken));
 
   return (
@@ -169,6 +172,12 @@ export function Login({
             </p>
           </div>
 
+          {registrationUnavailable ? (
+            <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+              {t('login.emailRegistrationUnavailable')}
+            </div>
+          ) : null}
+
           {created ? (
             <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
               {t('login.accountCreated')}
@@ -181,13 +190,11 @@ export function Login({
             <input type="hidden" name="turnstile" value={turnstileToken} />
 
             <div>
-              <Label htmlFor="email">
-                {mode === 'signin' ? t('login.emailOrAccount') : t('login.email')}
-              </Label>
+              <Label htmlFor="email">{t('login.email')}</Label>
               <Input
                 id="email"
                 name="email"
-                type={mode === 'signup' ? 'email' : 'text'}
+                type="email"
                 inputMode="email"
                 autoComplete="email"
                 value={email}
@@ -199,7 +206,7 @@ export function Login({
                 required
                 maxLength={255}
                 className="mt-2 h-12 rounded-xl border-gray-200 bg-white px-4 shadow-none"
-                placeholder={mode === 'signin' ? t('login.accountPlaceholder') : t('login.emailPlaceholder')}
+                placeholder={t('login.emailPlaceholder')}
               />
             </div>
 

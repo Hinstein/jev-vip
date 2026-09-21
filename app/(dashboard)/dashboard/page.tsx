@@ -25,6 +25,7 @@ export default async function DashboardPage() {
   const { locale, t } = await getI18n();
   const user = await getUser();
   if (!user) redirect(localizedPath(locale, '/sign-in'));
+  const email = user.email?.trim() || '';
 
   let activeKeys = 0;
   try {
@@ -68,7 +69,7 @@ export default async function DashboardPage() {
             </h1>
             <p className="mt-2 text-sm text-gray-500">
               {t('dashboard.signedInAs', {
-                value: user.email || user.display_name || user.username,
+                value: email || t('dashboard.emailNotBound'),
               })}
             </p>
           </div>
@@ -138,15 +139,9 @@ export default async function DashboardPage() {
               <dl className="mt-4 space-y-4 text-sm">
                 <div className="flex items-center justify-between gap-4">
                   <dt className="text-gray-500">{t('dashboard.email')}</dt>
-                  <dd className="font-medium">{user.email || '—'}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <dt className="text-gray-500">{t('dashboard.group')}</dt>
-                  <dd className="font-medium">{user.group}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <dt className="text-gray-500">{t('dashboard.accountId')}</dt>
-                  <dd className="font-mono text-xs">{user.id}</dd>
+                  <dd className="font-medium">
+                    {email || t('dashboard.emailNotBound')}
+                  </dd>
                 </div>
               </dl>
             </CardContent>

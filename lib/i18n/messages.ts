@@ -43,12 +43,9 @@ type Messages = {
     signInTitle: string;
     signUpTitle: string;
     subtitle: string;
-    emailOrAccount: string;
-    username: string;
     email: string;
     verificationCode: string;
     password: string;
-    accountPlaceholder: string;
     emailPlaceholder: string;
     verificationCodePlaceholder: string;
     passwordPlaceholder: string;
@@ -61,6 +58,7 @@ type Messages = {
     securityCheck: string;
     securityCheckDescription: string;
     securityCheckError: string;
+    emailRegistrationUnavailable: string;
     accountCreated: string;
     pleaseWait: string;
     signIn: string;
@@ -125,9 +123,7 @@ type Messages = {
     viewUsage: string;
     account: string;
     email: string;
-    username: string;
-    group: string;
-    accountId: string;
+    emailNotBound: string;
   };
   credits: {
     eyebrow: string;
@@ -215,12 +211,9 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       signInTitle: 'Sign in to JEVstone',
       signUpTitle: 'Start using JEVstone',
       subtitle: 'Use one account for balance, API keys and usage.',
-      emailOrAccount: 'Email or account name',
-      username: 'Username',
       email: 'Email',
       verificationCode: 'Verification code',
       password: 'Password',
-      accountPlaceholder: 'your email or account name',
       emailPlaceholder: 'you@example.com',
       verificationCodePlaceholder: '6-digit code',
       passwordPlaceholder: 'At least 8 characters',
@@ -235,6 +228,8 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       securityCheckDescription:
         'This takes a moment and helps keep sign-in traffic safe.',
       securityCheckError: 'The security check could not load. Please refresh and try again.',
+      emailRegistrationUnavailable:
+        'Email registration is not available yet. Please try again later.',
       accountCreated: 'Account created. Sign in to continue.',
       pleaseWait: 'Please wait',
       signIn: 'Sign in',
@@ -307,9 +302,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       viewUsage: 'View usage',
       account: 'Account',
       email: 'Email',
-      username: 'Username',
-      group: 'Group',
-      accountId: 'Account ID',
+      emailNotBound: 'Email not bound',
     },
     credits: {
       eyebrow: 'Balance',
@@ -394,12 +387,9 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       signInTitle: '登录 JEVstone',
       signUpTitle: '开始使用 JEVstone',
       subtitle: '使用一个账户管理余额、API 密钥和用量。',
-      emailOrAccount: '邮箱或账户名',
-      username: '用户名',
       email: '邮箱',
       verificationCode: '邮箱验证码',
       password: '密码',
-      accountPlaceholder: '输入邮箱或账户名',
       emailPlaceholder: 'you@example.com',
       verificationCodePlaceholder: '输入 6 位验证码',
       passwordPlaceholder: '至少 8 个字符',
@@ -412,6 +402,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       securityCheck: '快速安全验证',
       securityCheckDescription: '验证只需片刻，用于保护登录和注册请求。',
       securityCheckError: '安全验证加载失败，请刷新页面后重试。',
+      emailRegistrationUnavailable: '邮箱注册尚未启用，请稍后再试。',
       accountCreated: '账户已创建，请登录继续。',
       pleaseWait: '请稍候',
       signIn: '登录',
@@ -477,9 +468,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       viewUsage: '查看用量',
       account: '账户',
       email: '邮箱',
-      username: '用户名',
-      group: '用户组',
-      accountId: '账户 ID',
+      emailNotBound: '未绑定邮箱',
     },
     credits: {
       eyebrow: '余额',

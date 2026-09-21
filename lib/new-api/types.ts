@@ -12,7 +12,7 @@ export type NewApiUser = {
   has_password?: boolean;
   role: number;
   status: number;
-  email: string;
+  email?: string | null;
   group: string;
   quota: number;
   used_quota: number;

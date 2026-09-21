@@ -88,6 +88,14 @@ usage, preventing an unmetered successful call.
    - enable `TurnstileCheckEnabled` and set `TurnstileSiteKey` plus
      `TurnstileSecretKey` when bot protection is required.
 
+   Email is the only customer-facing JEV identity. New API's registration
+   handler persists the submitted email only when `EmailVerificationEnabled`
+   is enabled; when it is disabled, the email field may be discarded even if
+   JEV sends it in the registration request. Configure New API SMTP and email
+   verification before allowing customer registration. The `jev_<hash>`
+   username used by JEV is an internal compatibility key and must not be shown
+   in the customer UI.
+
    With email verification enabled, JEV sends the code through New API's
    `GET /api/verification` endpoint and registers with
    `POST /api/user/register` using `email` and `verification_code`. Email
