@@ -68,13 +68,32 @@ function signInUrl(
   return url;
 }
 
-function absoluteUrl(
+function publicUrl(
   request: NextRequest,
   pathname: string,
   search = ''
 ) {
   const configuredBaseUrl = process.env.BASE_URL?.trim();
   return new URL(`${pathname}${search}`, configuredBaseUrl || request.url);
+}
+
+function internalRewriteUrl(
+  request: NextRequest,
+  pathname: string,
+  search = ''
+) {
+  const configuredInternalBaseUrl = process.env.INTERNAL_BASE_URL?.trim();
+  const url = new URL(
+    `${pathname}${search}`,
+    configuredInternalBaseUrl || request.url
+  );
+
+  // The Next server listens over plain HTTP behind Caddy. When the proxy's
+  // forwarded scheme is HTTPS, keep the internal rewrite from attempting TLS
+  // against the loopback Next listener.
+  if (!configuredInternalBaseUrl) url.protocol = 'http:';
+
+  return url;
 }
 
 function unauthorized(
@@ -120,7 +139,7 @@ function localizedResponse(
   const response =
     localeFromPath && !isApiPath(internalPathname)
       ? NextResponse.rewrite(
-          absoluteUrl(request, internalPathname, search),
+          internalRewriteUrl(request, internalPathname, search),
           { request: { headers: requestHeaders } }
         )
       : NextResponse.next({ request: { headers: requestHeaders } });
@@ -143,7 +162,7 @@ export async function middleware(request: NextRequest) {
     request.headers.get(internalLocaleRewriteHeader) === '1';
 
   if (!localeFromPath && isPageRequest(pathname) && !isInternalLocaleRewrite) {
-    const url = absoluteUrl(request, localizedPath(locale, pathname), search);
+    const url = publicUrl(request, localizedPath(locale, pathname), search);
     const response = NextResponse.redirect(url);
     return setLocaleCookie(response, locale);
   }
