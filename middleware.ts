@@ -161,6 +161,21 @@ export async function middleware(request: NextRequest) {
   const redirectPath = `${pathname}${search}`;
   const sessionCookie = request.cookies.get(SESSION_COOKIE)?.value;
 
+  // The locale-prefixed URL is rewritten to the existing route tree. Bootstrap
+  // the locale cookie once so server components can still recover the locale
+  // after Next performs that internal rewrite.
+  const localeCookie = request.cookies.get(localeCookieName)?.value;
+  if (
+    localeFromPath &&
+    !isApiPath(internalPathname) &&
+    localeCookie !== locale
+  ) {
+    const response = NextResponse.redirect(
+      publicUrl(request, pathname, search)
+    );
+    return setLocaleCookie(response, locale);
+  }
+
   const isInternalLocaleRewrite =
     request.headers.has(internalLocaleRewriteHeader);
 
