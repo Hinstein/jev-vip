@@ -1,18 +1,47 @@
 import { z } from 'zod';
+import { NextRequest, NextResponse } from 'next/server';
 import { forwardedForFromHeaders } from '@/lib/http/client-ip';
+import { hasSameOrigin } from '@/lib/http/origin';
+import {
+  readJsonWithLimit,
+  RequestBodyTooLargeError,
+} from '@/lib/http/json';
 import { sendNewApiVerificationCode } from '@/lib/new-api/auth';
+
+const MAX_BODY_BYTES = 16 * 1024;
 
 const requestSchema = z.object({
   email: z.string().trim().email().max(255),
   turnstile: z.string().trim().max(4096).optional(),
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  try {
+    if (!hasSameOrigin(request)) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid request origin.' },
+        { status: 403 }
+      );
+    }
+  } catch (error) {
+    console.error('Origin validation is not configured', error);
+    return NextResponse.json(
+      { success: false, message: 'Server is not configured.' },
+      { status: 500 }
+    );
+  }
+
   let body: unknown;
   try {
-    body = await request.json();
-  } catch {
-    return Response.json(
+    body = await readJsonWithLimit(request, MAX_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { success: false, message: 'Request body is too large.' },
+        { status: 413 }
+      );
+    }
+    return NextResponse.json(
       { success: false, message: 'Invalid request body' },
       { status: 400 }
     );

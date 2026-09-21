@@ -104,17 +104,28 @@ const server = http.createServer(async (req, res) => {
     const body = await readJson(req);
     const payload = extractJevPayload(body);
 
-    const upstream = await fetch(`${upstreamBase}/v1/systemone`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${upstreamKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(30000),
-    });
+    let upstream;
+    let text;
+    try {
+      upstream = await fetch(`${upstreamBase}/v1/systemone`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${upstreamKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(30000),
+      });
+      text = await upstream.text();
+    } catch (error) {
+      console.error('TypeSafe transport failed', {
+        message: error instanceof Error ? error.message : 'unknown error',
+      });
+      return sendJson(res, 502, {
+        error: { message: 'Jev upstream is temporarily unavailable' },
+      });
+    }
 
-    const text = await upstream.text();
     let data;
     try {
       data = text ? JSON.parse(text) : {};
