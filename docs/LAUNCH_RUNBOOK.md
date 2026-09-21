@@ -150,10 +150,23 @@ than hard-coded into the JEV request path.
 
 ## J. Automated production smoke test
 
-After the disposable test redemption code exists, run:
+After SMTP/email verification is enabled, a real test email is available, and a
+disposable test redemption code exists, request the registration code:
 
 ```bash
-JEV_E2E_REDEMPTION_CODE=<one-time-test-code> pnpm jev:e2e
+JEV_E2E_BASE_URL=https://jevhub.store \
+JEV_E2E_EMAIL=<real-test-email> \
+pnpm jev:e2e:send-code
+```
+
+Read the code from the mailbox, then run the complete smoke test:
+
+```bash
+JEV_E2E_BASE_URL=https://jevhub.store \
+JEV_E2E_EMAIL=<real-test-email> \
+JEV_E2E_VERIFICATION_CODE=<email-code> \
+JEV_E2E_REDEMPTION_CODE=<one-time-test-code> \
+pnpm jev:e2e
 ```
 
 The script now fails if any of these invariants are wrong:
@@ -161,6 +174,7 @@ The script now fails if any of these invariants are wrong:
 - New API `QuotaPerUnit` is not 500,000
 - `jev` is not $0.42/M input and $0/M output
 - redemption does not add quota
+- the registered New API account does not retain the supplied email
 - a generated API key cannot call JEV
 - the successful Jev result lacks input-token usage
 - wallet deduction differs from New API pricing

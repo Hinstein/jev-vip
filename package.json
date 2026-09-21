@@ -6,6 +6,7 @@
     "start": "next start",
     "test": "tsx --test tests/*.test.ts",
     "jev:e2e": "node scripts/e2e-backend.mjs",
+    "jev:e2e:send-code": "node scripts/e2e-backend.mjs --send-verification",
     "arch:check": "node scripts/architecture-check.mjs"
   },
   "dependencies": {
