@@ -189,26 +189,28 @@ export function Login({
             <input type="hidden" name="locale" value={locale} />
             <input type="hidden" name="turnstile" value={turnstileToken} />
 
-            <div>
-              <Label htmlFor="email">{t('login.email')}</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                value={email}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  setVerificationMessage('');
-                  setVerificationError('');
-                }}
-                required
-                maxLength={255}
-                className="mt-2 h-12 rounded-xl border-gray-200 bg-white px-4 shadow-none"
-                placeholder={t('login.emailPlaceholder')}
-              />
-            </div>
+            {!emailVerificationEnabled ? (
+              <div>
+                <Label htmlFor="email">{t('login.email')}</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    setVerificationMessage('');
+                    setVerificationError('');
+                  }}
+                  required
+                  maxLength={255}
+                  className="mt-2 h-12 rounded-xl border-gray-200 bg-white px-4 shadow-none"
+                  placeholder={t('login.emailPlaceholder')}
+                />
+              </div>
+            ) : null}
 
             {emailVerificationEnabled ? (
               <div>
