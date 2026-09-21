@@ -45,10 +45,24 @@ type Messages = {
     subtitle: string;
     usernameOrEmail: string;
     username: string;
+    email: string;
+    verificationCode: string;
     password: string;
     accountPlaceholder: string;
     usernamePlaceholder: string;
+    emailPlaceholder: string;
+    verificationCodePlaceholder: string;
     passwordPlaceholder: string;
+    sendCode: string;
+    sendingCode: string;
+    resendCode: string;
+    verificationSent: string;
+    invalidEmail: string;
+    emailVerificationDescription: string;
+    securityCheck: string;
+    securityCheckDescription: string;
+    securityCheckError: string;
+    accountCreated: string;
     pleaseWait: string;
     signIn: string;
     signUp: string;
@@ -203,10 +217,26 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       subtitle: 'Use one account for balance, API keys and usage.',
       usernameOrEmail: 'Username or email',
       username: 'Username',
+      email: 'Email',
+      verificationCode: 'Verification code',
       password: 'Password',
       accountPlaceholder: 'your account',
       usernamePlaceholder: 'choose a username',
+      emailPlaceholder: 'you@example.com',
+      verificationCodePlaceholder: '6-digit code',
       passwordPlaceholder: 'At least 8 characters',
+      sendCode: 'Send code',
+      sendingCode: 'Sending…',
+      resendCode: 'Resend in {seconds}s',
+      verificationSent: 'A verification code was sent to your email.',
+      invalidEmail: 'Please enter a valid email address.',
+      emailVerificationDescription:
+        'Verify your email before creating the account.',
+      securityCheck: 'Quick security check',
+      securityCheckDescription:
+        'This takes a moment and helps keep sign-in traffic safe.',
+      securityCheckError: 'The security check could not load. Please refresh and try again.',
+      accountCreated: 'Account created. Sign in to continue.',
       pleaseWait: 'Please wait',
       signIn: 'Sign in',
       signUp: 'Create account',
@@ -366,10 +396,24 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       subtitle: '使用一个账户管理余额、API 密钥和用量。',
       usernameOrEmail: '用户名或邮箱',
       username: '用户名',
+      email: '邮箱',
+      verificationCode: '邮箱验证码',
       password: '密码',
       accountPlaceholder: '输入账户名',
       usernamePlaceholder: '选择用户名',
+      emailPlaceholder: 'you@example.com',
+      verificationCodePlaceholder: '输入 6 位验证码',
       passwordPlaceholder: '至少 8 个字符',
+      sendCode: '发送验证码',
+      sendingCode: '发送中…',
+      resendCode: '{seconds} 秒后重发',
+      verificationSent: '验证码已发送到你的邮箱。',
+      invalidEmail: '请输入有效的邮箱地址。',
+      emailVerificationDescription: '验证邮箱后即可创建账户。',
+      securityCheck: '快速安全验证',
+      securityCheckDescription: '验证只需片刻，用于保护登录和注册请求。',
+      securityCheckError: '安全验证加载失败，请刷新页面后重试。',
+      accountCreated: '账户已创建，请登录继续。',
       pleaseWait: '请稍候',
       signIn: '登录',
       signUp: '创建账户',

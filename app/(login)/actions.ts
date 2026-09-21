@@ -22,6 +22,7 @@ import { isLocale, localizedPath, type Locale } from '@/lib/i18n/config';
 const signInSchema = z.object({
   username: z.string().trim().min(1).max(255),
   password: z.string().min(8).max(128),
+  turnstile: z.string().trim().max(4096).optional(),
 });
 
 async function requestMeta() {
@@ -46,7 +47,8 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
     const bundle = await loginNewApi(
       data.username,
       data.password,
-      await requestMeta()
+      await requestMeta(),
+      { turnstile: data.turnstile || undefined }
     );
     await setSession(bundle);
   } catch (error) {
@@ -79,15 +81,34 @@ const signUpSchema = z.object({
     .max(20)
     .regex(/^[a-zA-Z0-9_.-]+$/, 'Use letters, numbers, ., _ or - only.'),
   password: z.string().min(8).max(128),
+  email: z
+    .union([z.literal(''), z.string().trim().email().max(255)])
+    .optional(),
+  verificationCode: z
+    .union([z.literal(''), z.string().trim().max(32)])
+    .optional(),
+  turnstile: z.string().trim().max(4096).optional(),
 });
 
 export const signUp = validatedAction(signUpSchema, async (data, formData) => {
   const locale = await actionLocale(formData);
+  let requiresSignIn = false;
   try {
     const meta = await requestMeta();
-    await registerNewApi(data.username, data.password, meta);
-    const bundle = await loginNewApi(data.username, data.password, meta);
-    await setSession(bundle);
+    await registerNewApi(data.username, data.password, meta, {
+      email: data.email || undefined,
+      verificationCode: data.verificationCode || undefined,
+      turnstile: data.turnstile || undefined,
+    });
+
+    // Turnstile tokens are single-use. New API also protects the login route,
+    // so a token used for registration cannot safely be reused for the
+    // automatic login that follows it.
+    requiresSignIn = Boolean(data.turnstile);
+    if (!requiresSignIn) {
+      const bundle = await loginNewApi(data.username, data.password, meta);
+      await setSession(bundle);
+    }
   } catch (error) {
     return {
       error:
@@ -95,7 +116,13 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
           ? error.message
           : 'Unable to create account. Please try again.',
       username: data.username,
+      email: data.email,
+      verificationCode: data.verificationCode,
     };
+  }
+
+  if (requiresSignIn) {
+    redirect(localizedPath(locale, '/sign-in?created=1'));
   }
 
   const redirectTo = formData.get('redirect');

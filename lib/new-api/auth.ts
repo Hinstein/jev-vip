@@ -18,9 +18,25 @@ type AuthResponseData = {
   user?: NewApiUser;
 };
 
-type RequestMeta = {
+export type NewApiRequestMeta = {
   forwardedFor?: string;
   userAgent?: string | null;
+};
+
+export type NewApiAuthStatus = {
+  emailVerificationEnabled: boolean;
+  turnstileCheckEnabled: boolean;
+  turnstileSiteKey: string;
+};
+
+type NewApiStatusData = {
+  email_verification?: boolean;
+  turnstile_check?: boolean;
+  turnstile_site_key?: string;
+};
+
+export type NewApiAuthRequestOptions = {
+  turnstile?: string;
 };
 
 function baseUrl() {
@@ -35,11 +51,19 @@ function trustedOrigin() {
   return value;
 }
 
-function requestMetaHeaders(meta?: RequestMeta) {
+function requestMetaHeaders(meta?: NewApiRequestMeta) {
   const headers: Record<string, string> = {};
   if (meta?.forwardedFor) headers['X-Forwarded-For'] = meta.forwardedFor;
   if (meta?.userAgent) headers['User-Agent'] = meta.userAgent;
   return headers;
+}
+
+function withTurnstile(path: string, token?: string) {
+  const value = token?.trim();
+  if (!value) return path;
+
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}turnstile=${encodeURIComponent(value)}`;
 }
 
 function extractRefreshToken(setCookie: string | null) {
@@ -64,19 +88,23 @@ async function parseEnvelope<T>(response: Response): Promise<ApiEnvelope<T>> {
 
 async function authRequest(
   path: string,
-  init: RequestInit
+  init: RequestInit,
+  options?: NewApiAuthRequestOptions
 ): Promise<{ response: Response; payload: ApiEnvelope<AuthResponseData> }> {
   let response: Response;
   try {
-    response = await fetch(`${baseUrl()}${path}`, {
-      ...init,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(init.headers ?? {}),
-      },
-      cache: 'no-store',
-      signal: AbortSignal.timeout(10000),
-    });
+    response = await fetch(
+      `${baseUrl()}${withTurnstile(path, options?.turnstile)}`,
+      {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init.headers ?? {}),
+        },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(10000),
+      }
+    );
   } catch {
     throw new Error('JEV account service is temporarily unavailable');
   }
@@ -135,13 +163,14 @@ function normalizeAuthBundle(
 export async function loginNewApi(
   username: string,
   password: string,
-  meta?: RequestMeta
+  meta?: NewApiRequestMeta,
+  options?: NewApiAuthRequestOptions
 ) {
   const { response, payload } = await authRequest('/api/user/login', {
     method: 'POST',
     headers: requestMetaHeaders(meta),
     body: JSON.stringify({ username, password }),
-  });
+  }, options);
 
   return normalizeAuthBundle(response, payload);
 }
@@ -149,20 +178,32 @@ export async function loginNewApi(
 export async function registerNewApi(
   username: string,
   password: string,
-  meta?: RequestMeta
+  meta?: NewApiRequestMeta,
+  input?: {
+    email?: string;
+    verificationCode?: string;
+    turnstile?: string;
+  }
 ) {
+  const body: Record<string, string> = { username, password };
+  if (input?.email) body.email = input.email;
+  if (input?.verificationCode) body.verification_code = input.verificationCode;
+
   let response: Response;
   try {
-    response = await fetch(`${baseUrl()}/api/user/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...requestMetaHeaders(meta),
-      },
-      body: JSON.stringify({ username, password }),
-      cache: 'no-store',
-      signal: AbortSignal.timeout(10000),
-    });
+    response = await fetch(
+      `${baseUrl()}${withTurnstile('/api/user/register', input?.turnstile)}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...requestMetaHeaders(meta),
+        },
+        body: JSON.stringify(body),
+        cache: 'no-store',
+        signal: AbortSignal.timeout(10000),
+      }
+    );
   } catch {
     throw new Error('JEV account service is temporarily unavailable');
   }
@@ -173,10 +214,67 @@ export async function registerNewApi(
   }
 }
 
+export async function getNewApiAuthStatus(): Promise<NewApiAuthStatus> {
+  const fallback: NewApiAuthStatus = {
+    emailVerificationEnabled: false,
+    turnstileCheckEnabled: false,
+    turnstileSiteKey: '',
+  };
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl()}/api/status`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(5000),
+    });
+  } catch {
+    return fallback;
+  }
+
+  const payload = await parseEnvelope<NewApiStatusData>(response);
+  const data = payload.data;
+  if (!response.ok || payload.success === false || !data) return fallback;
+
+  return {
+    emailVerificationEnabled: data.email_verification === true,
+    turnstileCheckEnabled: data.turnstile_check === true,
+    turnstileSiteKey: data.turnstile_site_key?.trim() || '',
+  };
+}
+
+export async function sendNewApiVerificationCode(
+  email: string,
+  meta?: NewApiRequestMeta,
+  options?: NewApiAuthRequestOptions
+) {
+  const query = new URLSearchParams({ email });
+  if (options?.turnstile?.trim()) {
+    query.set('turnstile', options.turnstile.trim());
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl()}/api/verification?${query}`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        ...requestMetaHeaders(meta),
+      },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(10000),
+    });
+  } catch {
+    throw new Error('JEV account service is temporarily unavailable');
+  }
+
+  const payload = await parseEnvelope<unknown>(response);
+  return { response, payload };
+}
+
 export async function refreshNewApiAuth(
   refreshToken: string,
   sid?: string,
-  meta?: RequestMeta
+  meta?: NewApiRequestMeta
 ) {
   const headers: Record<string, string> = {
     Cookie: `new_api_refresh=${refreshToken}`,

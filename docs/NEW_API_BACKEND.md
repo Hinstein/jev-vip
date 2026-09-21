@@ -79,9 +79,21 @@ usage, preventing an unmetered successful call.
 3. Put the New API administrator console behind a protected HTTPS reverse proxy
    to `127.0.0.1:3001` and complete root setup.
 4. Keep New API password registration/login enabled for the JEV customer
-   frontend. For the current simple JEV signup form, keep Turnstile, email
-   verification and password-login encryption disabled until those flows are
-   explicitly implemented in JEV.
+   frontend. JEV reads the public `/api/status` flags at the sign-in and
+   sign-up pages, so the following New API Root settings are the source of
+   truth for the customer auth experience:
+   - configure the SMTP server in New API's email-server settings;
+   - enable `EmailVerificationEnabled` when registration must verify an email;
+   - enable `TurnstileCheckEnabled` and set `TurnstileSiteKey` plus
+     `TurnstileSecretKey` when bot protection is required.
+
+   With email verification enabled, JEV sends the code through New API's
+   `GET /api/verification` endpoint and registers with
+   `POST /api/user/register` using `email` and `verification_code`. Email
+   verification is a registration step; normal password login does not ask
+   for the email code. If Turnstile is enabled, JEV includes a fresh token on
+   each protected request. A successful Turnstile-protected registration
+   returns the user to sign-in because New API tokens are single-use.
 5. Keep new-user quota at 0 and automatic default-token generation disabled.
 6. Confirm New API payment/compliance settings so redemption-code generation is
    allowed.
