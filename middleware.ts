@@ -28,6 +28,9 @@ function preferredLocale(request: NextRequest): Locale {
   // Next may run middleware again after a locale-prefixed page is rewritten
   // to its internal route. Preserve the locale carried on that rewrite so a
   // direct /zh-CN/... request is not redirected back to /en/....
+  const rewriteLocale = request.headers.get(internalLocaleRewriteHeader);
+  if (isLocale(rewriteLocale)) return rewriteLocale;
+
   const requestLocale = request.headers.get('x-locale');
   if (isLocale(requestLocale)) return requestLocale;
 
@@ -133,7 +136,7 @@ function localizedResponse(
   requestHeaders: Headers
 ) {
   if (localeFromPath && !isApiPath(internalPathname)) {
-    requestHeaders.set(internalLocaleRewriteHeader, '1');
+    requestHeaders.set(internalLocaleRewriteHeader, locale);
   }
 
   const response =
@@ -159,7 +162,7 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get(SESSION_COOKIE)?.value;
 
   const isInternalLocaleRewrite =
-    request.headers.get(internalLocaleRewriteHeader) === '1';
+    request.headers.has(internalLocaleRewriteHeader);
 
   if (!localeFromPath && isPageRequest(pathname) && !isInternalLocaleRewrite) {
     const url = publicUrl(request, localizedPath(locale, pathname), search);
