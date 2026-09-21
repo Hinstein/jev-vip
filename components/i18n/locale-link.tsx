@@ -9,6 +9,7 @@ import {
   localizedPath,
   type Locale,
 } from '@/lib/i18n/config';
+import { useProvidedLocale } from './locale-provider';
 
 type LocaleLinkProps = Omit<LinkProps, 'href'> &
   Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
@@ -16,13 +17,11 @@ type LocaleLinkProps = Omit<LinkProps, 'href'> &
     children: ReactNode;
   };
 
-function getLocaleForPathname(pathname: string | null): Locale {
-  return getLocaleFromPathname(pathname || '') || defaultLocale;
-}
-
 export function LocaleLink({ href, ...props }: LocaleLinkProps) {
   const pathname = usePathname();
-  const locale = getLocaleForPathname(pathname);
+  const providedLocale = useProvidedLocale();
+  const locale =
+    getLocaleFromPathname(pathname || '') || providedLocale || defaultLocale;
 
   return <Link href={localizedPath(locale, href)} {...props} />;
 }

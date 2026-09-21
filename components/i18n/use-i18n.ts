@@ -2,16 +2,18 @@
 
 import { usePathname } from 'next/navigation';
 import {
-  defaultLocale,
   getLocaleFromPathname,
+  defaultLocale,
   type Locale,
 } from '@/lib/i18n/config';
 import { translate, type MessageKey } from '@/lib/i18n/messages';
+import { useProvidedLocale } from './locale-provider';
 
 export function useI18n() {
   const pathname = usePathname();
+  const providedLocale = useProvidedLocale();
   const locale: Locale =
-    getLocaleFromPathname(pathname || '') || defaultLocale;
+    getLocaleFromPathname(pathname || '') || providedLocale || defaultLocale;
 
   return {
     locale,

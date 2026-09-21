@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { Manrope } from 'next/font/google';
 import { getLocale } from '@/lib/i18n/server';
+import { LocaleProvider } from '@/components/i18n/locale-provider';
 
 export const metadata: Metadata = {
   title: {
@@ -39,7 +40,7 @@ export default async function RootLayout({
             strategy="afterInteractive"
           />
         ) : null}
-        {children}
+        <LocaleProvider locale={locale}>{children}</LocaleProvider>
       </body>
     </html>
   );
