@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import {
-  REFRESH_COOKIE,
-  SESSION_COOKIE,
-  sessionCookieSecure,
-  sessionFromBundle,
-  signToken,
-  verifyToken,
-} from '@/lib/auth/session';
+  NEW_API_ACCESS_COOKIE,
+  NEW_API_REFRESH_COOKIE,
+  NEW_API_SESSION_COOKIE,
+  clearNewApiAuthCookies,
+  setNewApiAuthCookies,
+} from '@/lib/auth/new-api-session';
 import { forwardedForFromHeaders } from '@/lib/http/client-ip';
 import { refreshNewApiAuth } from '@/lib/new-api/auth';
 import {
@@ -112,9 +111,7 @@ function unauthorized(
 }
 
 function clearAuth(response: NextResponse) {
-  response.cookies.delete(SESSION_COOKIE);
-  response.cookies.delete(REFRESH_COOKIE);
-  return response;
+  return clearNewApiAuthCookies(response);
 }
 
 function setLocaleCookie(response: NextResponse, locale: Locale) {
@@ -159,7 +156,9 @@ export async function middleware(request: NextRequest) {
     : pathname;
   const protectedPath = isProtectedPath(internalPathname);
   const redirectPath = `${pathname}${search}`;
-  const sessionCookie = request.cookies.get(SESSION_COOKIE)?.value;
+  const accessToken = request.cookies.get(NEW_API_ACCESS_COOKIE)?.value;
+  const refreshToken = request.cookies.get(NEW_API_REFRESH_COOKIE)?.value;
+  const sessionId = request.cookies.get(NEW_API_SESSION_COOKIE)?.value;
 
   // The locale-prefixed URL is rewritten to the existing route tree. Bootstrap
   // the locale cookie once so server components can still recover the locale
@@ -185,7 +184,7 @@ export async function middleware(request: NextRequest) {
     return setLocaleCookie(response, locale);
   }
 
-  if (protectedPath && !sessionCookie) {
+  if (protectedPath && !accessToken && !refreshToken) {
     return unauthorized(request, locale, redirectPath);
   }
 
@@ -202,22 +201,14 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  let session;
-  try {
-    session = await verifyToken(sessionCookie as string);
-  } catch {
-    return clearAuth(unauthorized(request, locale, redirectPath));
-  }
-
-  if (new Date(session.expires).getTime() <= Date.now()) {
-    return clearAuth(unauthorized(request, locale, redirectPath));
-  }
-
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-locale', locale);
 
-  const now = Math.floor(Date.now() / 1000);
-  if (session.accessExpiresAt > now + 60) {
+  // Access tokens are issued and expired by New API. JEV does not verify or
+  // re-sign them locally. The browser expiry is set from New API's
+  // access_expires_at; when it disappears, the refresh flow below obtains the
+  // next access token from New API.
+  if (accessToken) {
     return localizedResponse(
       request,
       locale,
@@ -228,17 +219,15 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
   if (!refreshToken) {
     return clearAuth(unauthorized(request, locale, redirectPath));
   }
 
   try {
-    const bundle = await refreshNewApiAuth(refreshToken, session.sid, {
+    const bundle = await refreshNewApiAuth(refreshToken, sessionId, {
       forwardedFor: forwardedForFromHeaders(request.headers),
       userAgent: request.headers.get('user-agent'),
     });
-    const nextSession = sessionFromBundle(bundle);
     const response = localizedResponse(
       request,
       locale,
@@ -247,25 +236,7 @@ export async function middleware(request: NextRequest) {
       search,
       requestHeaders
     );
-    const secure = sessionCookieSecure();
-    const expires = new Date(nextSession.expires);
-
-    response.cookies.set(SESSION_COOKIE, await signToken(nextSession), {
-      httpOnly: true,
-      secure,
-      sameSite: 'lax',
-      path: '/',
-      expires,
-    });
-    response.cookies.set(REFRESH_COOKIE, bundle.refreshToken, {
-      httpOnly: true,
-      secure,
-      sameSite: 'strict',
-      path: '/',
-      expires,
-    });
-
-    return response;
+    return setNewApiAuthCookies(response, bundle);
   } catch {
     return clearAuth(unauthorized(request, locale, redirectPath));
   }

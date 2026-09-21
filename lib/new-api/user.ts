@@ -1,14 +1,18 @@
 import 'server-only';
 
-import { getSession } from '@/lib/auth/session';
+import { getNewApiAccessToken } from '@/lib/auth/new-api-session';
 import { getNewApiSelfByAccessToken } from '@/lib/new-api/client';
 
 export async function getUser() {
-  const session = await getSession();
-  if (!session) return null;
+  let accessToken: string;
+  try {
+    accessToken = await getNewApiAccessToken();
+  } catch {
+    return null;
+  }
 
   try {
-    return await getNewApiSelfByAccessToken(session.accessToken);
+    return await getNewApiSelfByAccessToken(accessToken);
   } catch {
     return null;
   }

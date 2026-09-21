@@ -18,12 +18,13 @@ New API owns:
 - request and administrator logs
 - the administrator console
 
-JEV does not keep a second business user, role table, permission model or credit
-balance.
+JEV does not keep a second business user, role table, permission model, session
+signing key or credit balance.
 
-The JEV Store frontend stores only an HttpOnly signed session envelope containing the
-current New API access token/user snapshot plus the New API refresh credential.
-Access tokens are refreshed through New API's session endpoint.
+The JEV Store frontend stores only the opaque credentials issued by New API in
+HttpOnly cookies. It does not sign, decode, persist or validate a second JWT
+session. Access-token refresh, session expiry and logout all go through New
+API's session endpoints.
 
 ## Login path
 
@@ -31,7 +32,7 @@ Access tokens are refreshed through New API's session endpoint.
 JEV sign-in form
   -> POST New API /api/user/login
   -> New API validates username/password, status and login policy
-  -> JEV stores the returned New API session in HttpOnly cookies
+  -> JEV stores the returned New API credentials in HttpOnly cookies
   -> protected JEV pages read /api/user/self
 ```
 

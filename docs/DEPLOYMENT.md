@@ -5,7 +5,8 @@
 The JEV Store Next.js frontend is stateless and has no application database.
 
 1. Install Node 22+ and pnpm.
-2. Copy `.env.example` to `.env` and set production secrets.
+2. Copy `.env.example` to `.env` and set the New API/backend secrets. The JEV
+   frontend has no separate `AUTH_SECRET` or application database.
 3. Install and build:
 
 ```bash

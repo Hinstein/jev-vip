@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { randomUUID } from 'node:crypto';
-import { getSession } from '@/lib/auth/session';
+import { getNewApiAccessToken } from '@/lib/auth/new-api-session';
 import type { NewApiUser } from './types';
 
 export type NewApiToken = {
@@ -80,9 +80,7 @@ export async function newApiRequest<T>(
 }
 
 async function currentAccessToken() {
-  const session = await getSession();
-  if (!session) throw new Error('User is not authenticated');
-  return session.accessToken;
+  return getNewApiAccessToken();
 }
 
 function extractItems(payload: unknown): NewApiToken[] {

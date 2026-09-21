@@ -77,6 +77,10 @@ transactions were still present after the New API migration.
 Status: **fixed**. Local commercial database state has been removed from the
 active architecture.
 
+The frontend also no longer creates a local JWT session envelope. Browser
+session credentials are the opaque access/refresh/session values issued by New
+API, and refresh/logout are delegated back to New API.
+
 ### 2. Undefined quota/price relationship
 
 The old catalog had arbitrary credit values that were not tied to New API's
@@ -198,8 +202,9 @@ redemption codes retain the quota value with which they were generated.
 
 The pre-deploy audit additionally fixed:
 
-- fail-closed `AUTH_SECRET` validation (minimum 32 bytes)
-- session cookie refresh retaining `Secure` based on canonical `BASE_URL`
+- New API access/refresh/session credentials stored without a second JEV JWT
+  signing layer
+- frontend auth-cookie security retaining `Secure` based on canonical `BASE_URL`
 - client IP forwarding for New API's critical auth rate limiter
 - same-origin mutation checks failing closed instead of allowing missing Origin
 - streaming request-size enforcement for `/api/v1/decide`

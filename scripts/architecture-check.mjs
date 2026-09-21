@@ -5,6 +5,7 @@ const forbiddenPaths = [
   'lib/credits',
   'lib/litellm',
   'lib/vouchers',
+  'lib/auth/session.ts',
   'relay/litellm',
   'docker-compose.relay.yml',
 ];
@@ -20,6 +21,7 @@ const forbiddenDependencies = [
   'bcryptjs',
   'drizzle-kit',
   'drizzle-orm',
+  'jose',
   'postgres',
   'stripe',
 ];
@@ -28,6 +30,10 @@ for (const name of forbiddenDependencies) {
   if (packageJson.dependencies?.[name] || packageJson.devDependencies?.[name]) {
     throw new Error(`Legacy dependency must be removed: ${name}`);
   }
+}
+
+if (readFileSync('.env.example', 'utf8').includes('AUTH_SECRET=')) {
+  throw new Error('JEV must not define a second application auth secret');
 }
 
 const compose = readFileSync('docker-compose.backend.yml', 'utf8');

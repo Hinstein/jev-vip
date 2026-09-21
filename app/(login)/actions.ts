@@ -2,18 +2,17 @@
 
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
-import { cookies, headers } from 'next/headers';
+import { headers } from 'next/headers';
 import {
   loginNewApi,
   logoutNewApiAuth,
   registerNewApi,
 } from '@/lib/new-api/auth';
 import {
-  clearSession,
-  getSession,
-  REFRESH_COOKIE,
-  setSession,
-} from '@/lib/auth/session';
+  clearStoredNewApiAuthCookies,
+  getNewApiCredentials,
+  storeNewApiAuthCookies,
+} from '@/lib/auth/new-api-session';
 import { forwardedForFromHeaders } from '@/lib/http/client-ip';
 import { validatedAction } from '@/lib/auth/middleware';
 import { newApiUsernameForLogin, usernameForEmail } from '@/lib/auth/account-identity';
@@ -51,7 +50,7 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
       await requestMeta(),
       { turnstile: data.turnstile || undefined }
     );
-    await setSession(bundle);
+    await storeNewApiAuthCookies(bundle);
   } catch (error) {
     return {
       error:
@@ -101,7 +100,7 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
     requiresSignIn = Boolean(data.turnstile);
     if (!requiresSignIn) {
       const bundle = await loginNewApi(username, data.password, meta);
-      await setSession(bundle);
+      await storeNewApiAuthCookies(bundle);
     }
   } catch (error) {
     return {
@@ -131,21 +130,19 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
 });
 
 export async function signOut() {
-  const [session, store, meta] = await Promise.all([
-    getSession(),
-    cookies(),
+  const [credentials, meta] = await Promise.all([
+    getNewApiCredentials(),
     requestMeta(),
   ]);
-  const refreshToken = store.get(REFRESH_COOKIE)?.value;
 
-  if (session || refreshToken) {
+  if (credentials.accessToken || credentials.refreshToken) {
     await logoutNewApiAuth({
-      accessToken: session?.accessToken,
-      refreshToken,
-      sid: session?.sid,
+      accessToken: credentials.accessToken,
+      refreshToken: credentials.refreshToken,
+      sid: credentials.sessionId,
       ...meta,
     });
   }
 
-  await clearSession();
+  await clearStoredNewApiAuthCookies();
 }

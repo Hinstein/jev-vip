@@ -7,7 +7,7 @@ Jev.
 
 ```text
 Customer
-  -> JEV Store frontend (stateless; no local database)
+  -> JEV Store frontend (stateless; no local database or auth system)
        -> New API
           -> login / users / roles / permissions
           -> quota / redemption codes
@@ -20,7 +20,8 @@ Customer
 
 New API is the only source of truth for customer identity and commercial API
 state. The JEV Store frontend does not maintain a second user database, permission
-system, credit ledger or API-key store.
+system, JWT session, credit ledger or API-key store. It only renders the
+customer experience and forwards New API credentials and business operations.
 
 The TypeSafe upstream is not OpenAI-compatible, so
 `relay/jev-adapter` remains as a narrow protocol converter. It owns no users,
