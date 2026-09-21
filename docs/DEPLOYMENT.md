@@ -37,3 +37,6 @@ Before opening redemption to users, verify the OfferKit readiness endpoint and r
   as a second layer for multi-instance deployments.
 - Configure LiteLLM, TypeSafe and the JEV usage-metering database migration
   before issuing API keys publicly.
+- Treat the relay as configured only when all of these are non-empty and valid:
+  `LITELLM_PROXY_URL`, `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`,
+  `LITELLM_DATABASE_URL`, `TYPESAFE_API_BASE` and `TYPESAFE_API_KEY`.

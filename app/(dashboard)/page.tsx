@@ -46,10 +46,10 @@ export default function HomePage() {
               <span className="block text-gray-500">managed in one dashboard.</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-              Start with a simple prepaid workflow: create an account, top up
-              credits, receive API access, and track usage. Phase one ships the
-              SaaS foundation; payment and automatic delivery are intentionally
-              kept separate for the next phase.
+              Start with a simple prepaid workflow: create an account, redeem
+              credits, receive API access, and track usage. Phase 1 ships the
+              SaaS foundation; payment and automatic delivery are explicitly
+              reserved for Phase 2.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="rounded-full">

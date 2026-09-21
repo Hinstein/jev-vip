@@ -18,9 +18,11 @@ type KeyItem = {
 export function KeyManager({
   initialKeys,
   configured,
+  loadError,
 }: {
   initialKeys: KeyItem[];
   configured: boolean;
+  loadError?: boolean;
 }) {
   const router = useRouter();
   const [name, setName] = useState('Default');
@@ -107,6 +109,13 @@ export function KeyManager({
         </div>
       ) : null}
 
+      {configured && loadError ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          Existing API keys could not be loaded from the relay. Key creation
+          remains disabled until the relay is reachable again.
+        </div>
+      ) : null}
+
       <form
         onSubmit={createKey}
         className="flex flex-col gap-3 rounded-xl border bg-white p-4 sm:flex-row"
@@ -120,7 +129,9 @@ export function KeyManager({
         />
         <Button
           type="submit"
-          disabled={!configured || pending || name.trim().length === 0}
+          disabled={
+            !configured || loadError || pending || name.trim().length === 0
+          }
         >
           {pending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

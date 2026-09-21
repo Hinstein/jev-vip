@@ -41,9 +41,25 @@ async function main() {
     'XIANYU_STANDARD_URL=',
     'XIANYU_PRO_URL=',
     '',
+    '# Optional Umami web analytics.',
+    'NEXT_PUBLIC_UMAMI_SCRIPT_URL=',
+    'NEXT_PUBLIC_UMAMI_WEBSITE_ID=',
+    '',
+    '# LiteLLM relay and TypeSafe credentials are configured separately.',
+    'LITELLM_PROXY_URL=http://127.0.0.1:4000',
+    'LITELLM_MASTER_KEY=',
+    'LITELLM_SALT_KEY=',
+    'LITELLM_DATABASE_URL=',
+    'TYPESAFE_API_BASE=https://api.typesafe.ai',
+    'TYPESAFE_API_KEY=',
+    '',
   ].join('\n');
 
-  await fs.writeFile(path.join(process.cwd(), '.env'), env);
+  const envPath = path.join(process.cwd(), '.env');
+  await fs.writeFile(envPath, env, { mode: 0o600 });
+  // `mode` only applies when the file is created; enforce the permission when
+  // setup is rerun over an existing file as well because it contains secrets.
+  await fs.chmod(envPath, 0o600);
   console.log('Created .env. No Stripe setup is required for the voucher flow.');
 }
 

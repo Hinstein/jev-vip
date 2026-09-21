@@ -1,4 +1,8 @@
 import 'server-only';
+import { hashApiKey } from '@/lib/api-keys/crypto';
+import { isLiteLLMConfigured } from './config';
+
+export { isLiteLLMConfigured } from './config';
 
 export type LiteLLMVirtualKey = {
   tokenId: string;
@@ -19,6 +23,7 @@ export type LiteLLMKeyInfo = {
 };
 
 type LiteLLMKeyRecord = {
+  token?: unknown;
   token_id?: unknown;
   key_name?: unknown;
   key_alias?: unknown;
@@ -27,7 +32,11 @@ type LiteLLMKeyRecord = {
   blocked?: unknown;
   models?: unknown;
   user_id?: unknown;
+  metadata?: unknown;
 };
+
+const KEY_LIST_PAGE_SIZE = 100;
+const MAX_KEY_LIST_PAGES = 100;
 
 class LiteLLMAdminError extends Error {
   constructor(
@@ -39,21 +48,57 @@ class LiteLLMAdminError extends Error {
   }
 }
 
-function getConfig() {
-  const baseUrl = process.env.LITELLM_PROXY_URL?.replace(/\/+$/, '');
-  const masterKey = process.env.LITELLM_MASTER_KEY;
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
 
-  if (!baseUrl || !masterKey) {
+function stringValue(record: Record<string, unknown> | null, key: string) {
+  if (typeof record?.[key] === 'string') return record[key] as string;
+  if (typeof record?.[key] === 'number' && Number.isSafeInteger(record[key])) {
+    return String(record[key]);
+  }
+  return null;
+}
+
+function safeTokenIdentifier(value: string | null) {
+  if (!value) return null;
+
+  // LiteLLM's current `token`/`token_id` values are SHA-256 hashes. Keep a
+  // defensive fallback for older or custom responses that may still contain
+  // the reusable `sk-...` secret so it can never leave the server.
+  return value.startsWith('sk-') ? hashApiKey(value) : value;
+}
+
+function tokenIdentifier(record: Record<string, unknown> | null) {
+  return safeTokenIdentifier(
+    stringValue(record, 'token_id') ?? stringValue(record, 'token')
+  );
+}
+
+function providerTokenId(record: Record<string, unknown> | null) {
+  return safeTokenIdentifier(
+    stringValue(record, 'token_id') ?? stringValue(record, 'token')
+  );
+}
+
+function ownerIdentifier(record: Record<string, unknown> | null) {
+  const metadata = asRecord(record?.metadata);
+  return (
+    stringValue(record, 'user_id') ?? stringValue(metadata, 'jev_user_id')
+  );
+}
+
+function getConfig() {
+  const baseUrl = process.env.LITELLM_PROXY_URL?.trim().replace(/\/+$/, '');
+  const masterKey = process.env.LITELLM_MASTER_KEY?.trim();
+
+  if (!baseUrl || !masterKey || !isLiteLLMConfigured()) {
     throw new Error('LiteLLM relay is not configured');
   }
 
   return { baseUrl, masterKey };
-}
-
-export function isLiteLLMConfigured() {
-  return Boolean(
-    process.env.LITELLM_PROXY_URL && process.env.LITELLM_MASTER_KEY
-  );
 }
 
 function userRef(userId: number) {
@@ -129,8 +174,7 @@ export async function createLiteLLMVirtualKey(
     throw new Error('LiteLLM did not return the generated key');
   }
 
-  const tokenId =
-    typeof payload.token_id === 'string' ? payload.token_id : null;
+  const tokenId = providerTokenId(payload);
 
   return {
     key,
@@ -144,47 +188,69 @@ export async function listLiteLLMVirtualKeys(
   userId: number
 ): Promise<LiteLLMVirtualKey[]> {
   const expectedUserId = userRef(userId);
-  const params = new URLSearchParams({
-    user_id: expectedUserId,
-    return_full_object: 'true',
-    page: '1',
-    size: '100',
-  });
+  const result: LiteLLMVirtualKey[] = [];
+  const seen = new Set<string>();
 
-  const payload = (await adminRequest(
-    `/key/list?${params.toString()}`
-  )) as Record<string, unknown>;
+  for (let page = 1; page <= MAX_KEY_LIST_PAGES; page += 1) {
+    const params = new URLSearchParams({
+      user_id: expectedUserId,
+      return_full_object: 'true',
+      page: String(page),
+      size: String(KEY_LIST_PAGE_SIZE),
+    });
 
-  const keys = Array.isArray(payload.keys)
-    ? (payload.keys as LiteLLMKeyRecord[])
-    : [];
+    const payload = asRecord(
+      await adminRequest(`/key/list?${params.toString()}`)
+    );
+    const keys = Array.isArray(payload?.keys)
+      ? (payload.keys as unknown[])
+      : [];
 
-  return keys
-    .filter((item) => String(item.user_id ?? '') === expectedUserId)
-    .map((item) => {
-      const tokenId =
-        typeof item.token_id === 'string'
-          ? item.token_id
-          : '';
+    for (const item of keys) {
+      // Do not infer ownership from a bare string. Older LiteLLM responses
+      // used to return raw keys, but a misbehaving/older proxy could ignore
+      // the user_id filter and expose another user's key here. Current
+      // versions return full objects when return_full_object=true.
+      const record = asRecord(item) as LiteLLMKeyRecord | null;
+      if (!record || ownerIdentifier(record) !== expectedUserId) continue;
 
-      return {
+      const tokenId = tokenIdentifier(record);
+      if (!tokenId || seen.has(tokenId)) continue;
+      seen.add(tokenId);
+      result.push({
         tokenId,
         keyName:
-          typeof item.key_name === 'string' ? item.key_name : 'sk-...hidden',
+          typeof record.key_name === 'string'
+            ? record.key_name
+            : 'sk-...hidden',
         keyAlias:
-          typeof item.key_alias === 'string' ? item.key_alias : null,
+          typeof record.key_alias === 'string' ? record.key_alias : null,
         createdAt:
-          typeof item.created_at === 'string' ? item.created_at : null,
-        spend: typeof item.spend === 'number' ? item.spend : 0,
-        blocked: item.blocked === true,
-        models: Array.isArray(item.models)
-          ? item.models.filter(
+          typeof record.created_at === 'string' ? record.created_at : null,
+        spend: typeof record.spend === 'number' ? record.spend : 0,
+        blocked: record.blocked === true,
+        models: Array.isArray(record.models)
+          ? record.models.filter(
               (model): model is string => typeof model === 'string'
             )
           : [],
-      };
-    })
-    .filter((item) => item.tokenId.length > 0);
+      });
+    }
+
+    const totalPages =
+      typeof payload?.total_pages === 'number' &&
+      Number.isSafeInteger(payload.total_pages)
+        ? payload.total_pages
+        : null;
+    if (
+      keys.length < KEY_LIST_PAGE_SIZE ||
+      (totalPages !== null && page >= totalPages)
+    ) {
+      break;
+    }
+  }
+
+  return result;
 }
 
 export async function deleteLiteLLMVirtualKey(
@@ -195,13 +261,14 @@ export async function deleteLiteLLMVirtualKey(
   const owned = keys.some((key) => key.tokenId === tokenId);
 
   if (!owned) {
-    throw new Error('API key was not found for this user');
+    return false;
   }
 
   await adminRequest('/key/delete', {
     method: 'POST',
     body: JSON.stringify({ keys: [tokenId] }),
   });
+  return true;
 }
 
 export async function deleteLiteLLMKeyBySecret(key: string) {
@@ -211,27 +278,15 @@ export async function deleteLiteLLMKeyBySecret(key: string) {
   });
 }
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
-
-function stringValue(record: Record<string, unknown> | null, key: string) {
-  if (typeof record?.[key] === 'string') return record[key] as string;
-  if (typeof record?.[key] === 'number' && Number.isSafeInteger(record[key])) {
-    return String(record[key]);
-  }
-  return null;
-}
-
 export async function getLiteLLMKeyInfo(
   presentedKey: string
 ): Promise<LiteLLMKeyInfo | null> {
   let payload: unknown;
   try {
+    // LiteLLM accepts either a raw key or its SHA-256 hash, but the raw key
+    // would be written to proxy/access logs when sent as a query parameter.
     payload = await adminRequest(
-      `/key/info?key=${encodeURIComponent(presentedKey)}`
+      `/key/info?key=${encodeURIComponent(hashApiKey(presentedKey))}`
     );
   } catch (error) {
     if (error instanceof LiteLLMAdminError && error.status === 404) {
@@ -247,8 +302,7 @@ export async function getLiteLLMKeyInfo(
   const metadata = asRecord(info.metadata);
   const userId =
     stringValue(info, 'user_id') ?? stringValue(metadata, 'jev_user_id');
-  const tokenId =
-    stringValue(info, 'token_id');
+  const tokenId = providerTokenId(info);
 
   return {
     tokenId,

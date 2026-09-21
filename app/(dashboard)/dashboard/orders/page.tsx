@@ -9,7 +9,7 @@ import {
 export default function OrdersPage() {
   return (
     <section className="flex-1 p-4 lg:p-8">
-      <p className="text-sm text-gray-500">Billing history</p>
+      <p className="text-sm text-gray-500">Phase 2 · Billing history</p>
       <h1 className="text-2xl font-semibold tracking-tight">Orders</h1>
 
       <Card className="mt-6">
@@ -22,7 +22,8 @@ export default function OrdersPage() {
             <p className="mt-4 font-medium">No orders yet</p>
             <p className="mt-1 text-sm text-gray-500">
               Order ID, payment status, credited amount and delivery status will
-              be shown here after the top-up workflow is implemented.
+              appear here when the Phase 2 payment and delivery workflow is
+              implemented.
             </p>
           </div>
         </CardContent>

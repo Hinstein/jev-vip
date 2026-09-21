@@ -1,17 +1,23 @@
 import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveApiKey } from '@/lib/api-keys/service';
-import { getCreditBalance } from '@/lib/credits/queries';
 import { checkRateLimit } from '@/lib/security/rate-limit';
-import { recordUsageAndDebit } from '@/lib/usage/service';
-import { getUsageEventByRequestId } from '@/lib/usage/queries';
+import {
+  releaseUsageReservation,
+  reserveUsageCredits,
+  settleUsageReservation,
+  USAGE_STATUS,
+} from '@/lib/usage/service';
+import { RESERVATION_CREDITS } from '@/lib/usage/policy';
+import { isLiteLLMConfigured } from '@/lib/litellm/config';
 
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
 
 export const runtime = 'nodejs';
 
 function relayBaseUrl() {
-  return process.env.LITELLM_PROXY_URL?.replace(/\/+$/, '') || null;
+  const value = process.env.LITELLM_PROXY_URL?.trim();
+  return value ? value.replace(/\/+$/, '') : null;
 }
 
 function getBearerToken(header: string | null) {
@@ -53,11 +59,25 @@ function extractUsage(payload: Record<string, unknown>) {
     asNonNegativeInteger(usage.completion_tokens) ??
     asNonNegativeInteger(usage.output_tokens);
   const reportedTotal = asNonNegativeInteger(usage.total_tokens);
+  const calculatedTotal =
+    inputTokens !== null && outputTokens !== null
+      ? inputTokens <= Number.MAX_SAFE_INTEGER - outputTokens
+        ? inputTokens + outputTokens
+        : null
+      : null;
+
+  if (
+    inputTokens !== null &&
+    outputTokens !== null &&
+    calculatedTotal === null
+  ) {
+    return null;
+  }
+
   const totalTokens =
-    reportedTotal ??
-    (inputTokens !== null && outputTokens !== null
-      ? inputTokens + outputTokens
-      : null);
+    calculatedTotal !== null
+      ? Math.max(reportedTotal ?? 0, calculatedTotal)
+      : reportedTotal;
 
   if (inputTokens === null || outputTokens === null || totalTokens === null) {
     return null;
@@ -91,6 +111,34 @@ async function readJsonBody(request: NextRequest) {
   } catch {
     return { error: 'Invalid JSON request body.', status: 400 } as const;
   }
+}
+
+function relayErrorBody(status: number, text: string) {
+  if (status >= 500) {
+    return { error: 'JEV relay is temporarily unavailable.' };
+  }
+
+  if (text) {
+    try {
+      const payload = JSON.parse(text) as unknown;
+      if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+        const record = payload as Record<string, unknown>;
+        const message =
+          typeof record.error === 'string'
+            ? record.error
+            : typeof record.detail === 'string'
+              ? record.detail
+              : null;
+        if (message) return { error: message.slice(0, 1000) };
+      }
+    } catch {
+      // Fall through to the bounded plain-text error below.
+    }
+
+    return { error: text.slice(0, 1000) };
+  }
+
+  return { error: 'JEV relay request failed.' };
 }
 
 export async function POST(request: NextRequest) {
@@ -143,27 +191,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const existingUsage = await getUsageEventByRequestId(
-    resolved.apiKey.id,
-    requestId
-  );
-  if (existingUsage) {
-    return NextResponse.json(
-      {
-        error:
-          existingUsage.status === 'INSUFFICIENT_CREDITS'
-            ? 'This request was rejected because the account had insufficient JEV Credits.'
-            : 'This X-Request-ID has already been used. Choose a new request id.',
-      },
-      {
-        status: existingUsage.status === 'INSUFFICIENT_CREDITS' ? 402 : 409,
-        headers,
-      }
-    );
-  }
-
   const baseUrl = relayBaseUrl();
-  if (!baseUrl) {
+  if (!baseUrl || !isLiteLLMConfigured()) {
     return NextResponse.json(
       { error: 'JEV relay is not configured.' },
       { status: 503, headers }
@@ -189,21 +218,73 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const balance = await getCreditBalance(resolved.user.id);
-  if (balance <= 0) {
+  let reservation;
+  try {
+    reservation = await reserveUsageCredits({
+      userId: resolved.user.id,
+      apiKeyId: resolved.apiKey.id,
+      requestId,
+      model: 'jev',
+      credits: RESERVATION_CREDITS,
+    });
+  } catch (error) {
+    console.error('Failed to reserve JEV credits', error);
+    return NextResponse.json(
+      { error: 'Usage ledger is temporarily unavailable. Please retry.' },
+      { status: 503, headers }
+    );
+  }
+
+  if (reservation.status === 'insufficient_credits') {
     return NextResponse.json(
       {
         error: 'Insufficient JEV Credits for this request.',
-        creditsRemaining: balance,
+        creditsRequired: reservation.credits,
+        creditsRemaining: reservation.balance,
       },
       {
         status: 402,
         headers: {
           ...headers,
-          'X-JEV-Credits-Remaining': String(balance),
+          'X-JEV-Credits-Required': String(reservation.credits),
+          'X-JEV-Credits-Remaining': String(reservation.balance),
         },
       }
     );
+  }
+
+  if (reservation.status === 'duplicate') {
+    const insufficient =
+      reservation.existingStatus === USAGE_STATUS.INSUFFICIENT_CREDITS;
+    const inFlight = reservation.existingStatus === USAGE_STATUS.RESERVED;
+    return NextResponse.json(
+      {
+        error: insufficient
+          ? 'This request was rejected because the account had insufficient JEV Credits.'
+          : inFlight
+            ? 'This X-Request-ID is already being processed.'
+            : 'This X-Request-ID has already been used. Choose a new request id.',
+        creditsRemaining: reservation.balance,
+      },
+      {
+        status: insufficient ? 402 : 409,
+        headers: {
+          ...headers,
+          ...(inFlight ? { 'Retry-After': '1' } : {}),
+          'X-JEV-Credits-Remaining': String(reservation.balance),
+        },
+      }
+    );
+  }
+
+  const usageEventId = reservation.usageEventId;
+
+  async function releaseReservation() {
+    try {
+      await releaseUsageReservation(usageEventId);
+    } catch (error) {
+      console.error('Failed to release JEV credit reservation', error);
+    }
   }
 
   let relayResponse: Response;
@@ -229,25 +310,27 @@ export async function POST(request: NextRequest) {
       signal: AbortSignal.timeout(45000),
     });
   } catch {
+    await releaseReservation();
     return NextResponse.json(
       { error: 'JEV relay is temporarily unavailable.' },
       { status: 503, headers }
     );
   }
 
-  const relayText = await relayResponse.text();
+  let relayText: string;
+  try {
+    relayText = await relayResponse.text();
+  } catch {
+    await releaseReservation();
+    return NextResponse.json(
+      { error: 'JEV relay returned an unreadable response.' },
+      { status: 502, headers }
+    );
+  }
 
   if (!relayResponse.ok) {
-    let errorBody: unknown = { error: 'JEV relay request failed.' };
-    if (relayText) {
-      try {
-        errorBody = JSON.parse(relayText);
-      } catch {
-        errorBody = { error: relayText.slice(0, 1000) };
-      }
-    }
-
-    return NextResponse.json(errorBody, {
+    await releaseReservation();
+    return NextResponse.json(relayErrorBody(relayResponse.status, relayText), {
       status: relayResponse.status,
       headers,
     });
@@ -273,6 +356,7 @@ export async function POST(request: NextRequest) {
 
     jevResponse = JSON.parse(contentValue);
   } catch {
+    await releaseReservation();
     return NextResponse.json(
       { error: 'JEV relay returned an invalid response.' },
       { status: 502, headers }
@@ -281,6 +365,7 @@ export async function POST(request: NextRequest) {
 
   const usage = extractUsage(relayJson);
   if (!usage || usage.totalTokens <= 0) {
+    await releaseReservation();
     return NextResponse.json(
       { error: 'JEV relay did not return billable token usage.' },
       { status: 502, headers }
@@ -289,7 +374,8 @@ export async function POST(request: NextRequest) {
 
   let metering;
   try {
-    metering = await recordUsageAndDebit({
+    metering = await settleUsageReservation({
+      usageEventId,
       userId: resolved.user.id,
       apiKeyId: resolved.apiKey.id,
       requestId,
@@ -298,34 +384,35 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Failed to record JEV usage', error);
+    await releaseReservation();
     return NextResponse.json(
       { error: 'Usage ledger is temporarily unavailable. Please retry.' },
       { status: 503, headers }
     );
   }
 
-  if (metering.status === 'duplicate') {
-    return NextResponse.json(
-      { error: 'This X-Request-ID has already been metered.' },
-      { status: 409, headers }
-    );
-  }
-
-  if (metering.status === 'insufficient_credits') {
+  if (metering.status === 'over_budget') {
     return NextResponse.json(
       {
         error: 'Insufficient JEV Credits for this request.',
-        creditsRequired: metering.credits,
+        creditsRequired: metering.actualCredits,
         creditsRemaining: metering.balance,
       },
       {
         status: 402,
         headers: {
           ...headers,
-          'X-JEV-Credits-Required': String(metering.credits),
+          'X-JEV-Credits-Required': String(metering.actualCredits),
           'X-JEV-Credits-Remaining': String(metering.balance),
         },
       }
+    );
+  }
+
+  if (metering.status !== 'completed') {
+    return NextResponse.json(
+      { error: 'Usage ledger could not settle this request. Please retry.' },
+      { status: 503, headers }
     );
   }
 

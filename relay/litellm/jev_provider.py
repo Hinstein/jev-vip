@@ -77,13 +77,21 @@ def _model_response(payload: dict[str, Any]) -> ModelResponse:
         "output_tokens", usage.get("completion_tokens", 0)
     )
 
-    input_tokens = input_tokens if isinstance(input_tokens, int) else 0
-    output_tokens = output_tokens if isinstance(output_tokens, int) else 0
+    input_tokens = (
+        input_tokens
+        if isinstance(input_tokens, int) and input_tokens >= 0
+        else 0
+    )
+    output_tokens = (
+        output_tokens
+        if isinstance(output_tokens, int) and output_tokens >= 0
+        else 0
+    )
     total_tokens = usage.get("total_tokens")
-    total_tokens = (
-        total_tokens
-        if isinstance(total_tokens, int) and total_tokens >= 0
-        else input_tokens + output_tokens
+    calculated_total = input_tokens + output_tokens
+    total_tokens = max(
+        total_tokens if isinstance(total_tokens, int) and total_tokens >= 0 else 0,
+        calculated_total,
     )
 
     resolved_model = payload.get("model")
@@ -113,6 +121,30 @@ def _model_response(payload: dict[str, Any]) -> ModelResponse:
             total_tokens=total_tokens,
         ),
     )
+
+
+def _parse_upstream_response(response: httpx.Response) -> ModelResponse:
+    if response.status_code >= 400:
+        raise CustomLLMError(
+            status_code=response.status_code,
+            message=_error_message(response),
+        )
+
+    try:
+        data = response.json()
+    except ValueError as exc:
+        raise CustomLLMError(
+            status_code=502,
+            message="TypeSafe upstream returned invalid JSON",
+        ) from exc
+
+    if not isinstance(data, dict):
+        raise CustomLLMError(
+            status_code=502,
+            message="TypeSafe upstream returned an invalid payload",
+        )
+
+    return _model_response(data)
 
 
 class JevTypeSafeProvider(CustomLLM):
@@ -153,27 +185,7 @@ class JevTypeSafeProvider(CustomLLM):
         except httpx.RequestError as exc:
             raise CustomLLMError(status_code=502, message="TypeSafe upstream is unavailable") from exc
 
-        if response.status_code >= 400:
-            raise CustomLLMError(
-                status_code=response.status_code,
-                message=_error_message(response),
-            )
-
-        try:
-            data = response.json()
-        except ValueError as exc:
-            raise CustomLLMError(
-                status_code=502,
-                message="TypeSafe upstream returned invalid JSON",
-            ) from exc
-
-        if not isinstance(data, dict):
-            raise CustomLLMError(
-                status_code=502,
-                message="TypeSafe upstream returned an invalid payload",
-            )
-
-        return _model_response(data)
+        return _parse_upstream_response(response)
 
     async def acompletion(
         self,
@@ -212,27 +224,7 @@ class JevTypeSafeProvider(CustomLLM):
         except httpx.RequestError as exc:
             raise CustomLLMError(status_code=502, message="TypeSafe upstream is unavailable") from exc
 
-        if response.status_code >= 400:
-            raise CustomLLMError(
-                status_code=response.status_code,
-                message=_error_message(response),
-            )
-
-        try:
-            data = response.json()
-        except ValueError as exc:
-            raise CustomLLMError(
-                status_code=502,
-                message="TypeSafe upstream returned invalid JSON",
-            ) from exc
-
-        if not isinstance(data, dict):
-            raise CustomLLMError(
-                status_code=502,
-                message="TypeSafe upstream returned an invalid payload",
-            )
-
-        return _model_response(data)
+        return _parse_upstream_response(response)
 
 
 jev_handler = JevTypeSafeProvider()

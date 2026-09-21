@@ -36,7 +36,7 @@ customer
   -> JevTypeSafeProvider
   -> https://api.typesafe.ai/v1/systemone
   -> LiteLLM records normalized token usage
-  -> JEV VIP atomically debits 1 Credit per reported token
+  -> JEV VIP reserves 1 Credit, then settles the exact reported token total
   -> Next.js unwraps the original JEV JSON
   -> customer
 ```
@@ -53,7 +53,8 @@ private and avoids turning the gateway into a generic HTTP proxy.
 
 ## Deploy
 
-Create a second PostgreSQL database on the same PostgreSQL server if desired:
+Create a second PostgreSQL database on the same PostgreSQL server. LiteLLM
+virtual-key management requires PostgreSQL; SQLite is not supported:
 
 ```bash
 createdb jev_litellm
@@ -62,7 +63,17 @@ createdb jev_litellm
 Set the LiteLLM and TypeSafe variables in `.env`, then start only the relay:
 
 ```bash
-docker compose -f docker-compose.relay.yml up -d
+docker compose --env-file /absolute/path/to/.env \
+  -f docker-compose.relay.yml up -d
+```
+
+If the application keeps its production env file outside the release
+directory, point Compose at it explicitly:
+
+```bash
+JEV_VIP_ENV_FILE=/absolute/path/to/.env \
+  docker compose --env-file /absolute/path/to/.env \
+  -f docker-compose.relay.yml up -d
 ```
 
 The compose file binds LiteLLM to `127.0.0.1:4000`, not the public network.
@@ -85,8 +96,11 @@ The JEV Dashboard calls LiteLLM management APIs with the server-only master key.
 Keys are restricted to the `jev` model and tagged with a stable JEV user id.
 The plaintext key is returned to the customer only at creation time. JEV VIP
 stores only a SHA-256 hash of each generated key and its LiteLLM token id.
-Successful requests are recorded in `usage_events` and debited from the local
-credit balance in one database transaction.
+Each request first reserves 1 Credit so concurrent requests cannot overspend.
+Successful requests are recorded in `usage_events` and settled against the
+exact reported token total in one database transaction; unused reservation
+credits are refunded. If the final token total exceeds the remaining balance,
+the reservation is restored and the upstream result is not returned.
 
 ## Version
 

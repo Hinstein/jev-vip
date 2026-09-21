@@ -5,7 +5,7 @@ services:
     ports:
       - "127.0.0.1:4000:4000"
     env_file:
-      - .env
+      - ${JEV_VIP_ENV_FILE:-.env}
     volumes:
       - ./relay/litellm/config.yaml:/app/config.yaml:ro
       - ./relay/litellm/jev_provider.py:/app/jev_provider.py:ro

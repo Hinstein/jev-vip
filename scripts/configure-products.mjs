@@ -5,23 +5,28 @@ if (!process.env.POSTGRES_URL) {
   throw new Error('POSTGRES_URL is required');
 }
 
+function optionalEnv(name) {
+  const value = process.env[name]?.trim();
+  return value || null;
+}
+
 const sql = postgres(process.env.POSTGRES_URL);
 
 const mappings = [
   {
     key: 'JEV_10',
-    campaignId: process.env.OFFERKIT_CAMPAIGN_JEV_10,
-    purchaseUrl: process.env.XIANYU_STARTER_URL,
+    campaignId: optionalEnv('OFFERKIT_CAMPAIGN_JEV_10'),
+    purchaseUrl: optionalEnv('XIANYU_STARTER_URL'),
   },
   {
     key: 'JEV_30',
-    campaignId: process.env.OFFERKIT_CAMPAIGN_JEV_30,
-    purchaseUrl: process.env.XIANYU_STANDARD_URL,
+    campaignId: optionalEnv('OFFERKIT_CAMPAIGN_JEV_30'),
+    purchaseUrl: optionalEnv('XIANYU_STANDARD_URL'),
   },
   {
     key: 'JEV_50',
-    campaignId: process.env.OFFERKIT_CAMPAIGN_JEV_50,
-    purchaseUrl: process.env.XIANYU_PRO_URL,
+    campaignId: optionalEnv('OFFERKIT_CAMPAIGN_JEV_50'),
+    purchaseUrl: optionalEnv('XIANYU_PRO_URL'),
   },
 ];
 

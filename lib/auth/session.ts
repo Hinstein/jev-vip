@@ -3,8 +3,14 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NewUser } from '@/lib/db/schema';
 
-const key = new TextEncoder().encode(process.env.AUTH_SECRET);
+const authSecret = process.env.AUTH_SECRET?.trim();
+if (!authSecret || authSecret.length < 32) {
+  throw new Error('AUTH_SECRET must be configured with at least 32 characters');
+}
+
+const key = new TextEncoder().encode(authSecret);
 const SALT_ROUNDS = 10;
+const secureCookie = process.env.NODE_ENV === 'production';
 
 export async function hashPassword(password: string) {
   return hash(password, SALT_ROUNDS);
@@ -57,7 +63,8 @@ export async function setSession(user: NewUser) {
   (await cookies()).set('session', encryptedSession, {
     expires: expiresInOneDay,
     httpOnly: true,
-    secure: true,
+    secure: secureCookie,
     sameSite: 'lax',
+    path: '/',
   });
 }

@@ -92,20 +92,28 @@ export async function POST(request: NextRequest) {
     try {
       await registerApiKey({
         userId: user.id,
-        providerTokenId: created.tokenId,
+        providerTokenId: created.tokenId ?? hashApiKey(created.key),
         keyHash: hashApiKey(created.key),
         keyName: parsed.data.name,
       });
     } catch (error) {
       console.error('Failed to persist API key ownership', error);
       try {
-        if (created.tokenId) {
-          await deleteLiteLLMVirtualKey(user.id, created.tokenId);
-        } else {
-          await deleteLiteLLMKeyBySecret(created.key);
-        }
+        // Delete by the one-time secret first. This avoids a race with
+        // /key/list eventual consistency and does not put the secret in a URL.
+        await deleteLiteLLMKeyBySecret(created.key);
       } catch (cleanupError) {
         console.error('Failed to clean up unregistered LiteLLM key', cleanupError);
+        if (created.tokenId) {
+          try {
+            await deleteLiteLLMVirtualKey(user.id, created.tokenId);
+          } catch (fallbackCleanupError) {
+            console.error(
+              'Fallback cleanup of unregistered LiteLLM key failed',
+              fallbackCleanupError
+            );
+          }
+        }
       }
       return NextResponse.json(
         { error: 'API key service is unavailable.' },
@@ -146,8 +154,20 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    await deleteLiteLLMVirtualKey(user.id, parsed.data.tokenId);
-    await revokeApiKeyForUser(user.id, parsed.data.tokenId);
+    const remoteDeleted = await deleteLiteLLMVirtualKey(
+      user.id,
+      parsed.data.tokenId
+    );
+    const localRevoked = await revokeApiKeyForUser(
+      user.id,
+      parsed.data.tokenId,
+      hashApiKey(parsed.data.tokenId)
+    );
+
+    if (!remoteDeleted && !localRevoked) {
+      throw new Error('API key was not found for this user');
+    }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Failed to delete LiteLLM key', error);

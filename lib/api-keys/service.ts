@@ -69,7 +69,10 @@ export async function resolveApiKey(
   try {
     const apiKey = await registerApiKey({
       userId,
-      providerTokenId: remote.tokenId,
+      // LiteLLM /key/info deliberately omits the token hash in recent
+      // versions. The SHA-256 hash is the identifier accepted by /key/delete
+      // and is stable for this presented key.
+      providerTokenId: remote.tokenId ?? keyHash,
       keyHash,
       keyName: remote.keyName ?? 'LiteLLM key',
     });

@@ -1,6 +1,7 @@
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import { usageEvents } from '@/lib/db/schema';
+import { USAGE_STATUS } from './service';
 
 export async function getUsageEventByRequestId(
   apiKeyId: number,
@@ -23,8 +24,6 @@ export async function getUsageEventByRequestId(
   return event ?? null;
 }
 
-const COMPLETED = 'COMPLETED';
-
 export async function getUsageSummary(userId: number) {
   const [summary] = await db
     .select({
@@ -36,7 +35,10 @@ export async function getUsageSummary(userId: number) {
     })
     .from(usageEvents)
     .where(
-      and(eq(usageEvents.userId, userId), eq(usageEvents.status, COMPLETED))
+      and(
+        eq(usageEvents.userId, userId),
+        eq(usageEvents.status, USAGE_STATUS.COMPLETED)
+      )
     );
 
   return {
@@ -63,7 +65,10 @@ export async function getRecentUsageEvents(userId: number, limit = 50) {
     })
     .from(usageEvents)
     .where(
-      and(eq(usageEvents.userId, userId), eq(usageEvents.status, COMPLETED))
+      and(
+        eq(usageEvents.userId, userId),
+        eq(usageEvents.status, USAGE_STATUS.COMPLETED)
+      )
     )
     .orderBy(desc(usageEvents.createdAt))
     .limit(Math.min(Math.max(limit, 1), 100));

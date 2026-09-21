@@ -49,8 +49,8 @@ function extractDomainCode(payload: unknown) {
 }
 
 function getConfig() {
-  const baseUrl = process.env.OFFERKIT_API_URL?.replace(/\/+$/, '');
-  const apiKey = process.env.OFFERKIT_API_KEY;
+  const baseUrl = process.env.OFFERKIT_API_URL?.trim().replace(/\/+$/, '');
+  const apiKey = process.env.OFFERKIT_API_KEY?.trim();
 
   if (!baseUrl || !apiKey) {
     throw new VoucherProviderError(
@@ -59,8 +59,10 @@ function getConfig() {
     );
   }
 
-  const amountMinor = Number(process.env.OFFERKIT_REDEEM_AMOUNT_MINOR ?? '1');
-  const currency = process.env.OFFERKIT_REDEEM_CURRENCY ?? 'CNY';
+  const amountMinor = Number(
+    process.env.OFFERKIT_REDEEM_AMOUNT_MINOR?.trim() ?? '1'
+  );
+  const currency = process.env.OFFERKIT_REDEEM_CURRENCY?.trim() || 'CNY';
 
   if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) {
     throw new VoucherProviderError(

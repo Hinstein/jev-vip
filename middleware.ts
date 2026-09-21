@@ -4,6 +4,15 @@ import { signToken, verifyToken } from '@/lib/auth/session';
 
 const protectedRoutes = ['/dashboard', '/redeem'];
 
+function signInUrl(request: NextRequest, redirectPath: string) {
+  const configuredBaseUrl = process.env.BASE_URL?.trim();
+  const url = configuredBaseUrl
+    ? new URL('/sign-in', configuredBaseUrl)
+    : new URL('/sign-in', request.url);
+  url.searchParams.set('redirect', redirectPath);
+  return url;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionCookie = request.cookies.get('session');
@@ -12,9 +21,7 @@ export async function middleware(request: NextRequest) {
   );
 
   if (isProtectedRoute && !sessionCookie) {
-    const signInUrl = new URL('/sign-in', request.url);
-    signInUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(signInUrl);
+    return NextResponse.redirect(signInUrl(request, pathname));
   }
 
   let res = NextResponse.next();
@@ -31,15 +38,16 @@ export async function middleware(request: NextRequest) {
           expires: expiresInOneDay.toISOString()
         }),
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        expires: expiresInOneDay
+        expires: expiresInOneDay,
+        path: '/'
       });
     } catch (error) {
       console.error('Error updating session:', error);
       res.cookies.delete('session');
       if (isProtectedRoute) {
-        return NextResponse.redirect(new URL('/sign-in', request.url));
+        return NextResponse.redirect(signInUrl(request, pathname));
       }
     }
   }

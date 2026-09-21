@@ -10,6 +10,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Menu,
+  ReceiptText,
   Settings,
   Shield,
   TicketCheck,
@@ -31,6 +32,7 @@ export default function DashboardLayout({
     { href: '/dashboard/top-up', icon: CreditCard, label: 'Buy Credits' },
     { href: '/dashboard/api-keys', icon: KeyRound, label: 'API Keys' },
     { href: '/dashboard/usage', icon: Activity, label: 'Usage' },
+    { href: '/dashboard/orders', icon: ReceiptText, label: 'Orders' },
     { href: '/dashboard/general', icon: Settings, label: 'Account' },
     { href: '/dashboard/security', icon: Shield, label: 'Security' }
   ];

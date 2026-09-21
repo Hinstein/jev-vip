@@ -15,12 +15,14 @@ export default async function ApiKeysPage() {
 
   const configured = isLiteLLMConfigured();
   let keys: LiteLLMVirtualKey[] = [];
+  let loadError = false;
 
   if (configured) {
     try {
       keys = await listLiteLLMVirtualKeys(user.id);
     } catch (error) {
       console.error('Unable to load LiteLLM keys', error);
+      loadError = true;
     }
   }
 
@@ -36,7 +38,11 @@ export default async function ApiKeysPage() {
       </div>
 
       <div className="mt-6">
-        <KeyManager initialKeys={keys} configured={configured} />
+        <KeyManager
+          initialKeys={keys}
+          configured={configured}
+          loadError={loadError}
+        />
       </div>
     </section>
   );

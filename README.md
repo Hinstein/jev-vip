@@ -60,7 +60,8 @@ API key. The request is relayed through LiteLLM and a successful response is
 metered at one JEV Credit per reported token. The response includes
 `X-JEV-Credits-Used`, `X-JEV-Credits-Remaining` and `X-JEV-Request-ID` headers.
 Clients may send a stable `X-Request-ID` to prevent accidental duplicate
-billing; a reused id is rejected rather than forwarded again.
+operations and billing; once a request has been reserved, a reused id is
+rejected rather than forwarded again, including after a failed attempt.
 
 These are separate concerns and should not be mixed into the voucher adapter.
 

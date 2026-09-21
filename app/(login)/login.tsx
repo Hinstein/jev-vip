@@ -15,6 +15,13 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
   const redirect = searchParams.get('redirect');
   const priceId = searchParams.get('priceId');
   const inviteId = searchParams.get('inviteId');
+  const switchParams = new URLSearchParams();
+  if (redirect) switchParams.set('redirect', redirect);
+  if (priceId) switchParams.set('priceId', priceId);
+  if (inviteId) switchParams.set('inviteId', inviteId);
+  const switchHref = `${mode === 'signin' ? '/sign-up' : '/sign-in'}${
+    switchParams.toString() ? `?${switchParams.toString()}` : ''
+  }`;
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     mode === 'signin' ? signIn : signUp,
     { error: '' }
@@ -53,7 +60,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
                 autoComplete="email"
                 defaultValue={state.email}
                 required
-                maxLength={50}
+                maxLength={255}
                 className="appearance-none rounded-full relative block w-full px-3 py-2"
                 placeholder="Enter your email"
               />
@@ -113,9 +120,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
 
           <div className="mt-6">
             <Link
-              href={`${mode === 'signin' ? '/sign-up' : '/sign-in'}${
-                redirect ? `?redirect=${redirect}` : ''
-              }${priceId ? `&priceId=${priceId}` : ''}`}
+              href={switchHref}
               className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
             >
               {mode === 'signin' ? 'Create an account' : 'Sign in instead'}

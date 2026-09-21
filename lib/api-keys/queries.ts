@@ -1,4 +1,4 @@
-import { and, count, desc, eq, isNull } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, or } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import { apiKeys, users } from '@/lib/db/schema';
 
@@ -37,7 +37,8 @@ export async function registerApiKey(input: {
 
 export async function revokeApiKeyForUser(
   userId: number,
-  providerTokenId: string
+  providerTokenId: string,
+  keyHash?: string
 ) {
   const [revoked] = await db
     .update(apiKeys)
@@ -45,7 +46,10 @@ export async function revokeApiKeyForUser(
     .where(
       and(
         eq(apiKeys.userId, userId),
-        eq(apiKeys.providerTokenId, providerTokenId),
+        or(
+          eq(apiKeys.providerTokenId, providerTokenId),
+          ...(keyHash ? [eq(apiKeys.keyHash, keyHash)] : [])
+        ),
         isNull(apiKeys.revokedAt)
       )
     )
