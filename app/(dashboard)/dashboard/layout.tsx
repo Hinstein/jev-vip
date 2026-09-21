@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Activity,
+  BookOpen,
   CreditCard,
   KeyRound,
   LayoutDashboard,
@@ -30,6 +31,7 @@ export default function DashboardLayout({
     { href: '/dashboard', icon: LayoutDashboard, label: t('nav.overview') },
     { href: '/dashboard/credits', icon: WalletCards, label: t('nav.credits') },
     { href: '/dashboard/api-keys', icon: KeyRound, label: t('nav.apiKeys') },
+    { href: '/dashboard/api-docs', icon: BookOpen, label: t('nav.apiDocs') },
     { href: '/dashboard/usage', icon: Activity, label: t('nav.usage') },
     { href: '/dashboard/top-up', icon: CreditCard, label: t('nav.buyCredits') },
     { href: '/dashboard/redeem', icon: TicketCheck, label: t('nav.redeem') },

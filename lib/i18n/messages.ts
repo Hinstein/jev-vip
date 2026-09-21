@@ -5,6 +5,7 @@ type Messages = {
     chinese: string;
     loading: string;
     copyToClipboard: string;
+    copied: string;
   };
   nav: {
     credits: string;
@@ -15,6 +16,7 @@ type Messages = {
     redeem: string;
     buyCredits: string;
     apiKeys: string;
+    apiDocs: string;
     usage: string;
   };
   home: {
@@ -158,6 +160,44 @@ type Messages = {
     revoke: string;
     createError: string;
     revokeError: string;
+    openDocumentation: string;
+  };
+  apiDocs: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    createKey: string;
+    endpoint: string;
+    endpointDescription: string;
+    endpointNote: string;
+    authentication: string;
+    authenticationDescription: string;
+    requestBody: string;
+    requestBodyDescription: string;
+    field: string;
+    fieldDescription: string;
+    required: string;
+    stateDescription: string;
+    questionsDescription: string;
+    questionTypes: string;
+    choiceDescription: string;
+    scoreDescription: string;
+    noulDescription: string;
+    exampleRequest: string;
+    exampleResponse: string;
+    responseDescription: string;
+    errors: string;
+    error400: string;
+    error401: string;
+    error402: string;
+    error403: string;
+    error429: string;
+    error503: string;
+    security: string;
+    securityDescription: string;
+    billing: string;
+    billingDescription: string;
+    manageBalance: string;
   };
 };
 
@@ -169,6 +209,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       chinese: '简体中文',
       loading: 'Loading...',
       copyToClipboard: 'Copy to clipboard',
+      copied: 'Copied',
     },
     nav: {
       credits: 'Credits',
@@ -179,6 +220,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       redeem: 'Redeem code',
       buyCredits: 'Top up',
       apiKeys: 'API keys',
+      apiDocs: 'API docs',
       usage: 'Usage',
     },
     home: {
@@ -339,6 +381,56 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       revoke: 'Revoke',
       createError: 'Unable to create API key.',
       revokeError: 'Unable to revoke API key.',
+      openDocumentation: 'View API docs',
+    },
+    apiDocs: {
+      eyebrow: 'Developer guide',
+      title: 'Call the JEVstone API',
+      description:
+        'Use an API key created in this dashboard to call your hosted JEVstone Decision API. The gateway verifies your key and balance before forwarding the request.',
+      createKey: 'Manage API keys',
+      endpoint: 'Endpoint',
+      endpointDescription: 'Send a POST request to this address.',
+      endpointNote:
+        'Use this JEV Store address only. Do not call the admin console or the upstream provider directly.',
+      authentication: 'Authentication',
+      authenticationDescription:
+        'Pass the API key as a Bearer token. Keep it in a server-side environment variable and never expose it in browser code.',
+      requestBody: 'Request body',
+      requestBodyDescription:
+        'Send a JSON object with the context to evaluate and one or more typed questions.',
+      field: 'Field',
+      fieldDescription: 'Description',
+      required: 'Required',
+      stateDescription:
+        'The context to evaluate. It can be a string, object, or array.',
+      questionsDescription:
+        'A map of question names to typed questions. Add multiple questions to share the same context in one request.',
+      questionTypes: 'Question types',
+      choiceDescription:
+        'Choose one labelled option. Provide a criteria object whose keys are the possible choices.',
+      scoreDescription:
+        'Rate on an ordered scale. Provide a criteria array with 2–10 descriptions from low to high.',
+      noulDescription:
+        'Return a calibrated yes/no result. Provide instructions; criteria is optional.',
+      exampleRequest: 'Copy an example',
+      exampleResponse: 'Response',
+      responseDescription:
+        'Answers use the names you supplied in questions. Usage is recorded on this account after a successful request.',
+      errors: 'Common errors',
+      error400: 'The request JSON, state, or questions are invalid.',
+      error401: 'The API key is missing, invalid, or has been revoked.',
+      error402: 'The account does not have enough API balance. Top up and retry.',
+      error403: 'The key or account does not have access to this model.',
+      error429: 'The API quota or rate limit was reached. Retry with backoff.',
+      error503: 'The gateway or upstream is temporarily unavailable. Retry with backoff.',
+      security: 'Keep your key safe',
+      securityDescription:
+        'Do not put an API key in frontend JavaScript, a mobile app bundle, screenshots, or a public repository. Revoke it immediately here if it is exposed.',
+      billing: 'Balance and usage',
+      billingDescription:
+        'Successful calls consume this account’s prepaid balance based on input tokens. Check the Balance and Usage pages after a call.',
+      manageBalance: 'View balance and usage',
     },
   },
   'zh-CN': {
@@ -348,6 +440,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       chinese: '简体中文',
       loading: '加载中…',
       copyToClipboard: '复制到剪贴板',
+      copied: '已复制',
     },
     nav: {
       credits: '余额',
@@ -358,6 +451,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       redeem: '兑换码',
       buyCredits: '充值',
       apiKeys: 'API 密钥',
+      apiDocs: 'API 文档',
       usage: '用量',
     },
     home: {
@@ -503,6 +597,55 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       revoke: '撤销',
       createError: '无法创建 API 密钥。',
       revokeError: '无法撤销 API 密钥。',
+      openDocumentation: '查看 API 文档',
+    },
+    apiDocs: {
+      eyebrow: '开发者文档',
+      title: '调用 JEVstone API',
+      description:
+        '使用在本控制台创建的 API 密钥调用托管的 JEVstone Decision API。网关会先校验密钥和账户余额，再转发请求。',
+      createKey: '管理 API 密钥',
+      endpoint: '接口地址',
+      endpointDescription: '向以下地址发送 POST 请求。',
+      endpointNote:
+        '只能调用这个 JEV Store 地址；不要调用管理后台地址，也不要直接调用上游服务商。',
+      authentication: '鉴权方式',
+      authenticationDescription:
+        '将 API 密钥作为 Bearer Token 传入。请只保存在服务端环境变量中，绝不要暴露在浏览器代码里。',
+      requestBody: '请求体',
+      requestBodyDescription:
+        '发送一个 JSON 对象，包含待判断的上下文和一个或多个带类型的问题。',
+      field: '字段',
+      fieldDescription: '说明',
+      required: '必填',
+      stateDescription: '待判断的上下文，可以是字符串、对象或数组。',
+      questionsDescription:
+        '问题名称到带类型问题的映射。一次请求可添加多个问题，它们会复用同一份上下文。',
+      questionTypes: '问题类型',
+      choiceDescription:
+        '从多个带标签的选项中选择一个。传入 criteria 对象，键名就是可选结果。',
+      scoreDescription:
+        '按有序刻度评分。传入含 2–10 个描述的 criteria 数组，顺序从低到高。',
+      noulDescription:
+        '返回经过校准的是/否结果。传入 instructions；criteria 为可选项。',
+      exampleRequest: '复制示例',
+      exampleResponse: '响应结果',
+      responseDescription:
+        'answers 使用你在 questions 中提供的名称作为键。请求成功后，用量会记入当前账户。',
+      errors: '常见错误',
+      error400: '请求 JSON、state 或 questions 格式不正确。',
+      error401: '缺少 API 密钥、密钥无效，或该密钥已被撤销。',
+      error402: '账户 API 余额不足。充值后重试。',
+      error403: '该密钥或账户无权访问此模型。',
+      error429: '已达到 API 配额或限流，请使用退避策略后重试。',
+      error503: '网关或上游服务暂时不可用，请使用退避策略后重试。',
+      security: '妥善保管密钥',
+      securityDescription:
+        '不要将 API 密钥写进前端 JavaScript、移动端安装包、截图或公开仓库。如果密钥泄露，请立即在此控制台撤销。',
+      billing: '余额与用量',
+      billingDescription:
+        '成功调用会按输入 Token 从当前账户的预付费余额中扣除。调用后可在“余额”和“用量”页面查看结果。',
+      manageBalance: '查看余额与用量',
     },
   },
 };

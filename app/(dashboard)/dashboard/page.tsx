@@ -129,6 +129,11 @@ export default async function DashboardPage() {
                     {t('dashboard.viewUsage')}
                   </LocaleLink>
                 </Button>
+                <Button asChild size="sm" variant="outline">
+                  <LocaleLink href="/dashboard/api-docs">
+                    {t('apiKeys.openDocumentation')}
+                  </LocaleLink>
+                </Button>
               </div>
             </CardContent>
           </Card>
