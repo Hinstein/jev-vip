@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +12,9 @@ import {
   TicketCheck,
   WalletCards,
 } from 'lucide-react';
+import { LocaleLink } from '@/components/i18n/locale-link';
+import { useI18n } from '@/components/i18n/use-i18n';
+import { stripLocalePrefix } from '@/lib/i18n/config';
 
 export default function DashboardLayout({
   children,
@@ -21,27 +23,29 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { t } = useI18n();
+  const internalPathname = stripLocalePrefix(pathname || '/');
 
   const navItems = [
-    { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
-    { href: '/dashboard/credits', icon: WalletCards, label: 'Credits' },
-    { href: '/dashboard/api-keys', icon: KeyRound, label: 'API Keys' },
-    { href: '/dashboard/usage', icon: Activity, label: 'Usage' },
-    { href: '/dashboard/top-up', icon: CreditCard, label: 'Top up' },
-    { href: '/redeem', icon: TicketCheck, label: 'Redeem code' },
+    { href: '/dashboard', icon: LayoutDashboard, label: t('nav.overview') },
+    { href: '/dashboard/credits', icon: WalletCards, label: t('nav.credits') },
+    { href: '/dashboard/api-keys', icon: KeyRound, label: t('nav.apiKeys') },
+    { href: '/dashboard/usage', icon: Activity, label: t('nav.usage') },
+    { href: '/dashboard/top-up', icon: CreditCard, label: t('nav.buyCredits') },
+    { href: '/redeem', icon: TicketCheck, label: t('nav.redeem') },
   ];
 
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-65px)] w-full max-w-7xl flex-col">
       <div className="flex items-center justify-between border-b bg-white p-4 lg:hidden">
-        <span className="font-medium">Jev dashboard</span>
+        <span className="font-medium">JEV Store</span>
         <Button
           className="-mr-3"
           variant="ghost"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         >
           <Menu className="h-6 w-6" />
-          <span className="sr-only">Toggle sidebar</span>
+          <span className="sr-only">{t('nav.toggleSidebar')}</span>
         </Button>
       </div>
 
@@ -53,16 +57,16 @@ export default function DashboardLayout({
         >
           <nav className="h-full overflow-y-auto p-4">
             <p className="mb-3 px-3 text-xs font-medium uppercase tracking-[0.16em] text-gray-400">
-              Account
+              {t('dashboard.account')}
             </p>
             {navItems.map((item) => {
               const active =
                 item.href === '/dashboard'
-                  ? pathname === '/dashboard'
-                  : pathname.startsWith(item.href);
+                  ? internalPathname === '/dashboard'
+                  : internalPathname.startsWith(item.href);
 
               return (
-                <Link key={item.href} href={item.href}>
+                <LocaleLink key={item.href} href={item.href}>
                   <Button
                     variant={active ? 'secondary' : 'ghost'}
                     className="my-1 w-full justify-start shadow-none"
@@ -71,7 +75,7 @@ export default function DashboardLayout({
                     <item.icon className="h-4 w-4" />
                     {item.label}
                   </Button>
-                </Link>
+                </LocaleLink>
               );
             })}
           </nav>

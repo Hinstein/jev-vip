@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   ArrowRight,
@@ -8,33 +7,38 @@ import {
   Zap,
 } from 'lucide-react';
 import { productConfig } from '@/lib/jev/config';
+import { getI18n } from '@/lib/i18n/server';
+import { LocaleLink } from '@/components/i18n/locale-link';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { t } = await getI18n();
+
   return (
     <main>
       <section className="border-b bg-[#f7f7f4]">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
           <div className="max-w-3xl">
             <p className="text-sm font-medium text-gray-500">
-              Hosted Jev API · prepaid access
+              {t('home.badge')}
             </p>
             <h1 className="mt-4 text-5xl font-semibold tracking-[-0.045em] text-gray-950 sm:text-6xl">
-              Jev access without a complicated billing stack.
+              {t('home.titleLine1')}
             </h1>
+            <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-gray-500 sm:text-3xl">
+              {t('home.titleLine2')}
+            </p>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-              Create an account, add prepaid credits, generate an API key and
-              call the Jev Decision API. Balance and usage stay visible in one
-              dashboard.
+              {t('home.description')}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg">
-                <Link href="/sign-up">
-                  Create account
+                <LocaleLink href="/sign-up">
+                  {t('home.createAccount')}
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+                </LocaleLink>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/pricing">View credit packs</Link>
+                <LocaleLink href="/pricing">{t('home.viewCreditPacks')}</LocaleLink>
               </Button>
             </div>
             <p className="mt-6 text-xs leading-5 text-gray-500">
@@ -49,18 +53,18 @@ export default function HomePage() {
           {[
             {
               icon: WalletCards,
-              title: 'Prepaid credits',
-              text: 'Top up with a recharge code and use a visible account balance.',
+              title: t('home.prepaidCredits'),
+              text: t('home.prepaidCreditsDescription'),
             },
             {
               icon: KeyRound,
-              title: 'API keys',
-              text: 'Create and revoke keys from the dashboard without exposing the upstream Jev credential.',
+              title: t('home.apiKeyWorkspace'),
+              text: t('home.apiKeyWorkspaceDescription'),
             },
             {
               icon: Zap,
-              title: 'Usage metering',
-              text: 'Requests and credit consumption update automatically with each call.',
+              title: t('home.usageVisibility'),
+              text: t('home.usageVisibilityDescription'),
             },
           ].map((item) => (
             <div key={item.title} className="border-t pt-6">
@@ -76,17 +80,17 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
-              <p className="text-sm font-medium text-gray-500">Simple flow</p>
+              <p className="text-sm font-medium text-gray-500">{t('home.simpleFlow')}</p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                Buy credits. Create a key. Call Jev.
+                {t('home.flowTitle')}
               </h2>
             </div>
             <div className="space-y-4">
               {[
-                'Sign in to your Jev account.',
-                'Redeem a one-time recharge code.',
-                'Generate an API key in the dashboard.',
-                'Send Bearer-authenticated requests to /api/v1/decide.',
+                t('home.step1'),
+                t('home.step2'),
+                t('home.step3'),
+                t('home.step4'),
               ].map((text) => (
                 <div key={text} className="flex gap-3 text-sm text-gray-600">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-gray-950" />

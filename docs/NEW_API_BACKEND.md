@@ -2,7 +2,7 @@
 
 ## Source-of-truth boundary
 
-The JEV Next.js application is the customer-facing frontend. New API is the
+The JEV Store Next.js application is the customer-facing frontend. New API is the
 account and business backend.
 
 New API owns:
@@ -21,7 +21,7 @@ New API owns:
 JEV does not keep a second business user, role table, permission model or credit
 balance.
 
-The JEV frontend stores only an HttpOnly signed session envelope containing the
+The JEV Store frontend stores only an HttpOnly signed session envelope containing the
 current New API access token/user snapshot plus the New API refresh credential.
 Access tokens are refreshed through New API's session endpoint.
 
@@ -41,7 +41,7 @@ Role values remain New API's values:
 - admin: 10
 - root: 100
 
-Sensitive operations are still enforced by New API. The JEV frontend should
+Sensitive operations are still enforced by New API. The JEV Store frontend should
 never implement a parallel authorization decision.
 
 ## Jev request path

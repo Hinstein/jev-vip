@@ -133,7 +133,7 @@ treated as explicit migrations and rerun E2E.
 3. **Admin console isolation**
    New API should remain on localhost/private network. If an admin hostname is
    exposed, protect it with an additional admin-only access layer. Customer
-   traffic should go through the JEV frontend/BFF.
+   traffic should go through the JEV Store frontend/BFF.
 
 4. **Real TypeSafe upstream**
    Add the funded/authorized TypeSafe API key to the adapter and verify the
@@ -173,7 +173,7 @@ treated as explicit migrations and rerun E2E.
 
 ## P1 — not required for first manual-sale launch
 
-- customer-facing per-request usage table inside the JEV frontend
+- customer-facing per-request usage table inside the JEV Store frontend
 - password reset/email verification
 - Turnstile after abuse appears
 - admin-editable JEV documentation/CMS

@@ -16,6 +16,8 @@ import {
 } from '@/lib/auth/session';
 import { forwardedForFromHeaders } from '@/lib/http/client-ip';
 import { validatedAction } from '@/lib/auth/middleware';
+import { getLocale } from '@/lib/i18n/server';
+import { isLocale, localizedPath, type Locale } from '@/lib/i18n/config';
 
 const signInSchema = z.object({
   username: z.string().trim().min(1).max(255),
@@ -30,7 +32,16 @@ async function requestMeta() {
   };
 }
 
+async function actionLocale(formData: FormData): Promise<Locale> {
+  const submitted = formData.get('locale');
+  if (typeof submitted === 'string' && isLocale(submitted)) {
+    return submitted;
+  }
+  return getLocale();
+}
+
 export const signIn = validatedAction(signInSchema, async (data, formData) => {
+  const locale = await actionLocale(formData);
   try {
     const bundle = await loginNewApi(
       data.username,
@@ -54,10 +65,10 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
     redirectTo.startsWith('/') &&
     !redirectTo.startsWith('//')
   ) {
-    redirect(redirectTo);
+    redirect(localizedPath(locale, redirectTo));
   }
 
-  redirect('/dashboard');
+  redirect(localizedPath(locale, '/dashboard'));
 });
 
 const signUpSchema = z.object({
@@ -71,6 +82,7 @@ const signUpSchema = z.object({
 });
 
 export const signUp = validatedAction(signUpSchema, async (data, formData) => {
+  const locale = await actionLocale(formData);
   try {
     const meta = await requestMeta();
     await registerNewApi(data.username, data.password, meta);
@@ -92,10 +104,10 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
     redirectTo.startsWith('/') &&
     !redirectTo.startsWith('//')
   ) {
-    redirect(redirectTo);
+    redirect(localizedPath(locale, redirectTo));
   }
 
-  redirect('/dashboard');
+  redirect(localizedPath(locale, '/dashboard'));
 });
 
 export async function signOut() {

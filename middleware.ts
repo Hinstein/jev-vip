@@ -10,15 +10,67 @@ import {
 } from '@/lib/auth/session';
 import { forwardedForFromHeaders } from '@/lib/http/client-ip';
 import { refreshNewApiAuth } from '@/lib/new-api/auth';
+import {
+  getLocaleFromPathname,
+  isLocale,
+  localeCookieName,
+  localeFromAcceptLanguage,
+  localizedPath,
+  stripLocalePrefix,
+  type Locale,
+} from '@/lib/i18n/config';
 
-function unauthorized(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith('/api/')) {
+const protectedRoutes = ['/dashboard', '/redeem'];
+const protectedApiRoutes = ['/api/keys', '/api/redeem', '/api/user'];
+
+function preferredLocale(request: NextRequest): Locale {
+  const cookieLocale = request.cookies.get(localeCookieName)?.value;
+  if (isLocale(cookieLocale)) return cookieLocale;
+  return localeFromAcceptLanguage(request.headers.get('accept-language'));
+}
+
+function isPageRequest(pathname: string) {
+  return !pathname.startsWith('/api/') && !pathname.includes('.');
+}
+
+function isApiPath(pathname: string) {
+  return pathname === '/api' || pathname.startsWith('/api/');
+}
+
+function isProtectedPath(pathname: string) {
+  return (
+    protectedRoutes.some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`)
+    ) ||
+    protectedApiRoutes.some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`)
+    )
+  );
+}
+
+function signInUrl(
+  request: NextRequest,
+  locale: Locale,
+  redirectPath: string
+) {
+  const configuredBaseUrl = process.env.BASE_URL?.trim();
+  const url = configuredBaseUrl
+    ? new URL(localizedPath(locale, '/sign-in'), configuredBaseUrl)
+    : new URL(localizedPath(locale, '/sign-in'), request.url);
+  url.searchParams.set('redirect', redirectPath);
+  return url;
+}
+
+function unauthorized(
+  request: NextRequest,
+  locale: Locale,
+  redirectPath: string
+) {
+  if (isApiPath(request.nextUrl.pathname)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const signInUrl = new URL('/sign-in', request.url);
-  signInUrl.searchParams.set('redirect', request.nextUrl.pathname);
-  return NextResponse.redirect(signInUrl);
+  return NextResponse.redirect(signInUrl(request, locale, redirectPath));
 }
 
 function clearAuth(response: NextResponse) {
@@ -27,29 +79,99 @@ function clearAuth(response: NextResponse) {
   return response;
 }
 
+function setLocaleCookie(response: NextResponse, locale: Locale) {
+  response.cookies.set(localeCookieName, locale, {
+    httpOnly: false,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+  });
+  return response;
+}
+
+function localizedResponse(
+  request: NextRequest,
+  locale: Locale,
+  localeFromPath: Locale | null,
+  internalPathname: string,
+  search: string,
+  requestHeaders: Headers
+) {
+  const response =
+    localeFromPath && !isApiPath(internalPathname)
+      ? NextResponse.rewrite(
+          new URL(`${internalPathname}${search}`, request.url),
+          { request: { headers: requestHeaders } }
+        )
+      : NextResponse.next({ request: { headers: requestHeaders } });
+
+  return localeFromPath ? setLocaleCookie(response, locale) : response;
+}
+
 export async function middleware(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
+  const localeFromPath = getLocaleFromPathname(pathname);
+  const locale = localeFromPath || preferredLocale(request);
+  const internalPathname = localeFromPath
+    ? stripLocalePrefix(pathname)
+    : pathname;
+  const protectedPath = isProtectedPath(internalPathname);
+  const redirectPath = `${pathname}${search}`;
   const sessionCookie = request.cookies.get(SESSION_COOKIE)?.value;
-  if (!sessionCookie) return unauthorized(request);
+
+  if (!localeFromPath && isPageRequest(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = localizedPath(locale, pathname);
+    const response = NextResponse.redirect(url);
+    return setLocaleCookie(response, locale);
+  }
+
+  if (protectedPath && !sessionCookie) {
+    return unauthorized(request, locale, redirectPath);
+  }
+
+  if (!protectedPath) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-locale', locale);
+    return localizedResponse(
+      request,
+      locale,
+      localeFromPath,
+      internalPathname,
+      search,
+      requestHeaders
+    );
+  }
 
   let session;
   try {
-    session = await verifyToken(sessionCookie);
+    session = await verifyToken(sessionCookie as string);
   } catch {
-    return clearAuth(unauthorized(request));
+    return clearAuth(unauthorized(request, locale, redirectPath));
   }
 
   if (new Date(session.expires).getTime() <= Date.now()) {
-    return clearAuth(unauthorized(request));
+    return clearAuth(unauthorized(request, locale, redirectPath));
   }
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-locale', locale);
 
   const now = Math.floor(Date.now() / 1000);
   if (session.accessExpiresAt > now + 60) {
-    return NextResponse.next();
+    return localizedResponse(
+      request,
+      locale,
+      localeFromPath,
+      internalPathname,
+      search,
+      requestHeaders
+    );
   }
 
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
   if (!refreshToken) {
-    return clearAuth(unauthorized(request));
+    return clearAuth(unauthorized(request, locale, redirectPath));
   }
 
   try {
@@ -58,7 +180,14 @@ export async function middleware(request: NextRequest) {
       userAgent: request.headers.get('user-agent'),
     });
     const nextSession = sessionFromBundle(bundle);
-    const response = NextResponse.next();
+    const response = localizedResponse(
+      request,
+      locale,
+      localeFromPath,
+      internalPathname,
+      search,
+      requestHeaders
+    );
     const secure = sessionCookieSecure();
     const expires = new Date(nextSession.expires);
 
@@ -79,17 +208,11 @@ export async function middleware(request: NextRequest) {
 
     return response;
   } catch {
-    return clearAuth(unauthorized(request));
+    return clearAuth(unauthorized(request, locale, redirectPath));
   }
 }
 
 export const config = {
-  matcher: [
-    '/dashboard/:path*',
-    '/redeem/:path*',
-    '/api/keys/:path*',
-    '/api/redeem/:path*',
-    '/api/user',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
   runtime: 'nodejs',
 };

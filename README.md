@@ -1,4 +1,4 @@
-# JEV prepaid API platform
+# JEV Store
 
 This repository is the customer-facing recharge and hosted-access platform for
 Jev.
@@ -7,7 +7,7 @@ Jev.
 
 ```text
 Customer
-  -> JEV Next.js frontend (stateless; no local database)
+  -> JEV Store frontend (stateless; no local database)
        -> New API
           -> login / users / roles / permissions
           -> quota / redemption codes
@@ -19,7 +19,7 @@ Customer
 ```
 
 New API is the only source of truth for customer identity and commercial API
-state. The JEV frontend does not maintain a second user database, permission
+state. The JEV Store frontend does not maintain a second user database, permission
 system, credit ledger or API-key store.
 
 The TypeSafe upstream is not OpenAI-compatible, so

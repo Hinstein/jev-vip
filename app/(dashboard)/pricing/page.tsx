@@ -2,24 +2,24 @@ import { ProductGrid } from '@/components/jev/product-grid';
 import { getActiveProducts } from '@/lib/jev/products';
 import { productConfig } from '@/lib/jev/config';
 import { getJevRetailPricing } from '@/lib/new-api/pricing';
+import { getI18n } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PricingPage() {
   const products = getActiveProducts();
   const pricing = await getJevRetailPricing();
+  const { t } = await getI18n();
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
-        <p className="text-sm font-medium text-gray-500">Prepaid API balance</p>
+        <p className="text-sm font-medium text-gray-500">{t('pricing.eyebrow')}</p>
         <h1 className="mt-2 text-4xl font-semibold tracking-tight">
-          Choose a Jev recharge pack
+          {t('pricing.title')}
         </h1>
         <p className="mt-4 text-gray-600">
-          Buy a recharge code through the listed sales channel, then redeem it
-          to your account. The balance is available immediately after a
-          successful redemption.
+          {t('pricing.description')}
         </p>
       </div>
 

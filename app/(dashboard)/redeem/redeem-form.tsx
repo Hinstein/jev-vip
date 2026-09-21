@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatUsdFromQuota } from '@/lib/jev/billing';
+import { useI18n } from '@/components/i18n/use-i18n';
 
 type RedeemResponse =
   | {
@@ -23,6 +24,7 @@ type RedeemResponse =
     };
 
 export function RedeemForm() {
+  const { locale, t } = useI18n();
   const router = useRouter();
   const [code, setCode] = useState('');
   const [pending, setPending] = useState(false);
@@ -53,7 +55,7 @@ export function RedeemForm() {
       setResult({
         ok: false,
         code: 'network_error',
-        message: 'Network error. Please try again.',
+        message: t('redeem.networkError'),
       });
     } finally {
       setPending(false);
@@ -63,12 +65,12 @@ export function RedeemForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="voucher-code">Redemption code</Label>
+        <Label htmlFor="voucher-code">{t('redeem.redemptionCode')}</Label>
         <Input
           id="voucher-code"
           value={code}
           onChange={(event) => setCode(event.target.value)}
-          placeholder="JEV10-X82K-PQ91"
+          placeholder={t('redeem.placeholder')}
           autoComplete="off"
           autoCapitalize="characters"
           spellCheck={false}
@@ -82,12 +84,12 @@ export function RedeemForm() {
         {pending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Redeeming...
+            {t('redeem.redeeming')}
           </>
         ) : (
           <>
             <TicketCheck className="mr-2 h-4 w-4" />
-            Redeem now
+            {t('redeem.redeemNow')}
           </>
         )}
       </Button>
@@ -103,13 +105,16 @@ export function RedeemForm() {
           {result.ok ? (
             result.alreadyApplied ? (
               <p>
-                This code was already processed for your account. Current
-                balance: {formatUsdFromQuota(result.balance)}.
+                {t('redeem.alreadyProcessed', {
+                  balance: formatUsdFromQuota(result.balance, locale),
+                })}
               </p>
             ) : (
               <p>
-                Recharge successful: +{formatUsdFromQuota(result.credited)}.
-                Current balance: {formatUsdFromQuota(result.balance)}.
+                {t('redeem.successful', {
+                  credited: formatUsdFromQuota(result.credited, locale),
+                  balance: formatUsdFromQuota(result.balance, locale),
+                })}
               </p>
             )
           ) : (

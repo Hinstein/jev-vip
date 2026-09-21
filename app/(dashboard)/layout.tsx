@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { Suspense, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Home, LogOut } from 'lucide-react';
@@ -15,6 +14,10 @@ import { signOut } from '@/app/(login)/actions';
 import { useRouter } from 'next/navigation';
 import type { NewApiUser } from '@/lib/new-api/types';
 import useSWR, { mutate } from 'swr';
+import { LocaleLink } from '@/components/i18n/locale-link';
+import { LocaleSwitcher } from '@/components/i18n/locale-switcher';
+import { useI18n } from '@/components/i18n/use-i18n';
+import { localizedPath } from '@/lib/i18n/config';
 
 const fetcher = (url: string) =>
   fetch(url).then(async (res) => (res.ok ? res.json() : null));
@@ -23,25 +26,26 @@ function UserMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { data: user } = useSWR<NewApiUser | null>('/api/user', fetcher);
   const router = useRouter();
+  const { locale, t } = useI18n();
 
   async function handleSignOut() {
     await signOut();
     await mutate('/api/user', null, false);
-    router.push('/');
+    router.push(localizedPath(locale, '/'));
     router.refresh();
   }
 
   if (!user) {
     return (
       <>
-        <Link
+        <LocaleLink
           href="/pricing"
           className="text-sm font-medium text-gray-600 hover:text-gray-950"
         >
-          Pricing
-        </Link>
+          {t('nav.credits')}
+        </LocaleLink>
         <Button asChild size="sm">
-          <Link href="/sign-in">Sign in</Link>
+          <LocaleLink href="/sign-in">{t('login.signIn')}</LocaleLink>
         </Button>
       </>
     );
@@ -59,17 +63,17 @@ function UserMenu() {
       <DropdownMenuContent align="end" className="min-w-48">
         <div className="px-2 py-1.5">
           <p className="text-sm font-medium">{label}</p>
-          <p className="text-xs text-gray-500">{user.group}</p>
+            <p className="text-xs text-gray-500">{user.group}</p>
         </div>
         <DropdownMenuItem asChild>
-          <Link href="/dashboard" className="flex w-full items-center">
+          <LocaleLink href="/dashboard" className="flex w-full items-center">
             <Home className="mr-2 h-4 w-4" />
-            Dashboard
-          </Link>
+            {t('nav.dashboard')}
+          </LocaleLink>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void handleSignOut()}>
           <LogOut className="mr-2 h-4 w-4" />
-          Sign out
+          {t('nav.signOut')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -77,25 +81,30 @@ function UserMenu() {
 }
 
 function Header() {
+  const { t } = useI18n();
+
   return (
     <header className="border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-baseline gap-2">
+        <LocaleLink href="/" className="flex items-baseline gap-2">
           <span className="text-xl font-semibold tracking-[-0.04em] text-gray-950">
-            Jev
+            JEV Store
           </span>
           <span className="hidden text-xs font-medium uppercase tracking-[0.18em] text-gray-400 sm:inline">
             prepaid API
           </span>
-        </Link>
+        </LocaleLink>
 
         <div className="flex items-center gap-4">
-          <Link
+          <LocaleLink
             href="/pricing"
             className="hidden text-sm font-medium text-gray-600 hover:text-gray-950 sm:inline"
           >
-            Credits
-          </Link>
+            {t('nav.credits')}
+          </LocaleLink>
+          <Suspense fallback={<span className="h-5 w-16" />}>
+            <LocaleSwitcher />
+          </Suspense>
           <Suspense fallback={<div className="h-9 w-9" />}>
             <UserMenu />
           </Suspense>

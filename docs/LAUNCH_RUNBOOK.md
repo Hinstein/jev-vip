@@ -75,7 +75,7 @@ For a 100-code ¥10 batch, create exactly 100 codes at 750,000 quota each.
 
 Run this exact sequence:
 
-1. Register a fresh customer from the JEV frontend.
+1. Register a fresh customer from the JEV Store frontend.
 2. Verify the same user appears in New API User Management.
 3. Confirm initial quota = 0.
 4. Redeem one test code.
@@ -84,7 +84,7 @@ Run this exact sequence:
    - used user ID is recorded
    - user quota increases by the code denomination
    - recharge/audit log exists
-6. Create a JEV API key from the JEV frontend.
+6. Create a JEV API key from the JEV Store frontend.
 7. Confirm in New API:
    - the key belongs to that user
    - model restriction contains only `jev`

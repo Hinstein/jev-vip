@@ -14,7 +14,7 @@ The reference presents hosted Jev access as a simple prepaid developer product:
 6. The dashboard keeps balance, keys and usage easy to find.
 7. The service clearly states that it is independent from TypeSafe AI.
 
-## JEV frontend direction
+## JEV Store frontend direction
 
 Our frontend should keep the same information hierarchy:
 

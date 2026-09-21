@@ -4,6 +4,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "test": "tsx --test tests/*.test.ts",
     "jev:e2e": "node scripts/e2e-backend.mjs",
     "arch:check": "node scripts/architecture-check.mjs"
   },
@@ -29,5 +30,8 @@
     "tw-animate-css": "^1.3.0",
     "typescript": "^5.8.3",
     "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "tsx": "4.23.13"
   }
 }

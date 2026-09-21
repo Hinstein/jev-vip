@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Copy, KeyRound, Loader2, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/components/i18n/use-i18n';
 
 type KeyItem = {
   id: number;
@@ -25,6 +26,7 @@ export function KeyManager({
   configured: boolean;
 }) {
   const router = useRouter();
+  const { locale, t } = useI18n();
   const [name, setName] = useState('Default');
   const [pending, setPending] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
@@ -51,14 +53,14 @@ export function KeyManager({
       };
 
       if (!response.ok || !payload.key) {
-        throw new Error(payload.error || 'Unable to create API key.');
+        throw new Error(payload.error || t('apiKeys.createError'));
       }
 
       setNewKey(payload.key);
       router.refresh();
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : 'Unable to create API key.'
+        cause instanceof Error ? cause.message : t('apiKeys.createError')
       );
     } finally {
       setPending(false);
@@ -80,13 +82,13 @@ export function KeyManager({
       const payload = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        throw new Error(payload.error || 'Unable to revoke API key.');
+        throw new Error(payload.error || t('apiKeys.revokeError'));
       }
 
       router.refresh();
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : 'Unable to revoke API key.'
+        cause instanceof Error ? cause.message : t('apiKeys.revokeError')
       );
     } finally {
       setDeleting(null);
@@ -101,7 +103,7 @@ export function KeyManager({
     <div className="space-y-6">
       {!configured ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          The Jev backend is not configured on this server yet.
+          {t('apiKeys.backendNotConfigured')}
         </div>
       ) : null}
 
@@ -113,7 +115,7 @@ export function KeyManager({
           value={name}
           onChange={(event) => setName(event.target.value)}
           maxLength={50}
-          placeholder="Key name"
+          placeholder={t('apiKeys.keyName')}
           disabled={!configured || pending}
         />
         <Button
@@ -125,14 +127,14 @@ export function KeyManager({
           ) : (
             <Plus className="mr-2 h-4 w-4" />
           )}
-          Create API key
+          {t('apiKeys.create')}
         </Button>
       </form>
 
       {newKey ? (
         <div className="rounded-xl border border-green-200 bg-green-50 p-4">
           <p className="font-medium text-green-950">
-            Copy this key now. It will not be shown again in this interface.
+            {t('apiKeys.copyNow')}
           </p>
           <div className="mt-3 flex gap-2">
             <code className="min-w-0 flex-1 overflow-x-auto rounded-lg bg-white px-3 py-2 text-sm">
@@ -140,7 +142,7 @@ export function KeyManager({
             </code>
             <Button type="button" variant="outline" onClick={copyKey}>
               <Copy className="h-4 w-4" />
-              <span className="sr-only">Copy key</span>
+              <span className="sr-only">{t('apiKeys.copyKey')}</span>
             </Button>
           </div>
         </div>
@@ -156,9 +158,9 @@ export function KeyManager({
         {initialKeys.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-14 text-center">
             <KeyRound className="h-8 w-8 text-gray-400" />
-            <p className="mt-4 font-medium">No API keys yet</p>
+            <p className="mt-4 font-medium">{t('apiKeys.noKeys')}</p>
             <p className="mt-1 max-w-md text-sm text-gray-500">
-              Create a key to call the Jev API.
+              {t('apiKeys.noKeysDescription')}
             </p>
           </div>
         ) : (
@@ -169,14 +171,14 @@ export function KeyManager({
                 className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-medium">{key.name || 'Unnamed key'}</p>
+                  <p className="font-medium">{key.name || t('apiKeys.unnamed')}</p>
                   <p className="mt-1 font-mono text-sm text-gray-500">
                     {key.key}
                   </p>
                   <p className="mt-1 text-xs text-gray-400">
                     {key.created_time
-                      ? new Date(key.created_time * 1000).toLocaleString()
-                      : 'Creation time unavailable'}
+                      ? new Date(key.created_time * 1000).toLocaleString(locale)
+                      : t('apiKeys.creationTimeUnavailable')}
                   </p>
                 </div>
                 <Button
@@ -190,7 +192,7 @@ export function KeyManager({
                   ) : (
                     <Trash2 className="mr-2 h-4 w-4" />
                   )}
-                  Revoke
+                  {t('apiKeys.revoke')}
                 </Button>
               </div>
             ))}

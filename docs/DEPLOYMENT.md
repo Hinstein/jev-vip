@@ -1,8 +1,8 @@
 # Deployment checklist
 
-## JEV frontend
+## JEV Store frontend
 
-The JEV Next.js frontend is stateless and has no application database.
+The JEV Store Next.js frontend is stateless and has no application database.
 
 1. Install Node 22+ and pnpm.
 2. Copy `.env.example` to `.env` and set production secrets.
@@ -19,7 +19,7 @@ pnpm build
 docker compose -f docker-compose.backend.yml up -d
 ```
 
-5. Start the JEV frontend with `pnpm start`.
+5. Start the JEV Store frontend with `pnpm start`.
 6. Put both the JEV site and New API administrator console behind HTTPS.
 7. In production enable Secure New API session cookies and configure the trusted
    admin URL.
@@ -33,7 +33,7 @@ configured for reliable restart behavior.
 ## Before public sales
 
 - Root setup completed.
-- Password registration/login settings match the JEV frontend.
+- Password registration/login settings match the JEV Store frontend.
 - `jev` channel points only to the internal JEV adapter.
 - TypeSafe credential exists only in the adapter environment.
 - Model price is $0.42/M input and $0/M output.

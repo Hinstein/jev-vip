@@ -20,8 +20,8 @@ export function quotaToApproxInputTokens(
   return (quotaToUsd(quota) / inputUsdPerMillion) * 1_000_000;
 }
 
-export function formatUsdFromQuota(quota: number) {
-  return new Intl.NumberFormat('en-US', {
+export function formatUsdFromQuota(quota: number, locale = 'en-US') {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,

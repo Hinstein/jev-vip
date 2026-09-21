@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import {
   ArrowUpRight,
@@ -12,16 +11,20 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getUser } from '@/lib/new-api/user';
 import { listNewApiTokens } from '@/lib/new-api/client';
 import { formatUsdFromQuota } from '@/lib/jev/billing';
+import { getI18n } from '@/lib/i18n/server';
+import { localizedPath } from '@/lib/i18n/config';
+import { LocaleLink } from '@/components/i18n/locale-link';
 
 export const dynamic = 'force-dynamic';
 
-function formatNumber(value: number) {
-  return new Intl.NumberFormat('en-US').format(value);
+function formatNumber(value: number, locale: string) {
+  return new Intl.NumberFormat(locale).format(value);
 }
 
 export default async function DashboardPage() {
+  const { locale, t } = await getI18n();
   const user = await getUser();
-  if (!user) redirect('/sign-in');
+  if (!user) redirect(localizedPath(locale, '/sign-in'));
 
   let activeKeys = 0;
   try {
@@ -33,22 +36,22 @@ export default async function DashboardPage() {
 
   const metrics = [
     {
-      label: 'Available balance',
+      label: t('dashboard.availableBalance'),
       value: formatUsdFromQuota(user.quota),
       icon: WalletCards,
     },
     {
-      label: 'API spend',
+      label: t('dashboard.apiSpend'),
       value: formatUsdFromQuota(user.used_quota),
       icon: Zap,
     },
     {
-      label: 'Requests',
-      value: formatNumber(user.request_count),
+      label: t('dashboard.requests'),
+      value: formatNumber(user.request_count, locale),
       icon: MousePointerClick,
     },
     {
-      label: 'Active API keys',
+      label: t('dashboard.activeApiKeys'),
       value: activeKeys.toString(),
       icon: KeyRound,
     },
@@ -59,23 +62,25 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-col gap-4 border-b border-gray-200 pb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-500">Hosted Jev API</p>
+            <p className="text-sm font-medium text-gray-500">{t('dashboard.eyebrow')}</p>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight text-gray-950">
-              Dashboard
+              {t('dashboard.title')}
             </h1>
             <p className="mt-2 text-sm text-gray-500">
-              Signed in as {user.display_name || user.username}
+              {t('dashboard.signedInAs', {
+                value: user.display_name || user.username,
+              })}
             </p>
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline">
-              <Link href="/redeem">Redeem code</Link>
+              <LocaleLink href="/redeem">{t('dashboard.redeemCode')}</LocaleLink>
             </Button>
             <Button asChild>
-              <Link href="/dashboard/top-up">
-                Top up
+              <LocaleLink href="/dashboard/top-up">
+                {t('dashboard.topUp')}
                 <ArrowUpRight className="ml-2 h-4 w-4" />
-              </Link>
+              </LocaleLink>
             </Button>
           </div>
         </div>
@@ -99,13 +104,12 @@ export default async function DashboardPage() {
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <Card className="shadow-none">
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-gray-500">Quick start</p>
+              <p className="text-sm font-medium text-gray-500">{t('dashboard.quickStart')}</p>
               <h2 className="mt-1 text-xl font-semibold">
-                Call the Jev Decision API
+                {t('dashboard.callDecisionApi')}
               </h2>
               <p className="mt-2 text-sm leading-6 text-gray-500">
-                Create an API key, keep it server-side, then send Jev-shaped
-                requests to the hosted endpoint.
+                {t('dashboard.quickStartDescription')}
               </p>
               <div className="mt-5 rounded-xl bg-gray-950 p-4 text-sm text-gray-100">
                 <div className="font-mono">POST /api/v1/decide</div>
@@ -115,10 +119,14 @@ export default async function DashboardPage() {
               </div>
               <div className="mt-5 flex gap-2">
                 <Button asChild size="sm">
-                  <Link href="/dashboard/api-keys">Manage API keys</Link>
+                  <LocaleLink href="/dashboard/api-keys">
+                    {t('dashboard.manageApiKeys')}
+                  </LocaleLink>
                 </Button>
                 <Button asChild size="sm" variant="outline">
-                  <Link href="/dashboard/usage">View usage</Link>
+                  <LocaleLink href="/dashboard/usage">
+                    {t('dashboard.viewUsage')}
+                  </LocaleLink>
                 </Button>
               </div>
             </CardContent>
@@ -126,18 +134,18 @@ export default async function DashboardPage() {
 
           <Card className="shadow-none">
             <CardContent className="p-6">
-              <p className="text-sm font-medium text-gray-500">Account</p>
+              <p className="text-sm font-medium text-gray-500">{t('dashboard.account')}</p>
               <dl className="mt-4 space-y-4 text-sm">
                 <div className="flex items-center justify-between gap-4">
-                  <dt className="text-gray-500">Username</dt>
+                  <dt className="text-gray-500">{t('dashboard.username')}</dt>
                   <dd className="font-medium">{user.username}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-4">
-                  <dt className="text-gray-500">Group</dt>
+                  <dt className="text-gray-500">{t('dashboard.group')}</dt>
                   <dd className="font-medium">{user.group}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-4">
-                  <dt className="text-gray-500">Account ID</dt>
+                  <dt className="text-gray-500">{t('dashboard.accountId')}</dt>
                   <dd className="font-mono text-xs">{user.id}</dd>
                 </div>
               </dl>

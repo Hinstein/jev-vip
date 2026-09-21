@@ -1,5 +1,5 @@
 export const productConfig = {
-  name: 'Jev',
+  name: 'JEV Store',
   description:
     'Independent prepaid access and account management for the Jev API.',
   dashboardDescription:
