@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { Globe2 } from 'lucide-react';
 import {
   defaultLocale,
   getLocaleFromPathname,
@@ -30,11 +31,12 @@ export function LocaleSwitcher() {
   return (
     <Link
       href={target}
-      className="text-sm font-medium text-gray-600 hover:text-gray-950"
+      className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-100 hover:text-gray-950"
       aria-label={`${t('common.language')}: ${t(
         nextLocale === 'zh-CN' ? 'common.chinese' : 'common.english'
       )}`}
     >
+      <Globe2 aria-hidden="true" className="h-4 w-4" />
       {nextLocale === 'zh-CN' ? t('common.chinese') : t('common.english')}
     </Link>
   );

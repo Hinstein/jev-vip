@@ -43,7 +43,7 @@ function UserMenu() {
     );
   }
 
-  const label = user.display_name || user.username || 'U';
+  const label = user.email || user.display_name || user.username || 'U';
 
   return (
     <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
@@ -97,7 +97,7 @@ function Header() {
           <Suspense fallback={<div className="h-9 w-9" />}>
             <UserMenu />
           </Suspense>
-          <Suspense fallback={<span className="h-5 w-16" />}>
+          <Suspense fallback={<span className="h-8 w-24" />}>
             <LocaleSwitcher />
           </Suspense>
         </div>
