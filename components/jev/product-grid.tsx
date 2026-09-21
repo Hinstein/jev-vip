@@ -26,7 +26,10 @@ export async function ProductGrid({
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {products.map((product) => (
-        <div key={product.id} className="rounded-2xl border bg-white p-6">
+        <div
+          key={product.id}
+          className="rounded-[20px] border border-gray-200 bg-white p-7 shadow-none"
+        >
           <h2 className="text-lg font-semibold">{product.name}</h2>
           <p className="mt-4 text-4xl font-semibold tracking-tight">
             {formatPrice(product)}
@@ -58,7 +61,7 @@ export async function ProductGrid({
           </ul>
 
           {product.purchaseUrl ? (
-            <Button asChild className="mt-6 w-full">
+            <Button asChild className="mt-6 h-12 w-full rounded-xl">
               <a
                 href={product.purchaseUrl}
                 target="_blank"
@@ -68,13 +71,13 @@ export async function ProductGrid({
               </a>
             </Button>
           ) : (
-            <Button className="mt-6 w-full" disabled>
+            <Button className="mt-6 h-12 w-full rounded-xl" disabled>
               {t('product.purchasePending')}
             </Button>
           )}
 
-          <Button asChild variant="outline" className="mt-2 w-full">
-            <LocaleLink href="/redeem">{t('product.alreadyHaveCode')}</LocaleLink>
+          <Button asChild variant="outline" className="mt-2 h-12 w-full rounded-xl">
+            <LocaleLink href="/dashboard#redeem">{t('product.alreadyHaveCode')}</LocaleLink>
           </Button>
         </div>
       ))}
