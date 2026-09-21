@@ -77,7 +77,7 @@ export async function ProductGrid({
           )}
 
           <Button asChild variant="outline" className="mt-2 h-12 w-full rounded-xl">
-            <LocaleLink href="/dashboard#redeem">{t('product.alreadyHaveCode')}</LocaleLink>
+            <LocaleLink href="/dashboard/redeem">{t('product.alreadyHaveCode')}</LocaleLink>
           </Button>
         </div>
       ))}

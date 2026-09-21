@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import {
   ArrowUpRight,
-  BadgeCheck,
   KeyRound,
   MousePointerClick,
   WalletCards,
@@ -15,7 +14,6 @@ import { formatUsdFromQuota } from '@/lib/jev/billing';
 import { getI18n } from '@/lib/i18n/server';
 import { localizedPath } from '@/lib/i18n/config';
 import { LocaleLink } from '@/components/i18n/locale-link';
-import { RedeemForm } from '@/app/(dashboard)/redeem/redeem-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,7 +74,7 @@ export default async function DashboardPage() {
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline">
-              <LocaleLink href="#redeem">{t('dashboard.redeemCode')}</LocaleLink>
+              <LocaleLink href="/dashboard/redeem">{t('dashboard.redeemCode')}</LocaleLink>
             </Button>
             <Button asChild>
               <LocaleLink href="/dashboard/top-up">
@@ -154,47 +152,6 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-
-        <section id="redeem" className="mt-10 scroll-mt-8 border-t border-gray-200 pt-8">
-          <div>
-            <p className="text-sm font-medium text-gray-500">{t('redeem.eyebrow')}</p>
-            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-gray-950">
-              {t('redeem.title')}
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
-              {t('redeem.description')}
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-6 md:grid-cols-[1fr_260px]">
-            <Card className="rounded-2xl border-gray-200 shadow-none">
-              <CardContent className="p-6 sm:p-8">
-                <RedeemForm />
-              </CardContent>
-            </Card>
-
-            <div className="space-y-4">
-              <Card className="rounded-2xl border-gray-200 shadow-none">
-                <CardContent className="p-6">
-                  <WalletCards className="h-5 w-5 text-gray-400" />
-                  <p className="mt-4 text-sm text-gray-500">
-                    {t('redeem.availableBalance')}
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold">
-                    {formatUsdFromQuota(user.quota)}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <div className="rounded-xl border border-gray-200 bg-white p-4 text-sm leading-6 text-gray-500">
-                <div className="flex gap-2">
-                  <BadgeCheck className="mt-1 h-4 w-4 shrink-0 text-gray-900" />
-                  <p>{t('redeem.voucherNote')}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </section>
   );

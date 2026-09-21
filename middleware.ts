@@ -157,7 +157,7 @@ export async function middleware(request: NextRequest) {
   const protectedPath = isProtectedPath(internalPathname);
   const redirectPath =
     internalPathname === '/redeem'
-      ? localizedPath(locale, '/dashboard#redeem')
+      ? localizedPath(locale, '/dashboard/redeem')
       : `${pathname}${search}`;
   const accessToken = request.cookies.get(NEW_API_ACCESS_COOKIE)?.value;
   const refreshToken = request.cookies.get(NEW_API_REFRESH_COOKIE)?.value;

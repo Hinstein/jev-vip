@@ -9,6 +9,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Menu,
+  TicketCheck,
   WalletCards,
 } from 'lucide-react';
 import { LocaleLink } from '@/components/i18n/locale-link';
@@ -31,6 +32,7 @@ export default function DashboardLayout({
     { href: '/dashboard/api-keys', icon: KeyRound, label: t('nav.apiKeys') },
     { href: '/dashboard/usage', icon: Activity, label: t('nav.usage') },
     { href: '/dashboard/top-up', icon: CreditCard, label: t('nav.buyCredits') },
+    { href: '/dashboard/redeem', icon: TicketCheck, label: t('nav.redeem') },
   ];
 
   return (
