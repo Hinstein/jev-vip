@@ -9,7 +9,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      AUTH_SECRET: ci-only-auth-secret-ci-only-auth-secret
       BASE_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
