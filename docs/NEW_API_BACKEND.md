@@ -105,8 +105,10 @@ usage, preventing an unmetered successful call.
 9. Configure default group ratio 1.0 and V1 group rate limit 120 RPM.
 10. Keep New API's global per-IP API limiter disabled on this internal relay
     deployment; customer limits belong at the user/group/token level.
-11. Enable consumption logs.
-12. Generate test and production recharge-code batches.
+11. Keep batch quota updates disabled for the V1 deployment so wallet balances
+    and usage are immediately visible after a request.
+12. Enable consumption logs.
+13. Generate test and production recharge-code batches.
 
 See `docs/BILLING_V1.md` and `docs/LAUNCH_RUNBOOK.md`.
 

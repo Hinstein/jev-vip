@@ -13,7 +13,9 @@ services:
       SESSION_COOKIE_TRUSTED_URL: ${NEW_API_SESSION_COOKIE_TRUSTED_URL:-}
       TZ: Asia/Shanghai
       ERROR_LOG_ENABLED: "true"
-      BATCH_UPDATE_ENABLED: "true"
+      # Keep wallet and usage settlement immediately visible to the storefront.
+      # The V1 deployment favors accounting freshness over batch-write throughput.
+      BATCH_UPDATE_ENABLED: "false"
       GENERATE_DEFAULT_TOKEN: "false"
       # JEV relays customer traffic through this internal service, so a global
       # per-IP API limiter would collapse all customers onto the JEV server IP.
