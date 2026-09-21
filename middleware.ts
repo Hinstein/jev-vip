@@ -22,6 +22,7 @@ import {
 
 const protectedRoutes = ['/dashboard', '/redeem'];
 const protectedApiRoutes = ['/api/keys', '/api/redeem', '/api/user'];
+const internalLocaleRewriteHeader = 'x-jev-locale-rewrite';
 
 function preferredLocale(request: NextRequest): Locale {
   // Next may run middleware again after a locale-prefixed page is rewritten
@@ -103,6 +104,10 @@ function localizedResponse(
   search: string,
   requestHeaders: Headers
 ) {
+  if (localeFromPath && !isApiPath(internalPathname)) {
+    requestHeaders.set(internalLocaleRewriteHeader, '1');
+  }
+
   const response =
     localeFromPath && !isApiPath(internalPathname)
       ? NextResponse.rewrite(
@@ -125,7 +130,10 @@ export async function middleware(request: NextRequest) {
   const redirectPath = `${pathname}${search}`;
   const sessionCookie = request.cookies.get(SESSION_COOKIE)?.value;
 
-  if (!localeFromPath && isPageRequest(pathname)) {
+  const isInternalLocaleRewrite =
+    request.headers.get(internalLocaleRewriteHeader) === '1';
+
+  if (!localeFromPath && isPageRequest(pathname) && !isInternalLocaleRewrite) {
     const url = request.nextUrl.clone();
     url.pathname = localizedPath(locale, pathname);
     const response = NextResponse.redirect(url);
