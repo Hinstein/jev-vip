@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 const port = Number(process.env.PORT || 4100);
 const upstreamBase = (process.env.TYPESAFE_API_BASE || 'https://api.typesafe.ai').replace(/\/+$/, '');
 const upstreamKey = process.env.TYPESAFE_API_KEY;
+const upstreamModel = process.env.TYPESAFE_MODEL || 'jev-latest';
 const sharedKey = process.env.JEV_ADAPTER_SHARED_KEY;
 
 function sendJson(res, status, payload) {
@@ -113,7 +114,7 @@ const server = http.createServer(async (req, res) => {
           Authorization: `Bearer ${upstreamKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, model: upstreamModel }),
         signal: AbortSignal.timeout(30000),
       });
       text = await upstream.text();
