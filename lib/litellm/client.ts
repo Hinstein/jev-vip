@@ -163,7 +163,7 @@ export async function createLiteLLMVirtualKey(
       user_id: userRef(userId),
       key_alias: keyAlias,
       metadata: {
-        product: 'jev-vip',
+        product: 'jev-store',
         jev_user_id: String(userId),
       },
     }),

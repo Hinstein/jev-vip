@@ -102,7 +102,7 @@ export default async function DashboardPage() {
             {[
               ['1', 'Buy on Xianyu', 'Xianyu is only the sales channel.'],
               ['2', 'Receive a unique code', 'OfferKit owns voucher validity and one-time redemption.'],
-              ['3', 'Redeem on JEV VIP', 'The matching product credits are added to your account.'],
+              ['3', 'Redeem on JEV Store', 'The matching product credits are added to your account.'],
               ['4', 'Use JEV', 'Successful API requests debit the same JEV credit ledger by token usage.']
             ].map(([step, title, description]) => (
               <div key={step} className="flex gap-3">

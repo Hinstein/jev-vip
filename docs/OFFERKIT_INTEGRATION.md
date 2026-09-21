@@ -5,7 +5,7 @@
 OfferKit is voucher infrastructure only.
 
 - OfferKit owns voucher existence, lifecycle, expiration, limits, atomic redemption and redemption history.
-- JEV VIP owns products, user credit balances and the credit ledger.
+- JEV Store owns products, user credit balances and the credit ledger.
 - Xianyu is only a sales channel.
 - OfferKit does not own JEV balances and is never consulted when JEV usage is debited.
 
@@ -38,7 +38,7 @@ Recommended OfferKit settings:
 - no referral;
 - no payment or billing integration.
 
-Generate and export codes from OfferKit. Do not build a second voucher generator in JEV VIP.
+Generate and export codes from OfferKit. Do not build a second voucher generator in JEV Store.
 
 ## Server secrets
 
@@ -78,4 +78,4 @@ browser
 
 The JEV ledger reference is deterministic for a user + voucher code. If OfferKit commits successfully but the JEV database write fails, retrying the same code replays the OfferKit result with the same idempotency key and can safely finish the local credit write.
 
-Raw voucher codes are not persisted in JEV VIP. The credit ledger stores only a SHA-256 hash and the final four characters for support correlation.
+Raw voucher codes are not persisted in JEV Store. The credit ledger stores only a SHA-256 hash and the final four characters for support correlation.

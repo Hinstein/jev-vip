@@ -40,7 +40,7 @@ export default function DashboardLayout({
   return (
     <div className="flex flex-col min-h-[calc(100dvh-68px)] max-w-7xl mx-auto w-full">
       <div className="lg:hidden flex items-center justify-between bg-white border-b border-gray-200 p-4">
-        <span className="font-medium">JEV VIP</span>
+        <span className="font-medium">JEV Store</span>
         <Button
           className="-mr-3"
           variant="ghost"

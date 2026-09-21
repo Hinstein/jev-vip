@@ -14,7 +14,7 @@ The reference product turns Jev access into a familiar prepaid developer SaaS:
 6. Documentation provides a simple Bearer-token API workflow.
 7. The service clearly discloses that it is independent from TypeSafe AI.
 
-## What JEV VIP adopts in phase 1
+## What JEV Store adopts in phase 1
 
 - Customer dashboard as the product center
 - Credit balance as the primary account state
@@ -33,4 +33,4 @@ The reference product turns Jev access into a familiar prepaid developer SaaS:
 - Their pricing markup
 
 The UI uses the Next.js SaaS Starter's existing component system and an original
-JEV VIP layout.
+JEV Store layout.

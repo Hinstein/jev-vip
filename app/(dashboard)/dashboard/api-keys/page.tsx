@@ -32,7 +32,7 @@ export default async function ApiKeysPage() {
         <p className="text-sm text-gray-500">Access</p>
         <h1 className="text-2xl font-semibold tracking-tight">API Keys</h1>
         <p className="mt-2 max-w-2xl text-sm text-gray-500">
-          These are JEV VIP keys backed by LiteLLM Virtual Keys. Your upstream
+          These are JEV Store keys backed by LiteLLM Virtual Keys. Your upstream
           TypeSafe credential is never exposed.
         </p>
       </div>

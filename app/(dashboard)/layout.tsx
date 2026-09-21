@@ -82,7 +82,7 @@ function Header() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-950 text-white">
             <Gauge className="h-5 w-5" />
           </span>
-          <span className="ml-2 text-xl font-semibold text-gray-950">JEV VIP</span>
+          <span className="ml-2 text-xl font-semibold text-gray-950">JEV Store</span>
         </Link>
         <div className="flex items-center space-x-4">
           <Link

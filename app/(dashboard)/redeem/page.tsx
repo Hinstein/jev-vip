@@ -33,7 +33,7 @@ export default async function RedeemPage() {
         </h1>
         <p className="mt-3 text-gray-600">
           Buy a package from the configured sales channel, then redeem the code
-          here. OfferKit only validates and consumes the code; JEV VIP owns your
+          here. OfferKit only validates and consumes the code; JEV Store owns your
           credit balance.
         </p>
       </div>

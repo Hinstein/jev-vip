@@ -1,6 +1,6 @@
-# JEV VIP
+# JEV Store
 
-JEV VIP is an independent prepaid-access SaaS for Jev users, built on the MIT-licensed `nextjs/saas-starter`.
+JEV Store is an independent prepaid-access SaaS for Jev users, built on the MIT-licensed `nextjs/saas-starter`.
 
 ## Architecture
 
@@ -9,7 +9,7 @@ Xianyu (sales only)
    -> unique voucher code
 OfferKit (voucher lifecycle only)
    -> successful atomic redemption
-JEV VIP
+JEV Store
    -> products
    -> user credit balance
    -> credit transaction ledger
@@ -49,13 +49,13 @@ Default products:
 ## Intentionally not implemented yet
 
 - WeChat/Alipay/Stripe payment collection
-- Voucher generation or voucher inventory inside JEV VIP
+- Voucher generation or voucher inventory inside JEV Store
 - Xianyu automatic fulfillment
 - A global admin console
 
 ## Public API
 
-`POST /api/v1/decide` accepts a JEV-shaped JSON object with a JEV VIP Bearer
+`POST /api/v1/decide` accepts a JEV-shaped JSON object with a JEV Store Bearer
 API key. The request is relayed through LiteLLM and a successful response is
 metered at one JEV Credit per reported token. The response includes
 `X-JEV-Credits-Used`, `X-JEV-Credits-Remaining` and `X-JEV-Request-ID` headers.
@@ -81,4 +81,4 @@ See:
 - `docs/DEPLOYMENT.md`
 - `docs/LITELLM_RELAY.md`
 
-JEV VIP is independent and is not affiliated with or operated by TypeSafe AI.
+JEV Store is independent and is not affiliated with or operated by TypeSafe AI.

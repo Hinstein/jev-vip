@@ -41,7 +41,7 @@ export function ProductGrid({ products }: { products: DisplayProduct[] }) {
             </li>
             <li className="flex gap-2">
               <Check className="h-4 w-4 text-gray-950" />
-              Credits stored in JEV VIP
+              Credits stored in JEV Store
             </li>
             <li className="flex gap-2">
               <Check className="h-4 w-4 text-gray-950" />

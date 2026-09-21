@@ -1,6 +1,6 @@
 # Deployment checklist
 
-## JEV VIP
+## JEV Store
 
 1. Install Node 22+, pnpm and PostgreSQL 16+.
 2. Clone the repository.

@@ -1,6 +1,6 @@
 # LiteLLM relay
 
-JEV VIP uses LiteLLM only as the relay layer.
+JEV Store uses LiteLLM only as the relay layer.
 
 ## What LiteLLM owns
 
@@ -21,7 +21,7 @@ JEV VIP uses LiteLLM only as the relay layer.
 - JEV product definitions
 - JEV business billing
 
-Those remain in the existing JEV VIP application.
+Those remain in the existing JEV Store application.
 
 ## Request path
 
@@ -36,13 +36,13 @@ customer
   -> JevTypeSafeProvider
   -> https://api.typesafe.ai/v1/systemone
   -> LiteLLM records normalized token usage
-  -> JEV VIP reserves 1 Credit, then settles the exact reported token total
+  -> JEV Store reserves 1 Credit, then settles the exact reported token total
   -> Next.js unwraps the original JEV JSON
   -> customer
 ```
 
 The public customer request/response remains JEV-shaped. The OpenAI-shaped
-request exists only on the private hop between JEV VIP and LiteLLM.
+request exists only on the private hop between JEV Store and LiteLLM.
 
 ## Why custom provider instead of generic passthrough
 
@@ -94,7 +94,7 @@ The JEV Dashboard calls LiteLLM management APIs with the server-only master key.
 - Revoke: `POST /key/delete`
 
 Keys are restricted to the `jev` model and tagged with a stable JEV user id.
-The plaintext key is returned to the customer only at creation time. JEV VIP
+The plaintext key is returned to the customer only at creation time. JEV Store
 stores only a SHA-256 hash of each generated key and its LiteLLM token id.
 Each request first reserves 1 Credit so concurrent requests cannot overspend.
 Successful requests are recorded in `usage_events` and settled against the

@@ -7,8 +7,8 @@ import { SWRConfig } from 'swr';
 
 export const metadata: Metadata = {
   title: {
-    default: 'JEV VIP',
-    template: '%s · JEV VIP'
+    default: 'JEV Store',
+    template: '%s · JEV Store'
   },
   description:
     'Independent prepaid Jev access with credits, API key management and usage visibility.'

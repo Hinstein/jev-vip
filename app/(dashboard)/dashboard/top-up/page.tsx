@@ -11,7 +11,7 @@ export default async function TopUpPage() {
       <p className="text-sm text-gray-500">Phase 1 · Sales channel</p>
       <h1 className="text-2xl font-semibold tracking-tight">Buy Credits</h1>
       <p className="mt-2 max-w-2xl text-sm text-gray-500">
-        JEV VIP does not process payment in Phase 1. Buy a package on Xianyu
+        JEV Store does not process payment in Phase 1. Buy a package on Xianyu
         and redeem the delivered code on this site.
       </p>
 

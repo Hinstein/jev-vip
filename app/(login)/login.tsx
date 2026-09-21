@@ -36,7 +36,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
           </span>
         </Link>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {mode === 'signin' ? 'Sign in to JEV VIP' : 'Create your JEV VIP account'}
+          {mode === 'signin' ? 'Sign in to JEV Store' : 'Create your JEV Store account'}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-500">
           Independent Jev prepaid access dashboard

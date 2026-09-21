@@ -16,7 +16,7 @@ export default async function PricingPage() {
         </h1>
         <p className="mt-4 text-gray-600">
           Purchase through Xianyu, receive a unique voucher code, then redeem it
-          to your JEV VIP account.
+          to your JEV Store account.
         </p>
       </div>
 
@@ -26,7 +26,7 @@ export default async function PricingPage() {
 
       <p className="mx-auto mt-8 max-w-3xl text-center text-xs text-gray-500">
         {productConfig.officialDisclaimer} Xianyu is only a sales channel.
-        Voucher lifecycle is handled by OfferKit; JEV VIP remains the source of
+        Voucher lifecycle is handled by OfferKit; JEV Store remains the source of
         truth for credits.
       </p>
     </main>

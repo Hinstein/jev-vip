@@ -46,6 +46,6 @@ upstream Jev secrets in client components.
   Account and Security.
 - Top-up purchase/order delivery remains an unfinished phase 2 function.
 - API-key actions execute LiteLLM key management only when the relay is
-  configured; JEV VIP still owns local key ownership, usage metering and
+ configured; JEV Store still owns local key ownership, usage metering and
   credit debits.
 - UI explicitly marks unfinished payment and delivery functions as phase 2.
