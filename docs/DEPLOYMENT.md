@@ -25,6 +25,9 @@ docker compose -f docker-compose.backend.yml up -d
 7. In production enable Secure New API session cookies and configure the trusted
    admin URL.
 
+See [`ADMIN_CONSOLE.md`](./ADMIN_CONSOLE.md) for the reverse-proxy hostname and
+the New API user-management path.
+
 ## New API state
 
 New API PostgreSQL and Redis are the persistent backend state. Back up New API
