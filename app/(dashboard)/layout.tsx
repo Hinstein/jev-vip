@@ -94,11 +94,11 @@ function Header() {
           >
             {t('nav.credits')}
           </LocaleLink>
-          <Suspense fallback={<span className="h-5 w-16" />}>
-            <LocaleSwitcher />
-          </Suspense>
           <Suspense fallback={<div className="h-9 w-9" />}>
             <UserMenu />
+          </Suspense>
+          <Suspense fallback={<span className="h-5 w-16" />}>
+            <LocaleSwitcher />
           </Suspense>
         </div>
       </div>
