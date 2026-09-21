@@ -8,7 +8,7 @@ const MAX_BODY_BYTES = 2 * 1024 * 1024;
 
 function newApiBaseUrl() {
   const value = process.env.NEW_API_BASE_URL?.replace(/\/+$/, '');
-  if (!value) throw new Error('Jev backend is not configured');
+  if (!value) throw new Error('JEVstone backend is not configured');
   return value;
 }
 
@@ -32,10 +32,10 @@ function gatewayError(status: number) {
     );
   }
   if (status >= 400 && status < 500) {
-    return NextResponse.json({ error: 'Invalid Jev request.' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid JEVstone request.' }, { status: 400 });
   }
   return NextResponse.json(
-    { error: 'Jev gateway is temporarily unavailable.' },
+    { error: 'JEVstone gateway is temporarily unavailable.' },
     { status: 503 }
   );
 }
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     });
   } catch {
     return NextResponse.json(
-      { error: 'Jev gateway is temporarily unavailable.' },
+      { error: 'JEVstone gateway is temporarily unavailable.' },
       { status: 503 }
     );
   }
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(JSON.parse(content));
   } catch {
     return NextResponse.json(
-      { error: 'Jev gateway returned an invalid response.' },
+      { error: 'JEVstone gateway returned an invalid response.' },
       { status: 502 }
     );
   }

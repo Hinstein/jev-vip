@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const result = await redeemNewApiCode(parsed.data.code);
     return NextResponse.json({
       ok: true,
-      productName: 'Jev credits',
+      productName: 'JEVstone credits',
       credited: result.credited,
       balance: result.self.quota,
       alreadyApplied: false,

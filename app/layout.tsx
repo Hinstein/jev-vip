@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     template: '%s · JEV Store',
   },
   description:
-    'Prepaid Jev API access with recharge codes, API keys and usage visibility.',
+    'Prepaid JEVstone API access with recharge codes, API keys and usage visibility.',
 };
 
 export const viewport: Viewport = {

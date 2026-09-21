@@ -43,13 +43,12 @@ type Messages = {
     signInTitle: string;
     signUpTitle: string;
     subtitle: string;
-    usernameOrEmail: string;
+    emailOrAccount: string;
     username: string;
     email: string;
     verificationCode: string;
     password: string;
     accountPlaceholder: string;
-    usernamePlaceholder: string;
     emailPlaceholder: string;
     verificationCodePlaceholder: string;
     passwordPlaceholder: string;
@@ -125,6 +124,7 @@ type Messages = {
     manageApiKeys: string;
     viewUsage: string;
     account: string;
+    email: string;
     username: string;
     group: string;
     accountId: string;
@@ -186,11 +186,11 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       usage: 'Usage',
     },
     home: {
-      badge: 'Hosted Jev API · prepaid access',
-      titleLine1: 'Jev access without a complicated billing stack.',
+      badge: 'Hosted JEVstone API · prepaid access',
+      titleLine1: 'JEVstone access without a complicated billing stack.',
       titleLine2: 'Balance, keys and usage in one place.',
       description:
-        'Create an account, add prepaid balance, generate an API key and call the Jev Decision API. Your balance and usage stay visible in one dashboard.',
+        'Create an account, add prepaid balance, generate an API key and call the JEVstone Decision API. Your balance and usage stay visible in one dashboard.',
       createAccount: 'Create account',
       viewCreditPacks: 'View credit packs',
       prepaidCredits: 'Prepaid balance',
@@ -203,8 +203,8 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       usageVisibilityDescription:
         'Track requests, token spend and remaining balance without digging through logs.',
       simpleFlow: 'Simple flow',
-      flowTitle: 'Buy balance. Create a key. Call Jev.',
-      step1: 'Sign in to your Jev account.',
+      flowTitle: 'Buy balance. Create a key. Call JEVstone.',
+      step1: 'Sign in to your JEVstone account.',
       step2: 'Redeem a one-time recharge code.',
       step3: 'Generate an API key in the dashboard.',
       step4: 'Send Bearer-authenticated requests to /api/v1/decide.',
@@ -212,16 +212,15 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
     login: {
       welcomeBack: 'Welcome back',
       createAccountEyebrow: 'Create account',
-      signInTitle: 'Sign in to Jev',
-      signUpTitle: 'Start using Jev',
+      signInTitle: 'Sign in to JEVstone',
+      signUpTitle: 'Start using JEVstone',
       subtitle: 'Use one account for balance, API keys and usage.',
-      usernameOrEmail: 'Username or email',
+      emailOrAccount: 'Email or account name',
       username: 'Username',
       email: 'Email',
       verificationCode: 'Verification code',
       password: 'Password',
-      accountPlaceholder: 'your account',
-      usernamePlaceholder: 'choose a username',
+      accountPlaceholder: 'your email or account name',
       emailPlaceholder: 'you@example.com',
       verificationCodePlaceholder: '6-digit code',
       passwordPlaceholder: 'At least 8 characters',
@@ -240,7 +239,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       pleaseWait: 'Please wait',
       signIn: 'Sign in',
       signUp: 'Create account',
-      newToJev: 'New to Jev?',
+      newToJev: 'New to JEVstone?',
       alreadyHaveAccount: 'Already have an account?',
       createAccount: 'Create account',
       signInInstead: 'Sign in',
@@ -253,13 +252,13 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
     },
     pricing: {
       eyebrow: 'Prepaid API balance',
-      title: 'Choose a Jev recharge pack',
+      title: 'Choose a JEVstone recharge pack',
       description:
         'Buy a recharge code through the listed sales channel, then redeem it to your account. The balance is available immediately after a successful redemption.',
     },
     topUp: {
       eyebrow: 'Top up',
-      title: 'Buy Jev API balance',
+      title: 'Buy JEVstone API balance',
       description:
         'Choose a pack, complete the purchase in the configured sales channel, then redeem the delivered code on this site.',
     },
@@ -291,7 +290,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       networkError: 'Network error. Please try again.',
     },
     dashboard: {
-      eyebrow: 'Hosted Jev API',
+      eyebrow: 'Hosted JEVstone API',
       title: 'Dashboard',
       signedInAs: 'Signed in as {value}',
       availableBalance: 'Available balance',
@@ -301,12 +300,13 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       redeemCode: 'Redeem code',
       topUp: 'Top up',
       quickStart: 'Quick start',
-      callDecisionApi: 'Call the Jev Decision API',
+      callDecisionApi: 'Call the JEVstone Decision API',
       quickStartDescription:
-        'Create an API key, keep it server-side, then send Jev-shaped requests to the hosted endpoint.',
+        'Create an API key, keep it server-side, then send JEVstone-shaped requests to the hosted endpoint.',
       manageApiKeys: 'Manage API keys',
       viewUsage: 'View usage',
       account: 'Account',
+      email: 'Email',
       username: 'Username',
       group: 'Group',
       accountId: 'Account ID',
@@ -317,7 +317,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       available: 'Available',
       used: 'Used',
       requests: 'Requests',
-      billedDescription: 'Jev is billed from input tokens. Output tokens are not charged.',
+      billedDescription: 'JEVstone is billed from input tokens. Output tokens are not charged.',
     },
     usage: {
       eyebrow: 'Metering',
@@ -327,20 +327,20 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       remaining: 'Remaining',
       autoUpdates: 'Usage updates automatically',
       autoUpdatesDescription:
-        'Each successful request is settled against the input-token count reported by the Jev upstream response.',
+        'Each successful request is settled against the input-token count reported by the JEVstone upstream response.',
     },
     apiKeys: {
       eyebrow: 'Access',
       title: 'API keys',
       description:
-        'Create a key for your Jev API calls and revoke it whenever you need to rotate access.',
-      backendNotConfigured: 'The Jev backend is not configured on this server yet.',
+        'Create a key for your JEVstone API calls and revoke it whenever you need to rotate access.',
+      backendNotConfigured: 'The JEVstone backend is not configured on this server yet.',
       keyName: 'Key name',
       create: 'Create API key',
       copyNow: 'Copy this key now. It will not be shown again in this interface.',
       copyKey: 'Copy key',
       noKeys: 'No API keys yet',
-      noKeysDescription: 'Create a key to call the Jev API.',
+      noKeysDescription: 'Create a key to call the JEVstone API.',
       unnamed: 'Unnamed key',
       creationTimeUnavailable: 'Creation time unavailable',
       revoke: 'Revoke',
@@ -368,11 +368,11 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       usage: '用量',
     },
     home: {
-      badge: '托管 Jev API · 预付费访问',
-      titleLine1: '无需复杂的计费系统，即可使用 Jev。',
+      badge: '托管 JEVstone API · 预付费访问',
+      titleLine1: '无需复杂的计费系统，即可使用 JEVstone。',
       titleLine2: '余额、密钥和用量统一管理。',
       description:
-        '创建账户、充值余额、生成 API 密钥并调用 Jev Decision API，余额和用量都在一个控制台中清晰可见。',
+        '创建账户、充值余额、生成 API 密钥并调用 JEVstone Decision API，余额和用量都在一个控制台中清晰可见。',
       createAccount: '创建账户',
       viewCreditPacks: '查看充值套餐',
       prepaidCredits: '预付费余额',
@@ -382,8 +382,8 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       usageVisibility: '用量可见',
       usageVisibilityDescription: '无需翻查日志，即可查看请求、Token 消耗和剩余余额。',
       simpleFlow: '使用流程',
-      flowTitle: '充值余额，创建密钥，调用 Jev。',
-      step1: '登录 Jev 账户。',
+      flowTitle: '充值余额，创建密钥，调用 JEVstone。',
+      step1: '登录 JEVstone 账户。',
       step2: '兑换一次性充值码。',
       step3: '在控制台生成 API 密钥。',
       step4: '向 /api/v1/decide 发送 Bearer 鉴权请求。',
@@ -391,16 +391,15 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
     login: {
       welcomeBack: '欢迎回来',
       createAccountEyebrow: '创建账户',
-      signInTitle: '登录 Jev',
-      signUpTitle: '开始使用 Jev',
+      signInTitle: '登录 JEVstone',
+      signUpTitle: '开始使用 JEVstone',
       subtitle: '使用一个账户管理余额、API 密钥和用量。',
-      usernameOrEmail: '用户名或邮箱',
+      emailOrAccount: '邮箱或账户名',
       username: '用户名',
       email: '邮箱',
       verificationCode: '邮箱验证码',
       password: '密码',
-      accountPlaceholder: '输入账户名',
-      usernamePlaceholder: '选择用户名',
+      accountPlaceholder: '输入邮箱或账户名',
       emailPlaceholder: 'you@example.com',
       verificationCodePlaceholder: '输入 6 位验证码',
       passwordPlaceholder: '至少 8 个字符',
@@ -417,7 +416,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       pleaseWait: '请稍候',
       signIn: '登录',
       signUp: '创建账户',
-      newToJev: '还没有 Jev 账户？',
+      newToJev: '还没有 JEVstone 账户？',
       alreadyHaveAccount: '已经有账户了？',
       createAccount: '创建账户',
       signInInstead: '登录',
@@ -429,13 +428,13 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
     },
     pricing: {
       eyebrow: '预付费 API 余额',
-      title: '选择 Jev 充值套餐',
+      title: '选择 JEVstone 充值套餐',
       description:
         '通过列出的销售渠道购买充值码，再兑换到你的账户。兑换成功后余额会立即到账。',
     },
     topUp: {
       eyebrow: '充值',
-      title: '购买 Jev API 余额',
+      title: '购买 JEVstone API 余额',
       description: '选择套餐，在配置的销售渠道完成购买，然后在本站兑换收到的兑换码。',
     },
     product: {
@@ -462,7 +461,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       networkError: '网络错误，请重试。',
     },
     dashboard: {
-      eyebrow: '托管 Jev API',
+      eyebrow: '托管 JEVstone API',
       title: '控制台',
       signedInAs: '当前账户：{value}',
       availableBalance: '可用余额',
@@ -472,11 +471,12 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       redeemCode: '兑换码',
       topUp: '充值',
       quickStart: '快速开始',
-      callDecisionApi: '调用 Jev Decision API',
-      quickStartDescription: '创建 API 密钥并妥善保存在服务端，然后向托管端点发送 Jev 格式请求。',
+      callDecisionApi: '调用 JEVstone Decision API',
+      quickStartDescription: '创建 API 密钥并妥善保存在服务端，然后向托管端点发送 JEVstone 格式请求。',
       manageApiKeys: '管理 API 密钥',
       viewUsage: '查看用量',
       account: '账户',
+      email: '邮箱',
       username: '用户名',
       group: '用户组',
       accountId: '账户 ID',
@@ -487,7 +487,7 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       available: '可用',
       used: '已使用',
       requests: '请求数',
-      billedDescription: 'Jev 按输入 Token 计费，输出 Token 不收费。',
+      billedDescription: 'JEVstone 按输入 Token 计费，输出 Token 不收费。',
     },
     usage: {
       eyebrow: '用量计量',
@@ -496,19 +496,19 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       apiSpend: 'API 消耗',
       remaining: '剩余余额',
       autoUpdates: '用量自动更新',
-      autoUpdatesDescription: '每次成功请求都会根据 Jev 上游响应报告的输入 Token 数量结算。',
+      autoUpdatesDescription: '每次成功请求都会根据 JEVstone 上游响应报告的输入 Token 数量结算。',
     },
     apiKeys: {
       eyebrow: '访问权限',
       title: 'API 密钥',
-      description: '创建用于调用 Jev API 的密钥，需要轮换访问权限时可以随时撤销。',
-      backendNotConfigured: '服务器尚未配置 Jev 后端。',
+      description: '创建用于调用 JEVstone API 的密钥，需要轮换访问权限时可以随时撤销。',
+      backendNotConfigured: '服务器尚未配置 JEVstone 后端。',
       keyName: '密钥名称',
       create: '创建 API 密钥',
       copyNow: '请立即复制此密钥，之后不会在此界面再次显示。',
       copyKey: '复制密钥',
       noKeys: '暂无 API 密钥',
-      noKeysDescription: '创建密钥后即可调用 Jev API。',
+      noKeysDescription: '创建密钥后即可调用 JEVstone API。',
       unnamed: '未命名密钥',
       creationTimeUnavailable: '创建时间不可用',
       revoke: '撤销',

@@ -181,25 +181,25 @@ export function Login({
             <input type="hidden" name="turnstile" value={turnstileToken} />
 
             <div>
-              <Label htmlFor="username">
-                {mode === 'signin'
-                  ? t('login.usernameOrEmail')
-                  : t('login.username')}
+              <Label htmlFor="email">
+                {mode === 'signin' ? t('login.emailOrAccount') : t('login.email')}
               </Label>
               <Input
-                id="username"
-                name="username"
-                type="text"
-                autoComplete="username"
-                defaultValue={state.username}
+                id="email"
+                name="email"
+                type={mode === 'signup' ? 'email' : 'text'}
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setVerificationMessage('');
+                  setVerificationError('');
+                }}
                 required
-                maxLength={mode === 'signin' ? 255 : 20}
+                maxLength={255}
                 className="mt-2 h-12 rounded-xl border-gray-200 bg-white px-4 shadow-none"
-                placeholder={
-                  mode === 'signin'
-                    ? t('login.accountPlaceholder')
-                    : t('login.usernamePlaceholder')
-                }
+                placeholder={mode === 'signin' ? t('login.accountPlaceholder') : t('login.emailPlaceholder')}
               />
             </div>
 
