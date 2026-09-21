@@ -37,17 +37,9 @@ function UserMenu() {
 
   if (!user) {
     return (
-      <>
-        <LocaleLink
-          href="/pricing"
-          className="text-sm font-medium text-gray-600 hover:text-gray-950"
-        >
-          {t('nav.credits')}
-        </LocaleLink>
-        <Button asChild size="sm">
-          <LocaleLink href="/sign-in">{t('login.signIn')}</LocaleLink>
-        </Button>
-      </>
+      <Button asChild size="sm">
+        <LocaleLink href="/sign-in">{t('login.signIn')}</LocaleLink>
+      </Button>
     );
   }
 
