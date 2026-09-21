@@ -111,7 +111,7 @@ function localizedResponse(
   const response =
     localeFromPath && !isApiPath(internalPathname)
       ? NextResponse.rewrite(
-          new URL(`${internalPathname}${search}`, request.url),
+          `${internalPathname}${search}`,
           { request: { headers: requestHeaders } }
         )
       : NextResponse.next({ request: { headers: requestHeaders } });
