@@ -17,5 +17,10 @@ admin.jevhub.store {
 		jevadmin REPLACE_WITH_CADDY_BCRYPT_HASH
 	}
 
+	# New API's `/` is its public product landing page. Keep this hostname
+	# focused on administration by taking operators straight to user management.
+	@admin_homepage path /
+	redir @admin_homepage /users/ 302
+
 	reverse_proxy 127.0.0.1:3001
 }
