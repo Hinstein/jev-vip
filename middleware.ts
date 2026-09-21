@@ -68,6 +68,15 @@ function signInUrl(
   return url;
 }
 
+function absoluteUrl(
+  request: NextRequest,
+  pathname: string,
+  search = ''
+) {
+  const configuredBaseUrl = process.env.BASE_URL?.trim();
+  return new URL(`${pathname}${search}`, configuredBaseUrl || request.url);
+}
+
 function unauthorized(
   request: NextRequest,
   locale: Locale,
@@ -111,7 +120,7 @@ function localizedResponse(
   const response =
     localeFromPath && !isApiPath(internalPathname)
       ? NextResponse.rewrite(
-          `${internalPathname}${search}`,
+          absoluteUrl(request, internalPathname, search),
           { request: { headers: requestHeaders } }
         )
       : NextResponse.next({ request: { headers: requestHeaders } });
@@ -134,8 +143,7 @@ export async function middleware(request: NextRequest) {
     request.headers.get(internalLocaleRewriteHeader) === '1';
 
   if (!localeFromPath && isPageRequest(pathname) && !isInternalLocaleRewrite) {
-    const url = request.nextUrl.clone();
-    url.pathname = localizedPath(locale, pathname);
+    const url = absoluteUrl(request, localizedPath(locale, pathname), search);
     const response = NextResponse.redirect(url);
     return setLocaleCookie(response, locale);
   }
