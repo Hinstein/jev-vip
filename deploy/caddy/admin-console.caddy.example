@@ -13,14 +13,17 @@ admin.jevhub.store {
 		X-Robots-Tag "noindex, nofollow"
 	}
 
-	basic_auth {
-		jevadmin REPLACE_WITH_CADDY_BCRYPT_HASH
-	}
-
 	# New API's `/` is its public product landing page. Keep this hostname
 	# focused on administration by taking operators straight to user management.
 	@admin_homepage path /
 	redir @admin_homepage /users/ 302
+
+	# Customer sign-up belongs to the branded JEV storefront, not this console.
+	@customer_registration path /register /register/*
+	redir @customer_registration https://jevhub.store/sign-up 302
+
+	@customer_registration_api path /api/user/register
+	respond @customer_registration_api "Customer registration is available at https://jevhub.store/sign-up" 403
 
 	reverse_proxy 127.0.0.1:3001
 }
