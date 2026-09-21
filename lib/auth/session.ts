@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import type { NewApiAuthBundle } from '@/lib/new-api/types';
+import type { NewApiAuthBundle, NewApiUser } from '@/lib/new-api/types';
 
 export const SESSION_COOKIE = 'jev_session';
 export const REFRESH_COOKIE = 'jev_refresh';
@@ -36,6 +36,7 @@ export type SessionData = {
   accessExpiresAt: number;
   sid: string;
   expires: string;
+  user: NewApiUser;
 };
 
 export function sessionFromBundle(bundle: NewApiAuthBundle): SessionData {
@@ -48,6 +49,7 @@ export function sessionFromBundle(bundle: NewApiAuthBundle): SessionData {
     accessExpiresAt: bundle.accessExpiresAt,
     sid: bundle.session.sid,
     expires: expiresAt.toISOString(),
+    user: bundle.user,
   };
 }
 
