@@ -4,26 +4,20 @@ import { useMemo, useState } from 'react';
 import {
   Bot,
   Check,
-  CircleAlert,
   Copy,
   ExternalLink,
-  KeyRound,
   LockKeyhole,
   Terminal,
-  WalletCards,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { LocaleLink } from '@/components/i18n/locale-link';
 import { useI18n } from '@/components/i18n/use-i18n';
 import {
   buildAgentIntegrationTask,
-  typeSafeInstallCommands,
   typeSafeSkillUrl,
 } from '@/lib/jev/agent-task';
 
 type SnippetName = 'curl' | 'node' | 'python';
-type AgentInstallMethod = 'claudeCode' | 'otherAgents';
 
 type ApiDocsProps = {
   baseUrl: string;
@@ -123,8 +117,6 @@ function CodeBlock({
 export function ApiDocs({ baseUrl }: ApiDocsProps) {
   const { locale, t } = useI18n();
   const [activeSnippet, setActiveSnippet] = useState<SnippetName>('curl');
-  const [activeAgentInstall, setActiveAgentInstall] =
-    useState<AgentInstallMethod>('claudeCode');
   const [copied, setCopied] = useState<string | null>(null);
   const endpoint = `${baseUrl}/api/v1/decide`;
   const request = useMemo(requestExample, []);
@@ -210,146 +202,51 @@ print(data['answers']['route']['choice'])`,
     <div className="space-y-8">
       <Card className="rounded-2xl border-gray-200 shadow-none">
         <CardContent className="p-6 sm:p-7">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="rounded-lg bg-gray-950 p-2 text-white">
+              <Bot className="h-4 w-4" />
+            </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">{t('apiDocs.endpoint')}</p>
-              <p className="mt-2 break-all font-mono text-sm font-medium text-gray-950 sm:text-base">
-                POST {endpoint}
-              </p>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
-                {t('apiDocs.endpointDescription')}
-              </p>
+              <p className="text-sm font-medium text-gray-500">{t('apiDocs.agentEyebrow')}</p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight">
+                {t('apiDocs.agentTitle')}
+              </h2>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="shrink-0"
-              onClick={() => void copy('endpoint', endpoint)}
-            >
-              {copied === 'endpoint' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              {copied === 'endpoint' ? t('common.copied') : t('common.copyToClipboard')}
-            </Button>
           </div>
-          <div className="mt-5 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>{t('apiDocs.endpointNote')}</p>
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-600">
+            {t('apiDocs.agentDescription')}
+          </p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <Button type="button" onClick={() => void copy('agent-task', agentTask)}>
+              {copied === 'agent-task' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied === 'agent-task' ? t('common.copied') : t('apiDocs.copyAgentTask')}
+            </Button>
+            <Button asChild type="button" variant="outline">
+              <a href={typeSafeSkillUrl} target="_blank" rel="noreferrer">
+                <ExternalLink className="h-4 w-4" />
+                {t('apiDocs.officialSkill')}
+              </a>
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="gap-0 overflow-hidden rounded-2xl border-gray-200 py-0 shadow-none">
-        <CardContent className="p-0">
-          <div className="grid lg:grid-cols-[minmax(0,1.35fr)_minmax(19rem,0.65fr)]">
-            <div className="p-6 sm:p-7">
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-gray-950 p-2 text-white">
-                  <Bot className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">{t('apiDocs.agentEyebrow')}</p>
-                  <h2 className="mt-1 text-xl font-semibold tracking-tight">
-                    {t('apiDocs.agentTitle')}
-                  </h2>
-                </div>
-              </div>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-600">
-                {t('apiDocs.agentDescription')}
-              </p>
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <Button type="button" onClick={() => void copy('agent-task', agentTask)}>
-                  {copied === 'agent-task' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  {copied === 'agent-task' ? t('common.copied') : t('apiDocs.copyAgentTask')}
-                </Button>
-                <Button asChild type="button" variant="outline">
-                  <a href={typeSafeSkillUrl} target="_blank" rel="noreferrer">
-                    <ExternalLink className="h-4 w-4" />
-                    {t('apiDocs.officialSkill')}
-                  </a>
-                </Button>
-              </div>
-              <p className="mt-5 text-sm leading-6 text-gray-500">
-                {t('apiDocs.agentGatewayNotice')}
-              </p>
+      <Card className="rounded-2xl border-gray-200 shadow-none">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-gray-100 p-2 text-gray-700">
+              <LockKeyhole className="h-4 w-4" />
             </div>
-
-            <div className="border-t bg-gray-50 p-5 lg:border-t-0 lg:border-l">
-              <p className="text-sm font-semibold text-gray-950">{t('apiDocs.installSkill')}</p>
-              <p className="mt-2 text-sm leading-6 text-gray-600">
-                {t('apiDocs.installSkillDescription')}
-              </p>
-              <div className="mt-4 flex gap-1 rounded-lg bg-white p-1 ring-1 ring-gray-200">
-                {(['claudeCode', 'otherAgents'] as AgentInstallMethod[]).map((method) => (
-                  <Button
-                    key={method}
-                    type="button"
-                    size="sm"
-                    variant={activeAgentInstall === method ? 'secondary' : 'ghost'}
-                    className="flex-1 text-xs"
-                    onClick={() => setActiveAgentInstall(method)}
-                  >
-                    {method === 'claudeCode' ? t('apiDocs.claudeCode') : t('apiDocs.otherAgents')}
-                  </Button>
-                ))}
-              </div>
-              <div className="mt-3">
-                <CodeBlock
-                  language="shell"
-                  value={typeSafeInstallCommands[activeAgentInstall]}
-                  copied={copied === `agent-install-${activeAgentInstall}`}
-                  onCopy={() =>
-                    void copy(
-                      `agent-install-${activeAgentInstall}`,
-                      typeSafeInstallCommands[activeAgentInstall]
-                    )
-                  }
-                />
-              </div>
-              <p className="mt-3 text-xs leading-5 text-gray-500">
-                {t('apiDocs.chooseOneInstall')}{' '}
-                {activeAgentInstall === 'otherAgents'
-                  ? t('apiDocs.selectCurrentAgent')
-                  : null}
-              </p>
-            </div>
+            <h2 className="text-lg font-semibold">{t('apiDocs.authentication')}</h2>
+          </div>
+          <p className="mt-4 text-sm leading-6 text-gray-600">
+            {t('apiDocs.authenticationDescription')}
+          </p>
+          <div className="mt-4 rounded-lg bg-gray-100 px-3 py-2 font-mono text-sm text-gray-900">
+            Authorization: Bearer $JEV_API_KEY
           </div>
         </CardContent>
       </Card>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="rounded-2xl border-gray-200 shadow-none">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-gray-100 p-2 text-gray-700">
-                <LockKeyhole className="h-4 w-4" />
-              </div>
-              <h2 className="text-lg font-semibold">{t('apiDocs.authentication')}</h2>
-            </div>
-            <p className="mt-4 text-sm leading-6 text-gray-600">
-              {t('apiDocs.authenticationDescription')}
-            </p>
-            <div className="mt-4 rounded-lg bg-gray-100 px-3 py-2 font-mono text-sm text-gray-900">
-              Authorization: Bearer $JEV_API_KEY
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border-gray-200 shadow-none">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-gray-100 p-2 text-gray-700">
-                <WalletCards className="h-4 w-4" />
-              </div>
-              <h2 className="text-lg font-semibold">{t('apiDocs.billing')}</h2>
-            </div>
-            <p className="mt-4 text-sm leading-6 text-gray-600">
-              {t('apiDocs.billingDescription')}
-            </p>
-            <Button asChild className="mt-4" size="sm" variant="outline">
-              <LocaleLink href="/dashboard/usage">{t('apiDocs.manageBalance')}</LocaleLink>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
 
       <section>
         <h2 className="text-2xl font-semibold tracking-tight">{t('apiDocs.requestBody')}</h2>
@@ -433,43 +330,24 @@ print(data['answers']['route']['choice'])`,
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="rounded-2xl border-gray-200 shadow-none">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-gray-100 p-2 text-gray-700">
-                <Terminal className="h-4 w-4" />
-              </div>
-              <h2 className="text-lg font-semibold">{t('apiDocs.errors')}</h2>
+      <Card className="rounded-2xl border-gray-200 shadow-none">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-gray-100 p-2 text-gray-700">
+              <Terminal className="h-4 w-4" />
             </div>
-            <dl className="mt-5 divide-y">
-              {errors.map(([status, description]) => (
-                <div key={status} className="grid grid-cols-[3.5rem_1fr] gap-3 py-3 text-sm">
-                  <dt className="font-mono font-medium text-gray-950">{status}</dt>
-                  <dd className="leading-6 text-gray-600">{description}</dd>
-                </div>
-              ))}
-            </dl>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border-gray-200 shadow-none">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-gray-100 p-2 text-gray-700">
-                <KeyRound className="h-4 w-4" />
+            <h2 className="text-lg font-semibold">{t('apiDocs.errors')}</h2>
+          </div>
+          <dl className="mt-5 divide-y">
+            {errors.map(([status, description]) => (
+              <div key={status} className="grid grid-cols-[3.5rem_1fr] gap-3 py-3 text-sm">
+                <dt className="font-mono font-medium text-gray-950">{status}</dt>
+                <dd className="leading-6 text-gray-600">{description}</dd>
               </div>
-              <h2 className="text-lg font-semibold">{t('apiDocs.security')}</h2>
-            </div>
-            <p className="mt-4 text-sm leading-6 text-gray-600">
-              {t('apiDocs.securityDescription')}
-            </p>
-            <Button asChild className="mt-4" size="sm" variant="outline">
-              <LocaleLink href="/dashboard/api-keys">{t('apiDocs.createKey')}</LocaleLink>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+            ))}
+          </dl>
+        </CardContent>
+      </Card>
     </div>
   );
 }

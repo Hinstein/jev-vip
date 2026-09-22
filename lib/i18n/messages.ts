@@ -166,10 +166,6 @@ type Messages = {
     eyebrow: string;
     title: string;
     description: string;
-    createKey: string;
-    endpoint: string;
-    endpointDescription: string;
-    endpointNote: string;
     authentication: string;
     authenticationDescription: string;
     requestBody: string;
@@ -193,23 +189,11 @@ type Messages = {
     error403: string;
     error429: string;
     error503: string;
-    security: string;
-    securityDescription: string;
-    billing: string;
-    billingDescription: string;
-    manageBalance: string;
     agentEyebrow: string;
     agentTitle: string;
     agentDescription: string;
     copyAgentTask: string;
-    installSkill: string;
-    installSkillDescription: string;
-    claudeCode: string;
-    otherAgents: string;
-    chooseOneInstall: string;
-    selectCurrentAgent: string;
     officialSkill: string;
-    agentGatewayNotice: string;
   };
 };
 
@@ -400,11 +384,6 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       title: 'Call the JEVstone API',
       description:
         'Use an API key created in this dashboard to call your hosted JEVstone Decision API. The gateway verifies your key and balance before forwarding the request.',
-      createKey: 'Manage API keys',
-      endpoint: 'Endpoint',
-      endpointDescription: 'Send a POST request to this address.',
-      endpointNote:
-        'Use this JEV Store address only. Do not call the admin console or the upstream provider directly.',
       authentication: 'Authentication',
       authenticationDescription:
         'Pass the API key as a Bearer token. Keep it in a server-side environment variable and never expose it in browser code.',
@@ -436,28 +415,12 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       error403: 'The key or account does not have access to this model.',
       error429: 'The API quota or rate limit was reached. Retry with backoff.',
       error503: 'The gateway or upstream is temporarily unavailable. Retry with backoff.',
-      security: 'Keep your key safe',
-      securityDescription:
-        'Do not put an API key in frontend JavaScript, a mobile app bundle, screenshots, or a public repository. Revoke it immediately here if it is exposed.',
-      billing: 'Balance and usage',
-      billingDescription:
-        'Successful calls consume this account’s prepaid balance based on input tokens. Check the Balance and Usage pages after a call.',
-      manageBalance: 'View balance and usage',
       agentEyebrow: 'AI agent setup',
       agentTitle: 'Let an AI agent build the integration',
       agentDescription:
         'Copy one task into Claude Code, Codex, or another coding agent. It installs the official TypeSafe skill, then directs the agent to use your JEV Store gateway.',
       copyAgentTask: 'Copy task for Agent',
-      installSkill: 'Install the TypeSafe skill',
-      installSkillDescription:
-        'The skill teaches the agent how to design structured Jev questions before it writes your integration.',
-      claudeCode: 'Claude Code',
-      otherAgents: 'Other agents',
-      chooseOneInstall: 'Use exactly one installation method.',
-      selectCurrentAgent: 'Select your current coding agent if prompted.',
       officialSkill: 'Read the official skill',
-      agentGatewayNotice:
-        'The copied task explicitly keeps the agent on this JEV Store gateway. Your API key stays server-side; it never gives the agent an upstream TypeSafe credential.',
     },
   },
   'zh-CN': {
@@ -631,11 +594,6 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       title: '调用 JEVstone API',
       description:
         '使用在本控制台创建的 API 密钥调用托管的 JEVstone Decision API。网关会先校验密钥和账户余额，再转发请求。',
-      createKey: '管理 API 密钥',
-      endpoint: '接口地址',
-      endpointDescription: '向以下地址发送 POST 请求。',
-      endpointNote:
-        '只能调用这个 JEV Store 地址；不要调用管理后台地址，也不要直接调用上游服务商。',
       authentication: '鉴权方式',
       authenticationDescription:
         '将 API 密钥作为 Bearer Token 传入。请只保存在服务端环境变量中，绝不要暴露在浏览器代码里。',
@@ -666,28 +624,12 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       error403: '该密钥或账户无权访问此模型。',
       error429: '已达到 API 配额或限流，请使用退避策略后重试。',
       error503: '网关或上游服务暂时不可用，请使用退避策略后重试。',
-      security: '妥善保管密钥',
-      securityDescription:
-        '不要将 API 密钥写进前端 JavaScript、移动端安装包、截图或公开仓库。如果密钥泄露，请立即在此控制台撤销。',
-      billing: '余额与用量',
-      billingDescription:
-        '成功调用会按输入 Token 从当前账户的预付费余额中扣除。调用后可在“余额”和“用量”页面查看结果。',
-      manageBalance: '查看余额与用量',
       agentEyebrow: 'AI Agent 接入',
       agentTitle: '让 AI Agent 帮你完成接入',
       agentDescription:
         '将一份任务直接复制给 Claude Code、Codex 或其他编码 Agent。它会先安装 TypeSafe 官方 skill，再按你的 JEV Store 网关完成接入。',
       copyAgentTask: '复制任务给 Agent',
-      installSkill: '安装 TypeSafe skill',
-      installSkillDescription:
-        '这个 skill 会让 Agent 先学习如何设计结构化 Jev 问题，再开始编写接入代码。',
-      claudeCode: 'Claude Code',
-      otherAgents: '其他 Agent',
-      chooseOneInstall: '只能选择一种安装方式。',
-      selectCurrentAgent: '出现提示时选择你当前使用的编码 Agent。',
       officialSkill: '阅读官方 skill',
-      agentGatewayNotice:
-        '复制的任务会明确约束 Agent 只调用本 JEV Store 网关。API Key 始终仅在服务端使用，不会向 Agent 提供上游 TypeSafe 凭据。',
     },
   },
 };
