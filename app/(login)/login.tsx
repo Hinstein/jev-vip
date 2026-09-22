@@ -2,7 +2,8 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Gauge, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { BrandLogo } from '@/components/jev/brand-logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -142,14 +143,9 @@ export function Login({
       <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-xl flex-col justify-center">
         <div className="mb-7 flex items-center justify-between">
           <LocaleLink href="/" className="inline-flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-gray-950 text-white shadow-sm">
-              <Gauge className="size-5" />
-            </span>
             <span>
-              <span className="block text-lg font-semibold tracking-[-0.04em] text-gray-950">
-                JEV Store
-              </span>
-              <span className="block text-[10px] font-medium uppercase tracking-[0.18em] text-gray-400">
+              <BrandLogo />
+              <span className="ml-[46px] block text-[10px] font-medium uppercase tracking-[0.18em] text-gray-400">
                 prepaid API
               </span>
             </span>

@@ -1,5 +1,7 @@
 'use client';
 
+import { BrandLogo } from '@/components/jev/brand-logo';
+
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -40,7 +42,7 @@ export default function DashboardLayout({
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-65px)] w-full max-w-[1440px] flex-col">
       <div className="flex items-center justify-between border-b bg-white p-4 lg:hidden">
-        <span className="font-medium">JEV Store</span>
+        <BrandLogo compact />
         <Button
           className="-mr-3"
           variant="ghost"

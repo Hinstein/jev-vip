@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
+import { BrandLogo } from '@/components/jev/brand-logo';
 import { Button } from '@/components/ui/button';
 import { Home, LogOut } from 'lucide-react';
 import {
@@ -78,10 +79,8 @@ function Header() {
   return (
     <header className="border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-        <LocaleLink href="/" className="flex items-baseline gap-2">
-          <span className="text-xl font-semibold tracking-[-0.04em] text-gray-950">
-            JEV Store
-          </span>
+        <LocaleLink href="/" className="flex items-center gap-3">
+          <BrandLogo />
           <span className="hidden text-xs font-medium uppercase tracking-[0.18em] text-gray-400 sm:inline">
             prepaid API
           </span>

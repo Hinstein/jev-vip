@@ -6,6 +6,10 @@ import { getLocale } from '@/lib/i18n/server';
 import { LocaleProvider } from '@/components/i18n/locale-provider';
 
 export const metadata: Metadata = {
+  icons: {
+    icon: [{ url: '/brand/jev-mark.svg', type: 'image/svg+xml' }],
+    shortcut: '/brand/jev-mark.svg',
+  },
   title: {
     default: 'JEV Store',
     template: '%s · JEV Store',
