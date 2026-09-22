@@ -198,6 +198,18 @@ type Messages = {
     billing: string;
     billingDescription: string;
     manageBalance: string;
+    agentEyebrow: string;
+    agentTitle: string;
+    agentDescription: string;
+    copyAgentTask: string;
+    installSkill: string;
+    installSkillDescription: string;
+    claudeCode: string;
+    otherAgents: string;
+    chooseOneInstall: string;
+    selectCurrentAgent: string;
+    officialSkill: string;
+    agentGatewayNotice: string;
   };
 };
 
@@ -431,6 +443,21 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       billingDescription:
         'Successful calls consume this account’s prepaid balance based on input tokens. Check the Balance and Usage pages after a call.',
       manageBalance: 'View balance and usage',
+      agentEyebrow: 'AI agent setup',
+      agentTitle: 'Let an AI agent build the integration',
+      agentDescription:
+        'Copy one task into Claude Code, Codex, or another coding agent. It installs the official TypeSafe skill, then directs the agent to use your JEV Store gateway.',
+      copyAgentTask: 'Copy task for Agent',
+      installSkill: 'Install the TypeSafe skill',
+      installSkillDescription:
+        'The skill teaches the agent how to design structured Jev questions before it writes your integration.',
+      claudeCode: 'Claude Code',
+      otherAgents: 'Other agents',
+      chooseOneInstall: 'Use exactly one installation method.',
+      selectCurrentAgent: 'Select your current coding agent if prompted.',
+      officialSkill: 'Read the official skill',
+      agentGatewayNotice:
+        'The copied task explicitly keeps the agent on this JEV Store gateway. Your API key stays server-side; it never gives the agent an upstream TypeSafe credential.',
     },
   },
   'zh-CN': {
@@ -646,6 +673,21 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       billingDescription:
         '成功调用会按输入 Token 从当前账户的预付费余额中扣除。调用后可在“余额”和“用量”页面查看结果。',
       manageBalance: '查看余额与用量',
+      agentEyebrow: 'AI Agent 接入',
+      agentTitle: '让 AI Agent 帮你完成接入',
+      agentDescription:
+        '将一份任务直接复制给 Claude Code、Codex 或其他编码 Agent。它会先安装 TypeSafe 官方 skill，再按你的 JEV Store 网关完成接入。',
+      copyAgentTask: '复制任务给 Agent',
+      installSkill: '安装 TypeSafe skill',
+      installSkillDescription:
+        '这个 skill 会让 Agent 先学习如何设计结构化 Jev 问题，再开始编写接入代码。',
+      claudeCode: 'Claude Code',
+      otherAgents: '其他 Agent',
+      chooseOneInstall: '只能选择一种安装方式。',
+      selectCurrentAgent: '出现提示时选择你当前使用的编码 Agent。',
+      officialSkill: '阅读官方 skill',
+      agentGatewayNotice:
+        '复制的任务会明确约束 Agent 只调用本 JEV Store 网关。API Key 始终仅在服务端使用，不会向 Agent 提供上游 TypeSafe 凭据。',
     },
   },
 };

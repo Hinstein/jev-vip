@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import {
+  Bot,
   Check,
   CircleAlert,
   Copy,
+  ExternalLink,
   KeyRound,
   LockKeyhole,
   Terminal,
@@ -14,8 +16,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LocaleLink } from '@/components/i18n/locale-link';
 import { useI18n } from '@/components/i18n/use-i18n';
+import {
+  buildAgentIntegrationTask,
+  typeSafeInstallCommands,
+  typeSafeSkillUrl,
+} from '@/lib/jev/agent-task';
 
 type SnippetName = 'curl' | 'node' | 'python';
+type AgentInstallMethod = 'claudeCode' | 'otherAgents';
 
 type ApiDocsProps = {
   baseUrl: string;
@@ -113,12 +121,18 @@ function CodeBlock({
 }
 
 export function ApiDocs({ baseUrl }: ApiDocsProps) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [activeSnippet, setActiveSnippet] = useState<SnippetName>('curl');
+  const [activeAgentInstall, setActiveAgentInstall] =
+    useState<AgentInstallMethod>('claudeCode');
   const [copied, setCopied] = useState<string | null>(null);
   const endpoint = `${baseUrl}/api/v1/decide`;
   const request = useMemo(requestExample, []);
   const response = useMemo(responseExample, []);
+  const agentTask = useMemo(
+    () => buildAgentIntegrationTask({ baseUrl, locale }),
+    [baseUrl, locale]
+  );
 
   const snippets = useMemo<Record<SnippetName, string>>(
     () => ({
@@ -219,6 +233,84 @@ print(data['answers']['route']['choice'])`,
           <div className="mt-5 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
             <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
             <p>{t('apiDocs.endpointNote')}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="gap-0 overflow-hidden rounded-2xl border-gray-200 py-0 shadow-none">
+        <CardContent className="p-0">
+          <div className="grid lg:grid-cols-[minmax(0,1.35fr)_minmax(19rem,0.65fr)]">
+            <div className="p-6 sm:p-7">
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-gray-950 p-2 text-white">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">{t('apiDocs.agentEyebrow')}</p>
+                  <h2 className="mt-1 text-xl font-semibold tracking-tight">
+                    {t('apiDocs.agentTitle')}
+                  </h2>
+                </div>
+              </div>
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-600">
+                {t('apiDocs.agentDescription')}
+              </p>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <Button type="button" onClick={() => void copy('agent-task', agentTask)}>
+                  {copied === 'agent-task' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copied === 'agent-task' ? t('common.copied') : t('apiDocs.copyAgentTask')}
+                </Button>
+                <Button asChild type="button" variant="outline">
+                  <a href={typeSafeSkillUrl} target="_blank" rel="noreferrer">
+                    <ExternalLink className="h-4 w-4" />
+                    {t('apiDocs.officialSkill')}
+                  </a>
+                </Button>
+              </div>
+              <p className="mt-5 text-sm leading-6 text-gray-500">
+                {t('apiDocs.agentGatewayNotice')}
+              </p>
+            </div>
+
+            <div className="border-t bg-gray-50 p-5 lg:border-t-0 lg:border-l">
+              <p className="text-sm font-semibold text-gray-950">{t('apiDocs.installSkill')}</p>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                {t('apiDocs.installSkillDescription')}
+              </p>
+              <div className="mt-4 flex gap-1 rounded-lg bg-white p-1 ring-1 ring-gray-200">
+                {(['claudeCode', 'otherAgents'] as AgentInstallMethod[]).map((method) => (
+                  <Button
+                    key={method}
+                    type="button"
+                    size="sm"
+                    variant={activeAgentInstall === method ? 'secondary' : 'ghost'}
+                    className="flex-1 text-xs"
+                    onClick={() => setActiveAgentInstall(method)}
+                  >
+                    {method === 'claudeCode' ? t('apiDocs.claudeCode') : t('apiDocs.otherAgents')}
+                  </Button>
+                ))}
+              </div>
+              <div className="mt-3">
+                <CodeBlock
+                  language="shell"
+                  value={typeSafeInstallCommands[activeAgentInstall]}
+                  copied={copied === `agent-install-${activeAgentInstall}`}
+                  onCopy={() =>
+                    void copy(
+                      `agent-install-${activeAgentInstall}`,
+                      typeSafeInstallCommands[activeAgentInstall]
+                    )
+                  }
+                />
+              </div>
+              <p className="mt-3 text-xs leading-5 text-gray-500">
+                {t('apiDocs.chooseOneInstall')}{' '}
+                {activeAgentInstall === 'otherAgents'
+                  ? t('apiDocs.selectCurrentAgent')
+                  : null}
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
