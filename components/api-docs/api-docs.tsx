@@ -226,6 +226,13 @@ print(data['answers']['route']['choice'])`,
             </a>
           </p>
           <details className="mt-4 text-sm">
+            <summary className="cursor-pointer">{locale === 'zh-CN' ? '如何把业务判断设计好？' : 'How do I design useful decisions?'}</summary>
+            <p className="mt-3 text-gray-600">
+              {locale === 'zh-CN' ? '任务已要求 Agent 先读业务设计指南，再设计问题、复核路径和评测样本。不需要额外安装 Skill。' : 'The task requires the agent to read the design guide before defining questions, review paths and evaluation cases. No extra Skill installation.'}
+              {' '}<a className="underline" href="/docs/decision-design.md">{locale === 'zh-CN' ? '阅读业务设计指南' : 'Read the design guide (Chinese)'}</a>
+            </p>
+          </details>
+          <details className="mt-4 text-sm">
             <summary className="cursor-pointer">{locale === 'zh-CN' ? '查看完整任务 / 手动复制' : 'View full task / Copy manually'}</summary>
             <textarea
               aria-label={t('apiDocs.copyAgentTask')}

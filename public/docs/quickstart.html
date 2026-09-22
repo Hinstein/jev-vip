@@ -25,6 +25,8 @@
 
 先读取本站接入说明：https://jevhub.store/docs/agent.md
 再读取服务端参考代码：https://jevhub.store/docs/examples/jev-client.ts
+设计或修改业务问题前，必须读取业务设计指南：https://jevhub.store/docs/decision-design.md
+先写简短决策设计卡（业务目标、代码规则、语义判断、错误代价），再设计 state/questions、兜底分支和评测样本。按指南区分 mock 代码验证与真实业务效果评测；阈值没有样本依据就不得声称已适合生产。不确定结果交给澄清或复核，高置信度不代替业务授权。
 人类阅读指南：https://jevhub.store/docs/quickstart.html
 无需安装 Skill 或上游 SDK，无需访问 GitHub。如果资源无法读取，请停止并报告缺失项，不猜测接口。
 
@@ -77,6 +79,7 @@ const refundProbability = result.answers.wants_refund.noul;</code></pre>
     <p class="notice">本页不会接收或发送密钥，也没有浏览器 API 调试器。只把代码放在服务端；Next.js 适配模块加 <code>import 'server-only'</code>。密钥由运行环境注入，不需要写进代码。</p>
   </section>
   <section class="card"><h2>选对问题类型</h2><div class="scroll"><table><thead><tr><th>类型</th><th>问题设计</th><th>读取结果</th></tr></thead><tbody><tr><td>choice</td><td>从明确选项中选一个；criteria 是选项对象，建议含 other。</td><td><code>answers.问题名.choice</code></td></tr><tr><td>score</td><td>按2–10个具体等级评估程度，从0开始，可返回小数。</td><td><code>answers.问题名.score</code></td></tr><tr><td>noul</td><td>判断一个条件是否成立，返回“是”的概率，不是程度。</td><td><code>answers.问题名.noul</code></td></tr></tbody></table></div><p class="muted">state 放事实，instructions 写完整判断，criteria 定义边界。同一上下文的独立问题可以合并，但额外问题仍消耗 tokens。置信度和阈值需要用业务样本验证。</p></section>
+  <section class="card"><h2>接得上，也要用得好</h2><p class="muted">Agent 在设计业务问题前会读取本站业务设计指南：先分清代码规则和语义判断，再设计问题、复核路径与评测样本。无需你额外安装 Skill。</p><p>指南包含完整工单分派案例，以及检索排序、引用核验和原文值提取方法。模拟测试只能证明代码正确，业务准确率需要真实标注样本验证。</p><a href="/docs/decision-design.md">阅读业务设计指南（Agent 可直接读取）</a></section>
   <section class="card"><h2>失败时怎么办</h2><div class="scroll"><table><thead><tr><th>状态</th><th>处理方式</th></tr></thead><tbody><tr><td>400 / 403</td><td>检查请求 / 权限，不重试。</td></tr><tr><td>401</td><td>密钥无效或已撤销，在服务端更换。</td></tr><tr><td>402</td><td>账户余额不足，先充值。</td></tr><tr><td>429 / 503</td><td>指数退避，最多初次+2次重试；尊重 Retry-After。</td></tr><tr><td>网络 / 超时 / 其他状态</td><td>不自动重试；结果可能未知，先核对用量。</td></tr></tbody></table></div><p class="muted">每次请求15秒超时。记录 input_tokens 是用量追踪，不代表计费只看输入。不要把原始错误响应、用户隐私或密钥写入日志。</p></section>
   <footer>JEV Store 接入资源 v1 · 无需登录即可阅读 · 文档不等于真实调用验证；上线前请完成服务端验证。</footer>
 </main>

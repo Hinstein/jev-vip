@@ -6,7 +6,7 @@ import { buildAgentIntegrationTask } from '../lib/jev/agent-task';
 for (const locale of ['en', 'zh-CN'] as const) {
   test(locale + ' task uses hosted resources without mandatory installation', () => {
     const task = buildAgentIntegrationTask({ baseUrl: 'https://jevhub.store', locale });
-    for (const path of ['/docs/agent.md', '/docs/examples/jev-client.ts', '/docs/quickstart.html', '/api/v1/decide']) {
+    for (const path of ['/docs/agent.md', '/docs/decision-design.md', '/docs/examples/jev-client.ts', '/docs/quickstart.html', '/api/v1/decide']) {
       assert.ok(task.includes('https://jevhub.store' + path));
     }
     for (const value of ['JEV_API_KEY', 'usage.input_tokens', 'state', 'questions', '429', '503', '401', '402', 'model']) assert.ok(task.includes(value));

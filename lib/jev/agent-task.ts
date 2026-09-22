@@ -4,6 +4,8 @@ const chineseTask = `你是负责当前客户项目的编码 Agent。请将托�
 
 先读取本站接入说明：https://jevhub.store/docs/agent.md
 再读取服务端参考代码：https://jevhub.store/docs/examples/jev-client.ts
+设计或修改业务问题前，必须读取业务设计指南：https://jevhub.store/docs/decision-design.md
+先写简短决策设计卡（业务目标、代码规则、语义判断、错误代价），再设计 state/questions、兜底分支和评测样本。按指南区分 mock 代码验证与真实业务效果评测；阈值没有样本依据就不得声称已适合生产。不确定结果交给澄清或复核，高置信度不代替业务授权。
 人类阅读指南：https://jevhub.store/docs/quickstart.html
 无需安装 Skill 或上游 SDK，无需访问 GitHub。如果资源无法读取，请停止并报告缺失项，不猜测接口。
 
@@ -25,6 +27,8 @@ const englishTask = `You are the coding agent for this CUSTOMER application. Int
 First read https://jevhub.store/docs/agent.md and https://jevhub.store/docs/examples/jev-client.ts. Human guide: https://jevhub.store/docs/quickstart.html. Guidance is currently in Chinese; translate as needed. No Skill, upstream SDK installation or GitHub lookup is required. Stop and report unreadable resources rather than guessing.
 
 Inspect the framework, server entry point and requested business behavior. Ask for the decision use case if unclear. If this IS the JEV Store gateway repository (existing /api/v1/decide, relay or gateway billing), stop and confirm the target customer repository; never make the gateway call itself or replace its architecture, authentication or billing. If no server exists, confirm a backend plan first. Preserve unrelated changes.
+
+Before designing or changing business questions, read https://jevhub.store/docs/decision-design.md. Write a short decision design card: business outcome, deterministic rules, semantic judgments and error costs. Define state/questions, fallback paths and evaluation cases. Separate mock code validation from real business evaluation; do not claim production-ready thresholds without labeled evidence. Uncertain results need clarification or review; high confidence never substitutes for authorization.
 
 Use server-side fetch only: POST https://jevhub.store/api/v1/decide, Authorization: Bearer $JEV_API_KEY, Content-Type: application/json. JSON contains only state and questions. Do not send model; the hosted gateway selects it. Never call upstream TypeSafe directly or request an upstream API key.
 
