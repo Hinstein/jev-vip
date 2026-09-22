@@ -27,3 +27,13 @@ test('resources follow the configured origin', () => {
   assert.ok(task.includes('https://example.test/docs/agent.md'));
   assert.doesNotMatch(task, /https:\/\/jevhub.store/);
 });
+
+test('agent card hides design details and offers manual copy only after failure', () => {
+  const source = readFileSync('components/api-docs/api-docs.tsx', 'utf8');
+  assert.doesNotMatch(source, /如何把业务判断设计好|查看完整任务|How do I design useful decisions|View full task/);
+  assert.match(source, /\[showManualTask, setShowManualTask\] = useState\(false\)/);
+  assert.match(source, /showManualTask &&/);
+  assert.match(source, /catch \{[\s\S]*?if \(id === 'agent-task'\) setShowManualTask\(true\)/);
+  assert.match(source, /writeText\(value\);\s*if \(id === 'agent-task'\) setShowManualTask\(false\)/);
+  assert.match(source, /value=\{agentTask\}/);
+});

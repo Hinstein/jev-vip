@@ -19,7 +19,7 @@ function result(team = 'billing', confidence = 0.9, refund = 0.1, impact = 2, im
 }
 
 test('design guide is linked from entrypoints and contains a two-field request', () => {
-  for (const path of ['public/docs/agent.md', 'public/docs/quickstart.html', 'components/api-docs/api-docs.tsx']) {
+  for (const path of ['public/docs/agent.md', 'public/docs/quickstart.html', 'lib/jev/agent-task.ts']) {
     assert.ok(readFileSync(path, 'utf8').includes('/docs/decision-design.md'));
   }
   assert.deepEqual(Object.keys(request).sort(), ['questions', 'state']);

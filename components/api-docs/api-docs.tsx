@@ -116,6 +116,7 @@ export function ApiDocs({ baseUrl }: ApiDocsProps) {
   const { locale, t } = useI18n();
   const [activeSnippet, setActiveSnippet] = useState<SnippetName>('curl');
   const [copied, setCopied] = useState<string | null>(null);
+  const [showManualTask, setShowManualTask] = useState(false);
   const endpoint = `${baseUrl}/api/v1/decide`;
   const request = useMemo(requestExample, []);
   const response = useMemo(responseExample, []);
@@ -172,12 +173,14 @@ print(data['answers']['route']['choice'])`,
   async function copy(id: string, value: string) {
     try {
       await navigator.clipboard.writeText(value);
+      if (id === 'agent-task') setShowManualTask(false);
       setCopied(id);
       window.setTimeout(() => {
         setCopied((current) => (current === id ? null : current));
       }, 1800);
     } catch {
       setCopied(null);
+      if (id === 'agent-task') setShowManualTask(true);
     }
   }
 
@@ -225,15 +228,8 @@ print(data['answers']['route']['choice'])`,
               {locale === 'zh-CN' ? '站内接入指南与参考代码' : 'Hosted integration guide and reference code (Chinese)'}
             </a>
           </p>
-          <details className="mt-4 text-sm">
-            <summary className="cursor-pointer">{locale === 'zh-CN' ? '如何把业务判断设计好？' : 'How do I design useful decisions?'}</summary>
-            <p className="mt-3 text-gray-600">
-              {locale === 'zh-CN' ? '任务已要求 Agent 先读业务设计指南，再设计问题、复核路径和评测样本。不需要额外安装 Skill。' : 'The task requires the agent to read the design guide before defining questions, review paths and evaluation cases. No extra Skill installation.'}
-              {' '}<a className="underline" href="/docs/decision-design.md">{locale === 'zh-CN' ? '阅读业务设计指南' : 'Read the design guide (Chinese)'}</a>
-            </p>
-          </details>
-          <details className="mt-4 text-sm">
-            <summary className="cursor-pointer">{locale === 'zh-CN' ? '查看完整任务 / 手动复制' : 'View full task / Copy manually'}</summary>
+          {showManualTask && <div className="mt-4 text-sm">
+            <p role="status">{locale === 'zh-CN' ? '自动复制失败，请选中下方任务并手动复制。' : 'Automatic copy failed. Select the task below and copy it manually.'}</p>
             <textarea
               aria-label={t('apiDocs.copyAgentTask')}
               readOnly
@@ -241,7 +237,7 @@ print(data['answers']['route']['choice'])`,
               onFocus={(event) => event.currentTarget.select()}
               className="mt-3 h-64 w-full rounded-lg border p-3 font-mono text-xs"
             />
-          </details>
+          </div>}
         </CardContent>
       </Card>
 
