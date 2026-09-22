@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: '/docs/examples/jev-client.ts',
+        headers: [{ key: 'Content-Type', value: 'text/plain; charset=utf-8' }],
+      },
+      {
         source: '/:path*',
         headers: securityHeaders,
       },

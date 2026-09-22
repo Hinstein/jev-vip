@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="JEV Store 服务端接入指南：复制完整任务给 Agent，无需安装 Skill。">
+  <title>调用 JEVstone API · JEV Store</title>
+  <style>
+    :root{color-scheme:light;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#17191d;background:#fafafa;line-height:1.7}
+    *{box-sizing:border-box}body{margin:0}header{background:white;border-bottom:1px solid #e5e7eb;padding:18px max(24px,calc((100% - 1040px)/2));display:flex;gap:16px;align-items:center}header strong{font-size:23px;white-space:nowrap}header span{color:#737985;font-size:12px;letter-spacing:2px}main{max-width:1040px;margin:48px auto;padding:0 24px 60px}h1{font-size:36px;line-height:1.3;letter-spacing:-1px;margin:8px 0 16px}h2{font-size:23px;margin:0 0 12px}h3{font-size:17px;margin:0 0 8px}.muted{color:#646b78}.eyebrow{font-size:13px;color:#646b78}.card{background:white;border:1px solid #e2e5ea;border-radius:18px;padding:28px;margin-top:24px}.intro{margin-bottom:32px}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin:24px 0}.step{border-top:2px solid #20232a;padding-top:14px}a{color:#294d91;text-underline-offset:3px}button{font:inherit;border:0;border-radius:9px;background:#191b20;color:white;padding:12px 20px;cursor:pointer}button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid #80a7f1;outline-offset:4px}pre{background:#f5f6f8;padding:20px;overflow:auto;border-radius:10px;font-size:13px;line-height:1.7}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}textarea{display:block;width:100%;height:310px;padding:16px;font:13px/1.7 ui-monospace,monospace;border:1px solid #d7dce3;border-radius:8px;margin-top:12px;resize:vertical}summary{cursor:pointer}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top}.scroll{overflow:auto}.notice{border-left:3px solid #647b9e;padding-left:16px;font-size:14px}#copy-status{min-height:26px;font-size:14px}.links{display:flex;flex-wrap:wrap;gap:12px 24px}footer{margin-top:32px;font-size:13px;color:#646b78}@media(max-width:650px){main{margin-top:28px;padding:0 18px 40px}h1{font-size:29px}.card{padding:20px}.steps{grid-template-columns:1fr}header span{letter-spacing:0}}
+  </style>
+</head>
+<body>
+<header><strong>JEV Store</strong><span>DEVELOPER DOCS / 开发者文档</span></header>
+<main>
+  <div class="intro"><div class="eyebrow">托管 Decision API · 接入指南 v1</div><h1>调用 JEVstone API</h1><p class="muted">传入上下文和问题，拿到代码能直接使用的结构化判断。所有调用都经过 JEV Store 网关。</p></div>
+  <section class="card" aria-labelledby="agent-title">
+    <div class="eyebrow">AI Agent 接入</div><h2 id="agent-title">让 AI Agent 帮你完成接入</h2>
+    <p class="muted">复制完整任务给你的编码 Agent。它会读取本站文档和参考代码，在你的服务端完成接入与测试。无需安装 Skill，无需访问 GitHub。</p>
+    <button id="copy-task" type="button">复制任务给 Agent</button>
+    <p id="copy-status" role="status" aria-live="polite">任务中不包含任何真实密钥。</p>
+    <details id="task-details"><summary>查看完整任务 / 手动复制</summary>
+      <label for="agent-task">将下面整段文字发送给负责你项目的编码 Agent：</label>
+      <textarea id="agent-task" readonly spellcheck="false">你是负责当前客户项目的编码 Agent。请将托管的 JEVstone Decision API 接入本项目。
+
+先读取本站接入说明：https://jevhub.store/docs/agent.md
+再读取服务端参考代码：https://jevhub.store/docs/examples/jev-client.ts
+人类阅读指南：https://jevhub.store/docs/quickstart.html
+无需安装 Skill 或上游 SDK，无需访问 GitHub。如果资源无法读取，请停止并报告缺失项，不猜测接口。
+
+先检查项目框架、服务端入口和业务需求。如果没有明确判断场景，请先询问。如果当前仓库本身是 JEV Store 网关（包含 /api/v1/decide、LiteLLM relay 或网关计费），停止并确认目标仓库，不让网关调用自身，不改网关架构、鉴权或计费。只有前端/移动端时先确认后端方案。
+
+使用服务端 fetch，固定 POST https://jevhub.store/api/v1/decide，Authorization: Bearer $JEV_API_KEY。请求 JSON 顶层只包含 state 和 questions；不发送 model。禁止直连上游 TypeSafe，不索取上游 API Key。
+
+请让用户自行在项目的服务端 Secret/环境变量中配置 JEV_API_KEY。不要让用户在对话中粘贴真实密钥，不读取或输出真实密钥，不写含真实密钥的 .env 文件或提交仓库。密钥绝不进入浏览器、移动端、截图或日志。Next.js 服务端适配模块添加 import 'server-only'，不要使用公开环境变量前缀。
+
+沿用客户项目技术栈，把参考代码放进服务端目录并接入所需业务。state 提供必要上下文；questions 使用有清楚 instructions/criteria 的 choice、score 或 noul。按问题名称读取 answers 中的结构化结果，记录 usage.input_tokens。业务权限和实际动作仍由代码控制；客户服务端入口应有鉴权、输入校验及限流。
+
+错误处理：400/403不重试；401提示密钥无效或已撤销；402提示账户充值；429/503指数退避并限制次数。参考实现最多3次请求，每次15秒超时，尊重 Retry-After。网络/超时可能已执行，不自动重放。不记录原始请求、Authorization 或错误响应。
+
+先使用 mock fetch 和假测试占位符验证：成功答案、用量记录、缺失密钥、非重试错误、429/503重试上限、超时、响应校验、请求只含state/questions。运行项目相关测试和构建。真实调用仅在用户已自行配置服务端密钥并同意可能产生费用的验证后进行；没有完成就明确说仅模拟验证。
+
+交付：修改文件清单、无真实密钥的调用示例、服务端密钥隔离说明、测试和构建结果、未验证项。保留无关现有改动，不擅自部署。</textarea>
+    </details>
+    <noscript><p>JavaScript 未启用：展开“查看完整任务”，选中全部文字后复制。指南与下载仍可使用。</p></noscript>
+  </section>
+  <div class="steps"><div class="step"><h3>01 · 交给 Agent</h3><p class="muted">复制上面的任务，告诉它需要判断的业务场景。</p></div><div class="step"><h3>02 · 配置服务端密钥</h3><p class="muted">在部署平台 Secret 中设置 <code>JEV_API_KEY</code>，不要发给 Agent。</p></div><div class="step"><h3>03 · 验证后上线</h3><p class="muted">先跑模拟测试，再授权小规模真实验证；检查答案和用量。</p></div></div>
+  <section class="card"><h2>自己接入？只需要两个字段</h2><p><code>POST https://jevhub.store/api/v1/decide</code></p><p class="muted">服务端请求头：<code>Authorization: Bearer $JEV_API_KEY</code>。请求体不带 model，模型由托管网关选择。</p>
+<pre><code>{
+  "state": { "message": "Please correct the company name on my receipt." },
+  "questions": {
+    "wants_refund": {
+      "type": "noul",
+      "instructions": "Does the customer explicitly request a refund?"
+    }
+  }
+}</code></pre>
+    <p class="muted">模拟响应：<code>answers.wants_refund.noul = 0.02</code>，<code>usage.input_tokens = 180</code>。概率不是执行退款的授权。</p>
+<pre><code>// Node.js 20+ 服务端；将参考文件放到同一服务端目录。
+import { createJevClient } from './jev-client';
+
+const decide = createJevClient({
+  onUsage: ({ input_tokens }) =&gt; console.info('jev_usage', { input_tokens })
+});
+// 在 async 服务端函数中调用，并捕获 JevError。
+const result = await decide({
+  state: 'Please correct the company name on my receipt.',
+  questions: {
+    wants_refund: {
+      type: 'noul',
+      instructions: 'Does the customer explicitly request a refund?'
+    }
+  }
+});
+const refundProbability = result.answers.wants_refund.noul;</code></pre>
+    <p class="links"><a href="/docs/agent.md">完整 Agent 接入说明（Markdown）</a><a href="/docs/examples/jev-client.ts" download>下载服务端参考代码（TypeScript）</a></p>
+    <p class="notice">本页不会接收或发送密钥，也没有浏览器 API 调试器。只把代码放在服务端；Next.js 适配模块加 <code>import 'server-only'</code>。密钥由运行环境注入，不需要写进代码。</p>
+  </section>
+  <section class="card"><h2>选对问题类型</h2><div class="scroll"><table><thead><tr><th>类型</th><th>问题设计</th><th>读取结果</th></tr></thead><tbody><tr><td>choice</td><td>从明确选项中选一个；criteria 是选项对象，建议含 other。</td><td><code>answers.问题名.choice</code></td></tr><tr><td>score</td><td>按2–10个具体等级评估程度，从0开始，可返回小数。</td><td><code>answers.问题名.score</code></td></tr><tr><td>noul</td><td>判断一个条件是否成立，返回“是”的概率，不是程度。</td><td><code>answers.问题名.noul</code></td></tr></tbody></table></div><p class="muted">state 放事实，instructions 写完整判断，criteria 定义边界。同一上下文的独立问题可以合并，但额外问题仍消耗 tokens。置信度和阈值需要用业务样本验证。</p></section>
+  <section class="card"><h2>失败时怎么办</h2><div class="scroll"><table><thead><tr><th>状态</th><th>处理方式</th></tr></thead><tbody><tr><td>400 / 403</td><td>检查请求 / 权限，不重试。</td></tr><tr><td>401</td><td>密钥无效或已撤销，在服务端更换。</td></tr><tr><td>402</td><td>账户余额不足，先充值。</td></tr><tr><td>429 / 503</td><td>指数退避，最多初次+2次重试；尊重 Retry-After。</td></tr><tr><td>网络 / 超时 / 其他状态</td><td>不自动重试；结果可能未知，先核对用量。</td></tr></tbody></table></div><p class="muted">每次请求15秒超时。记录 input_tokens 是用量追踪，不代表计费只看输入。不要把原始错误响应、用户隐私或密钥写入日志。</p></section>
+  <footer>JEV Store 接入资源 v1 · 无需登录即可阅读 · 文档不等于真实调用验证；上线前请完成服务端验证。</footer>
+</main>
+<script>
+  const button = document.getElementById('copy-task');
+  const task = document.getElementById('agent-task');
+  const status = document.getElementById('copy-status');
+  button.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(task.value);
+      status.textContent = '完整任务已复制。发送给你的编码 Agent；不要附带真实密钥。';
+    } catch {
+      document.getElementById('task-details').open = true;
+      task.focus(); task.select();
+      status.textContent = '浏览器未允许自动复制。已选中完整任务，请按 Ctrl+C / ⌘C 复制。';
+    }
+  });
+</script>
+</body>
+</html>

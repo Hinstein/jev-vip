@@ -193,7 +193,6 @@ type Messages = {
     agentTitle: string;
     agentDescription: string;
     copyAgentTask: string;
-    officialSkill: string;
   };
 };
 
@@ -418,9 +417,8 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       agentEyebrow: 'AI agent setup',
       agentTitle: 'Let an AI agent build the integration',
       agentDescription:
-        'Copy one task into Claude Code, Codex, or another coding agent. It installs the official TypeSafe skill, then directs the agent to use your JEV Store gateway.',
+        'Copy the complete task into your coding agent. It reads our hosted guide and reference code, then integrates and tests your server. No Skill installation or GitHub lookup required.',
       copyAgentTask: 'Copy task for Agent',
-      officialSkill: 'Read the official skill',
     },
   },
   'zh-CN': {
@@ -627,9 +625,8 @@ export const messages: Record<'en' | 'zh-CN', Messages> = {
       agentEyebrow: 'AI Agent 接入',
       agentTitle: '让 AI Agent 帮你完成接入',
       agentDescription:
-        '将一份任务直接复制给 Claude Code、Codex 或其他编码 Agent。它会先安装 TypeSafe 官方 skill，再按你的 JEV Store 网关完成接入。',
+        '将完整任务复制给你的编码 Agent。它会读取本站文档和参考代码，在你的服务端完成接入与测试。无需安装 Skill，无需访问 GitHub。',
       copyAgentTask: '复制任务给 Agent',
-      officialSkill: '阅读官方 skill',
     },
   },
 };

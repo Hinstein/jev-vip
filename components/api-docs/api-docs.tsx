@@ -5,7 +5,6 @@ import {
   Bot,
   Check,
   Copy,
-  ExternalLink,
   LockKeyhole,
   Terminal,
 } from 'lucide-react';
@@ -14,7 +13,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useI18n } from '@/components/i18n/use-i18n';
 import {
   buildAgentIntegrationTask,
-  typeSafeSkillUrl,
 } from '@/lib/jev/agent-task';
 
 type SnippetName = 'curl' | 'node' | 'python';
@@ -221,13 +219,22 @@ print(data['answers']['route']['choice'])`,
               {copied === 'agent-task' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {copied === 'agent-task' ? t('common.copied') : t('apiDocs.copyAgentTask')}
             </Button>
-            <Button asChild type="button" variant="outline">
-              <a href={typeSafeSkillUrl} target="_blank" rel="noreferrer">
-                <ExternalLink className="h-4 w-4" />
-                {t('apiDocs.officialSkill')}
-              </a>
-            </Button>
           </div>
+          <p className="mt-4 text-sm">
+            <a className="underline underline-offset-4" href="/docs/quickstart.html">
+              {locale === 'zh-CN' ? '站内接入指南与参考代码' : 'Hosted integration guide and reference code (Chinese)'}
+            </a>
+          </p>
+          <details className="mt-4 text-sm">
+            <summary className="cursor-pointer">{locale === 'zh-CN' ? '查看完整任务 / 手动复制' : 'View full task / Copy manually'}</summary>
+            <textarea
+              aria-label={t('apiDocs.copyAgentTask')}
+              readOnly
+              value={agentTask}
+              onFocus={(event) => event.currentTarget.select()}
+              className="mt-3 h-64 w-full rounded-lg border p-3 font-mono text-xs"
+            />
+          </details>
         </CardContent>
       </Card>
 
